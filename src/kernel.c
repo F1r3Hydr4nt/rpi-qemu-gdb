@@ -1,3 +1,5 @@
+#include "printf.h"
+
 #define UART0_BASE 0x3F201000
 #define GPFSEL1    0x3F200004
 #define GPSET0     0x3F20001C
@@ -13,14 +15,15 @@ volatile unsigned int * const GPCLR0_REG  = (unsigned int *) GPCLR0;
 volatile unsigned int * const GPPUD_REG   = (unsigned int *) GPPUD;
 volatile unsigned int * const GPPUDCLK0_REG = (unsigned int *) GPPUDCLK0;
 
-void uart_putc(unsigned char c) {
+void uart_putc(void* p, char c) {
+    (void)p; // suppress unused parameter warning
     while (*UART0_FR & (1 << 5));
     *UART0_DR = c;
 }
 
 void uart_puts(const char *str) {
     while (*str) {
-        uart_putc(*str++);
+        uart_putc(0, *str++);
     }
 }
 
@@ -44,5 +47,7 @@ void main() {
     *UART0_DR = 0;
     uart_puts("Hello, World!\n");
 
+    init_printf(0, uart_putc);
+    printf("Hello, World!\n");
     while (1);
 }

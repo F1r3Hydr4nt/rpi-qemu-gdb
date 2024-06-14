@@ -6,9 +6,11 @@ qemu-system-aarch64 -M raspi3b -kernel build/kernel8.img -serial mon:stdio -nogr
 ```
 
 To quit:
+
 `CTRL-A, x`
 
 Run GDB, in a separate terminal:
+
 `gdb-multiarch build/kernel8.elf -ex "target remote localhost:1234" -ex "break *_start" -ex "continue"~ `
 
 AI queries used to get up and running:
