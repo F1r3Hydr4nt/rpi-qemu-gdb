@@ -1,5 +1,6 @@
 #include "printf.h"
 #include "mem.h"
+#include "gpg.h"
 
 #define UART0_BASE 0x3F201000
 #define GPFSEL1    0x3F200004
@@ -29,6 +30,15 @@ void uart_puts(const char *str) {
 }
 
 void main() {
+    // Initialize the page table
+    init_page_table();
+
+    // Setup stack guard
+    setup_stack_guard();
+
+    // Enable the MMU
+    enable_mmu();
+
     // Disable UART
     *GPPUD_REG = 0;
     for (volatile int i = 0; i < 150; i++);
@@ -59,5 +69,8 @@ void main() {
         free(message); // Test free function
     }
 
+    printf("Doing the work\n");
+    doGPG();
+    printf("Done\n");
     while (1);
 }

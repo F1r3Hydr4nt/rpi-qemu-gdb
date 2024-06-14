@@ -26,10 +26,15 @@ clean:
 
 debug:
 	qemu-system-aarch64 -M raspi3b -kernel build/kernel8.img -serial mon:stdio -nographic -s -S -d in_asm,cpu_reset
+debug2:
+	qemu-system-aarch64 -M raspi3b -kernel build/kernel8.img -serial mon:stdio -nographic -s -S
 
 run:
 	@echo "Type 'CTRL-A, x' to quit\n"
 	qemu-system-aarch64 -M raspi3b -kernel build/kernel8.img -serial mon:stdio -nographic
+
+gdb:
+	gdb-multiarch build/kernel8.elf -ex "target remote localhost:1234" -ex "break *_start" -ex "continue"~ 
 
 $(BUILD_DIR)/boot.o: $(BOOT_SRC)
 	$(CROSS_COMPILE)gcc $(CFLAGS) -c $< -o $@
