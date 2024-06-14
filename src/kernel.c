@@ -1,4 +1,5 @@
 #include "printf.h"
+#include "mem.h"
 
 #define UART0_BASE 0x3F201000
 #define GPFSEL1    0x3F200004
@@ -49,5 +50,14 @@ void main() {
 
     init_printf(0, uart_putc);
     printf("Hello, World!\n");
+
+    // Test memory functions
+    char *message = (char *)malloc(20);
+    if (message) {
+        memcpy(message, "Memory allocated\n", 18);
+        uart_puts(message);
+        free(message); // Test free function
+    }
+
     while (1);
 }

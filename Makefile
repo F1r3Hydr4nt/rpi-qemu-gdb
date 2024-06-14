@@ -28,7 +28,7 @@ debug:
 	qemu-system-aarch64 -M raspi3b -kernel build/kernel8.img -serial mon:stdio -nographic -s -S -d in_asm,cpu_reset
 
 run:
-	echo "Type 'CTRL-A, x' to quit"
+	@echo "Type 'CTRL-A, x' to quit\n"
 	qemu-system-aarch64 -M raspi3b -kernel build/kernel8.img -serial mon:stdio -nographic
 
 $(BUILD_DIR)/boot.o: $(BOOT_SRC)
