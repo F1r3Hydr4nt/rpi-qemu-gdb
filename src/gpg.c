@@ -2,10 +2,21 @@
 #include "gpg.h"
 #include "common.h"
 #include "sboxes.h"
-#include <stdio.h>
 #include "printf.h"
+// #include <stdio.h>
+#include <ctype.h>
+
 #define TRUE 1
 #define FALSE 0
+
+// Function prototypes for hex digit checks
+int my_isdigit(char c);
+int my_isxdigit(char c);
+char my_tolower(char c);
+int xtoi_2(const char *hex);
+void *xtrymalloc(size_t size);
+const char *hex2str(const char *hexstring, char *buffer, size_t bufsize, size_t *buflen);
+char *hex2str_alloc(const char *hexstring, size_t *r_count);
 
 enum
 {
@@ -109,10 +120,6 @@ unsigned char *uint32ToChar(uint32_t val)
 
 static void printBlock(struct Block block){
   printf("%08X%08X\n", block.msb, block.lsb);
-}
-
-static void printBlock2(const char* prefix, struct Block block){
-  printf("%s%08X%08X\n", prefix, block.msb, block.lsb);
 }
 
 static struct Block run(const Key key, struct Block data, int reverse)
@@ -278,6 +285,150 @@ void testVector()
     // exit(-1);
   }
 }
+char *testAAAHex = "41414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141410a";
+char *textAAAFilename = "testAAA.txt";
+const char *testPassphrase = "password";
+
+
+// Check if a character is a valid ASCII character
+int my_isascii(char c) {
+    return (unsigned char)c <= 0x7F;
+}
+
+// Check if a character is a whitespace character
+int my_isspace(char c) {
+    return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';
+}
+
+// Check if a character is a decimal digit
+int my_isdigit(char c) {
+    return c >= '0' && c <= '9';
+}
+
+// Check if a character is a hexadecimal digit
+int my_isxdigit(char c) {
+    return (c >= '0' && c <= '9') ||
+           (c >= 'A' && c <= 'F') ||
+           (c >= 'a' && c <= 'f');
+}
+
+// Convert a character to lowercase if it's an uppercase letter
+char my_tolower(char c) {
+    if (c >= 'A' && c <= 'Z') {
+        return c + ('a' - 'A');
+    }
+    return c;
+}
+
+// Convert a two-character hex string to an integer
+int xtoi_2(const char *hex) {
+    int result = 0;
+    for (int i = 0; i < 2; i++) {
+        char c = hex[i];
+        if (my_isdigit(c)) {
+            result = result * 16 + (c - '0');
+        } else if (my_isxdigit(c)) {
+            result = result * 16 + (my_tolower(c) - 'a' + 10);
+        } else {
+            return -1; // Error: not a hex digit
+        }
+    }
+    return result;
+}
+
+// Try to allocate memory, handle error if allocation fails
+void *xtrymalloc(size_t size) {
+    void *ptr = malloc(size);
+    if (!ptr) {
+        printf("Memory allocation failed\n");
+        // exit(EXIT_FAILURE); // Or handle the error as appropriate for your project
+    }
+    return ptr;
+}
+
+// Check if a character is a hexadecimal digit
+int hexdigitp(char c) {
+    return my_isxdigit(c);
+}
+
+// Convert a hexadecimal string to a byte string
+const char *hex2str(const char *hexstring, char *buffer, size_t bufsize, size_t *buflen) {
+    const char *s = hexstring;
+    int idx, count;
+    int need_nul = 0;
+
+    if (buflen)
+        *buflen = 0;
+
+    for (s = hexstring, count = 0; hexdigitp(*s) && hexdigitp(*(s + 1)); s += 2, count++)
+        ;
+
+    if (*s && (!my_isascii(*s) || !my_isspace(*s)))
+        return NULL; /* Not followed by Nul or white space.  */
+    
+    /* We need to append a nul character.  However we don't want that if
+       the hexstring already ends with "00".  */
+    need_nul = ((s == hexstring) || !(s[-2] == '0' && s[-1] == '0'));
+    if (need_nul)
+        count++;
+
+    if (buffer) {
+        if (count > bufsize)
+            return NULL; /* Too long.  */
+
+        for (s = hexstring, idx = 0; hexdigitp(*s) && hexdigitp(*(s + 1)); s += 2)
+            ((unsigned char *)buffer)[idx++] = xtoi_2(s);
+        
+        if (need_nul)
+            buffer[idx] = 0;
+    }
+
+    if (buflen)
+        *buflen = count - 1;
+    
+    return s;
+}
+
+// Allocate and convert a hexadecimal string to a byte string
+char *hex2str_alloc(const char *hexstring, size_t *r_count) {
+    const char *tail;
+    size_t nbytes;
+    char *result;
+
+    tail = hex2str(hexstring, NULL, 0, &nbytes);
+    if (!tail) {
+        if (r_count)
+            *r_count = 0;
+        // errno = EINVAL;
+        return NULL;
+    }
+    if (r_count)
+        *r_count = tail - hexstring;
+    result = xtrymalloc(nbytes + 1);
+    if (!result)
+        return NULL;
+    if (!hex2str(hexstring, result, nbytes + 1, NULL))
+        printf("BUG ();\n");
+    return result;
+}
+
 void doGPG() {
   testVector();
+  size_t totalFileSize = 0;
+  size_t countData = 0;
+  char *dataTest = hex2str_alloc(testAAAHex, &countData);
+  // Ensure dataTest is not NULL before proceeding
+  if (dataTest) {
+    printf("Decoded data:\n");
+    for (size_t i = 0; i < countData; i++) {
+      printf("%c", dataTest[i]);
+    }
+    printf("\n");
+    
+    // Free the allocated memory
+    free(dataTest);
+  } else {
+    printf("Failed to decode hex string.\n");
+  }
+  
 }

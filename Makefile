@@ -1,5 +1,5 @@
 CROSS_COMPILE = aarch64-linux-gnu-
-CFLAGS = -O2 -Wall -nostdlib -nostartfiles -ffreestanding -g
+CFLAGS = -O2 -Wall -nostdlib -nostartfiles -ffreestanding -g -gdwarf-4
 
 # Directories
 SRC_DIR = src
