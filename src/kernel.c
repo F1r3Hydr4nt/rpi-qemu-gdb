@@ -1,6 +1,7 @@
 #include "printf.h"
-#include "mem.h"
+//#include "mem.h"
 #include "gpg.h"
+#include "mmu.h"
 
 #define UART0_BASE 0x3F201000
 #define GPFSEL1    0x3F200004

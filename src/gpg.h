@@ -1,4 +1,4 @@
-#ifndef FILE_H
-#define FILE_H
+#ifndef GPG_H
+#define GPG_H
 void doGPG();
 #endif

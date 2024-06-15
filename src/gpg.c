@@ -112,7 +112,11 @@ static struct Block run(const Key key, struct Block data, int reverse)
     memcpy(x, key, sizeof(Key));
     Key z = {0};
 
-    uint32_t K[32] = {0};
+    uint32_t *K = (uint32_t *)malloc(32 * sizeof(uint32_t));
+    if (K == NULL) {
+        printf("Memory allocation failed\n");
+        return data; // Return early if memory allocation fails
+    }
     printf("Initializing K\n");
 
     for (int i = 0; i < 2; ++i)
@@ -169,17 +173,26 @@ static struct Block run(const Key key, struct Block data, int reverse)
         printf("K[12]=%x, K[13]=%x, K[14]=%x, K[15]=%x\n", K[12 + i * 16], K[13 + i * 16], K[14 + i * 16], K[15 + i * 16]);
     }
 
-    uint32_t L[ROUND_COUNT + 1] = {0};
+    uint32_t *L = (uint32_t *)malloc((ROUND_COUNT + 1) * sizeof(uint32_t));
+    if (L == NULL) {
+        printf("Memory allocation failed\n");
+        free(K);
+        return data; // Return early if memory allocation fails
+    }
     printf("Got here\n");
 
     L[0] = data.msb;
     printf("L[0] = %x\n", L[0]);
 
+    uint32_t *R = (uint32_t *)malloc((ROUND_COUNT + 1) * sizeof(uint32_t));
+    if (R == NULL) {
+        printf("Memory allocation failed\n");
+        free(K);
+        free(L);
+        return data; // Return early if memory allocation fails
+    }
     
-    uint32_t R[ROUND_COUNT + 1] = {0};
-    
-    memset(R, 0, sizeof(R));
-    printf("but not here\n");
+    memset(R, 0, (ROUND_COUNT + 1) * sizeof(uint32_t));
     printf("but not here\n");
 
     R[0] = data.lsb;
@@ -225,6 +238,12 @@ static struct Block run(const Key key, struct Block data, int reverse)
 
     data.msb = R[ROUND_COUNT];
     data.lsb = L[ROUND_COUNT];
+
+    // Free allocated memory
+    free(K);
+    free(L);
+    free(R);
+
     return data;
 }
 

@@ -24,5 +24,14 @@ SECTIONS
     }
 
     . = ALIGN(8);
-    _stack_top = . + 0x10000; /* Allocate 64KB for stack */
+
+    /* Define the stack space */
+    .stack (NOLOAD) : {
+        _stack_bottom = .;
+        . = . + 0x4000; /* Allocate 16KB for stack */
+        _stack_top = .;
+    }
+
+    /* End of the image */
+    _end = .;
 }
