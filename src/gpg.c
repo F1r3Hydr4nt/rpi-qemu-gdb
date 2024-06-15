@@ -16,7 +16,8 @@ enum
 typedef uint32_t Key[KEY_LEN];
 
 // Need to take this out if 64 bit
-static const uint64_t MOD_2_32 = (uint64_t)2 << 31;
+// static const uint64_t MOD_2_32 = (uint64_t)2 << 31;
+#define MOD_2_32 ((uint32_t)1 << 31) * 2
 // static const uint32_t MOD_2_32_MINUS_1 = 0xFFFFFFFF;
 
 struct Block{
@@ -45,10 +46,19 @@ static void splitI(uint32_t I, uint8_t *Ia, uint8_t *Ib, uint8_t *Ic, uint8_t *I
   *Id = (I)&0xFF;
 }
 
+// static uint32_t sumMod2_32(uint32_t a, uint32_t b)
+// {
+//   // its just a remainder
+//   return ((a) + b) % MOD_2_32;
+// }
+
+// Function to add two 32-bit unsigned integers with wrap-around at 2^32
 static uint32_t sumMod2_32(uint32_t a, uint32_t b)
 {
-  // its just a remainder
-  return ((a) + b) % MOD_2_32;
+    // In 32-bit unsigned arithmetic, adding two uint32_t values
+    // automatically wraps around on overflow, effectively performing
+    // the operation modulo 2^32. Therefore, no explicit modulus operation is needed.
+    return a + b;
 }
 
 // static uint32_t sumMod2_32b(uint32_t a, uint32_t b)
@@ -107,7 +117,6 @@ static void printBlock2(const char* prefix, struct Block block){
 
 static struct Block run(const Key key, struct Block data, int reverse)
 {
-    printf("run\n");
     Key x = {0};
     memcpy(x, key, sizeof(Key));
     Key z = {0};
@@ -117,24 +126,21 @@ static struct Block run(const Key key, struct Block data, int reverse)
         printf("Memory allocation failed\n");
         return data; // Return early if memory allocation fails
     }
-    printf("Initializing K\n");
 
     for (int i = 0; i < 2; ++i)
     {
-        printf("Round %d\n", i);
         z[0] = x[0] ^ S5[g(x, 0xD)] ^ S6[g(x, 0xF)] ^ S7[g(x, 0xC)] ^ S8[g(x, 0xE)] ^ S7[g(x, 0x8)];
         z[1] = x[2] ^ S5[g(z, 0x0)] ^ S6[g(z, 0x2)] ^ S7[g(z, 0x1)] ^ S8[g(z, 0x3)] ^ S8[g(x, 0xA)];
         z[2] = x[3] ^ S5[g(z, 0x7)] ^ S6[g(z, 0x6)] ^ S7[g(z, 0x5)] ^ S8[g(z, 0x4)] ^ S5[g(x, 0x9)];
         z[3] = x[1] ^ S5[g(z, 0xA)] ^ S6[g(z, 0x9)] ^ S7[g(z, 0xB)] ^ S8[g(z, 0x8)] ^ S6[g(x, 0xB)];
 
-        printf("z[0]=%x, z[1]=%x, z[2]=%x, z[3]=%x\n", z[0], z[1], z[2], z[3]);
+        // printf("z[0]=%x, z[1]=%x, z[2]=%x, z[3]=%x\n", z[0], z[1], z[2], z[3]);
 
         K[0 + i * 16] = S5[g(z, 0x8)] ^ S6[g(z, 0x9)] ^ S7[g(z, 0x7)] ^ S8[g(z, 0x6)] ^ S5[g(z, 0x2)];
         K[1 + i * 16] = S5[g(z, 0xA)] ^ S6[g(z, 0xB)] ^ S7[g(z, 0x5)] ^ S8[g(z, 0x4)] ^ S6[g(z, 0x6)];
         K[2 + i * 16] = S5[g(z, 0xC)] ^ S6[g(z, 0xD)] ^ S7[g(z, 0x3)] ^ S8[g(z, 0x2)] ^ S7[g(z, 0x9)];
         K[3 + i * 16] = S5[g(z, 0xE)] ^ S6[g(z, 0xF)] ^ S7[g(z, 0x1)] ^ S8[g(z, 0x0)] ^ S8[g(z, 0xC)];
 
-        printf("K[0]=%x, K[1]=%x, K[2]=%x, K[3]=%x\n", K[0 + i * 16], K[1 + i * 16], K[2 + i * 16], K[3 + i * 16]);
 
         x[0] = z[2] ^ S5[g(z, 0x5)] ^ S6[g(z, 0x7)] ^ S7[g(z, 0x4)] ^ S8[g(z, 0x6)] ^ S7[g(z, 0x0)];
         x[1] = z[0] ^ S5[g(x, 0x0)] ^ S6[g(x, 0x2)] ^ S7[g(x, 0x1)] ^ S8[g(x, 0x3)] ^ S8[g(z, 0x2)];
@@ -146,7 +152,6 @@ static struct Block run(const Key key, struct Block data, int reverse)
         K[6 + i * 16] = S5[g(x, 0x7)] ^ S6[g(x, 0x6)] ^ S7[g(x, 0x8)] ^ S8[g(x, 0x9)] ^ S7[g(x, 0x3)];
         K[7 + i * 16] = S5[g(x, 0x5)] ^ S6[g(x, 0x4)] ^ S7[g(x, 0xA)] ^ S8[g(x, 0xB)] ^ S8[g(x, 0x7)];
 
-        printf("K[4]=%x, K[5]=%x, K[6]=%x, K[7]=%x\n", K[4 + i * 16], K[5 + i * 16], K[6 + i * 16], K[7 + i * 16]);
 
         z[0] = x[0] ^ S5[g(x, 0xD)] ^ S6[g(x, 0xF)] ^ S7[g(x, 0xC)] ^ S8[g(x, 0xE)] ^ S7[g(x, 0x8)];
         z[1] = x[2] ^ S5[g(z, 0x0)] ^ S6[g(z, 0x2)] ^ S7[g(z, 0x1)] ^ S8[g(z, 0x3)] ^ S8[g(x, 0xA)];
@@ -158,7 +163,6 @@ static struct Block run(const Key key, struct Block data, int reverse)
         K[10 + i * 16] = S5[g(z, 0x7)] ^ S6[g(z, 0x6)] ^ S7[g(z, 0x8)] ^ S8[g(z, 0x9)] ^ S7[g(z, 0x2)];
         K[11 + i * 16] = S5[g(z, 0x5)] ^ S6[g(z, 0x4)] ^ S7[g(z, 0xA)] ^ S8[g(z, 0xB)] ^ S8[g(z, 0x6)];
 
-        printf("K[8]=%x, K[9]=%x, K[10]=%x, K[11]=%x\n", K[8 + i * 16], K[9 + i * 16], K[10 + i * 16], K[11 + i * 16]);
 
         x[0] = z[2] ^ S5[g(z, 0x5)] ^ S6[g(z, 0x7)] ^ S7[g(z, 0x4)] ^ S8[g(z, 0x6)] ^ S7[g(z, 0x0)];
         x[1] = z[0] ^ S5[g(x, 0x0)] ^ S6[g(x, 0x2)] ^ S7[g(x, 0x1)] ^ S8[g(x, 0x3)] ^ S8[g(z, 0x2)];
@@ -170,7 +174,6 @@ static struct Block run(const Key key, struct Block data, int reverse)
         K[14 + i * 16] = S5[g(x, 0xC)] ^ S6[g(x, 0xD)] ^ S7[g(x, 0x3)] ^ S8[g(x, 0x2)] ^ S7[g(x, 0x8)];
         K[15 + i * 16] = S5[g(x, 0xE)] ^ S6[g(x, 0xF)] ^ S7[g(x, 0x1)] ^ S8[g(x, 0x0)] ^ S8[g(x, 0xD)];
 
-        printf("K[12]=%x, K[13]=%x, K[14]=%x, K[15]=%x\n", K[12 + i * 16], K[13 + i * 16], K[14 + i * 16], K[15 + i * 16]);
     }
 
     uint32_t *L = (uint32_t *)malloc((ROUND_COUNT + 1) * sizeof(uint32_t));
@@ -179,10 +182,8 @@ static struct Block run(const Key key, struct Block data, int reverse)
         free(K);
         return data; // Return early if memory allocation fails
     }
-    printf("Got here\n");
 
     L[0] = data.msb;
-    printf("L[0] = %x\n", L[0]);
 
     uint32_t *R = (uint32_t *)malloc((ROUND_COUNT + 1) * sizeof(uint32_t));
     if (R == NULL) {
@@ -193,10 +194,8 @@ static struct Block run(const Key key, struct Block data, int reverse)
     }
     
     memset(R, 0, (ROUND_COUNT + 1) * sizeof(uint32_t));
-    printf("but not here\n");
 
     R[0] = data.lsb;
-    printf("R[0] = %x\n", R[0]);
 
     for (int i = 0; i < ROUND_COUNT; ++i)
     {
@@ -208,7 +207,6 @@ static struct Block run(const Key key, struct Block data, int reverse)
         uint32_t f = 0;
 
         uint8_t Ia, Ib, Ic, Id;
-        printf("switching\n");
 
         switch (rIndex % 3)
         {
@@ -234,7 +232,6 @@ static struct Block run(const Key key, struct Block data, int reverse)
         L[i + 1] = R[i];
         R[i + 1] = L[i] ^ f;
     }
-    printf("ROUND_COUNT\n");
 
     data.msb = R[ROUND_COUNT];
     data.lsb = L[ROUND_COUNT];
@@ -249,7 +246,6 @@ static struct Block run(const Key key, struct Block data, int reverse)
 
 struct Block encrypt(const Key key, struct Block data)
 {  
-  printf("encrypt\n");
   return run(key, data, FALSE);
 }
 
