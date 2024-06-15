@@ -3,6 +3,7 @@
 #include "common.h"
 #include "sboxes.h"
 #include "printf.h"
+#include "sha1.h"
 // #include <stdio.h>
 #include <ctype.h>
 
@@ -17,6 +18,17 @@ int xtoi_2(const char *hex);
 void *xtrymalloc(size_t size);
 const char *hex2str(const char *hexstring, char *buffer, size_t bufsize, size_t *buflen);
 char *hex2str_alloc(const char *hexstring, size_t *r_count);
+
+static void
+print_hex(const char *text, const void *buf, size_t n)
+{
+  const unsigned char *p = buf;
+
+  fputs(text);
+  for (; n; n--, p++)
+    printf("%02X", *p);
+  putchar('\n');
+}
 
 enum
 {
@@ -412,6 +424,104 @@ char *hex2str_alloc(const char *hexstring, size_t *r_count) {
     return result;
 }
 
+size_t my_strlen(const char *str) {
+    size_t len = 0;
+    while (str[len] != '\0') {
+        len++;
+    }
+    return len;
+}
+// /*
+
+// 3.7.1.3.  Iterated and Salted S2K
+
+//    This includes both a salt and an octet count.  The salt is combined
+//    with the passphrase and the resulting value is hashed repeatedly.
+//    This further increases the amount of work an attacker must do to try
+//    dictionary attacks.
+
+//        Octet  0:        0x03
+//        Octet  1:        hash algorithm
+//        Octets 2-9:      8-octet salt value
+//        Octet  10:       count, a one-octet, coded value
+
+//    The count is coded into a one-octet number using the following
+//    formula:
+
+//        #define EXPBIAS 6
+//            count = ((Int32)16 + (c & 15)) << ((c >> 4) + EXPBIAS);
+
+//    The above formula is in C, where "Int32" is a type for a 32-bit
+//    integer, and the variable "c" is the coded count, Octet 10.
+
+//    Iterated-Salted S2K hashes the passphrase and salt data multiple
+//    times.  The total number of octets to be hashed is specified in the
+//    encoded count in the S2K specifier.
+//    ********************************************************************
+//    Note that the resulting count
+//    value is an octet count of how many octets will be hashed, not an
+//    iteration count.
+//    **********************************************************************
+//    Initially, one or more hash contexts are set up as with the other S2K
+//    algorithms, depending on how many octets of key data are needed.
+//    Then the salt, followed by the passphrase data, is repeatedly hashed
+//    until the number of octets specified by the octet count has been
+//    hashed.  The one exception is that if the octet count is less than
+//    the size of the salt plus passphrase, the full salt plus passphrase
+//    will be hashed even though that is greater than the octet count.
+//    After the hashing is done, the data is unloaded from the hash
+//    context(s) as with the other S2K algorithms.*/
+
+// // https://raysnotebook.info/computing/crypto-gnupg-s2k.html
+// // The passphrase is "abc", and the count is 1,408. Thus the salted passphrase appears 128 times: (8+3)×128 = 1,408.
+
+#define EXPBIAS 6
+
+unsigned char *passphraseStringToKey(const char *passphrase, char *salt, int count)
+{
+  printf("passphraseStringToKey: %s,\nsalt: %s,\ncount: %d\n", passphrase, salt, count);
+  unsigned char *key = malloc(16);
+  unsigned char saltPlusPassphrase[8 + my_strlen(passphrase)];
+  memcpy(saltPlusPassphrase, salt, my_strlen((const char *)(salt)));
+  memcpy(saltPlusPassphrase + 8, passphrase, my_strlen((const char *)passphrase));
+  int octetExpansionCount = ((int32_t)16 + (count & 15)) << ((count >> 4) + EXPBIAS);
+  int totalLen = 8 + my_strlen(passphrase);
+  printf("octetExpansionCount: %d\ntotalLen: %d\n",octetExpansionCount,totalLen);
+  // Now we multiply the total length by the repeat count
+  // And loop copying a single byte at a time, wrapping around the end to the start
+  int byteIndex = 0;
+  // unsigned char saltPlusPassphraseExpanded[octetExpansionCount];
+
+  unsigned char *saltPlusPassphraseExpanded = (unsigned char *)malloc(octetExpansionCount);
+
+  for (int i = 0; i < octetExpansionCount; i++)
+  {
+    if(i%10000==0)printf("i: %d\n",i);
+    memcpy(saltPlusPassphraseExpanded + (i * sizeof(unsigned char)), &saltPlusPassphrase[byteIndex], sizeof(unsigned char));
+    byteIndex++;
+    if (byteIndex == totalLen) // Wrap around end
+      byteIndex = 0;
+  }
+  char result[21];
+  printf("strlen((char *)saltPlusPassphraseExpanded: %ld\n",my_strlen((char *)saltPlusPassphraseExpanded));
+  // calculate hash
+  /*SHA1(result, (char *)saltPlusPassphraseExpanded, my_strlen((char *)saltPlusPassphraseExpanded));
+  // sha256SumData(saltPlusPassphraseExpanded, my_strlen((char *)saltPlusPassphraseExpanded), "saltPlusPassphraseExpanded");
+
+//  print_hex("result: ",result,20);
+  char hexresult[41];
+  size_t offset;
+  // format the hash for comparison
+  for (offset = 0; offset < 20; offset++)
+  {
+    sprintf((hexresult + (2 * offset)), "%02x", result[offset] & 0xff);
+    if (offset < 16) // We only need the first 16 bytes
+      key[offset] = result[offset];
+  }*/
+
+  return key;
+}
+
 void doGPG() {
   testVector();
   size_t totalFileSize = 0;
@@ -430,5 +540,11 @@ void doGPG() {
   } else {
     printf("Failed to decode hex string.\n");
   }
-  
+
+  size_t *count = 0;
+  char *salt = hex2str_alloc("c99a13a5944b4f4a", count); // genRandomBytes(8);
+ 
+  int s2kCount = 255;
+  const unsigned char *decryptionKey = passphraseStringToKey(testPassphrase, salt, s2kCount);
+
 }
