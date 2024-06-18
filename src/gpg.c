@@ -24,10 +24,10 @@ print_hex(const char *text, const void *buf, size_t n)
 {
   const unsigned char *p = buf;
 
-  fputs(text);
+  printf(text);
   for (; n; n--, p++)
     printf("%02X", *p);
-  putchar('\n');
+  printf('\n');
 }
 
 enum
@@ -479,47 +479,77 @@ size_t my_strlen(const char *str) {
 
 unsigned char *passphraseStringToKey(const char *passphrase, char *salt, int count)
 {
-  printf("passphraseStringToKey: %s,\nsalt: %s,\ncount: %d\n", passphrase, salt, count);
-  unsigned char *key = malloc(16);
-  unsigned char saltPlusPassphrase[8 + my_strlen(passphrase)];
-  memcpy(saltPlusPassphrase, salt, my_strlen((const char *)(salt)));
-  memcpy(saltPlusPassphrase + 8, passphrase, my_strlen((const char *)passphrase));
-  int octetExpansionCount = ((int32_t)16 + (count & 15)) << ((count >> 4) + EXPBIAS);
-  int totalLen = 8 + my_strlen(passphrase);
-  printf("octetExpansionCount: %d\ntotalLen: %d\n",octetExpansionCount,totalLen);
-  // Now we multiply the total length by the repeat count
-  // And loop copying a single byte at a time, wrapping around the end to the start
-  int byteIndex = 0;
-  // unsigned char saltPlusPassphraseExpanded[octetExpansionCount];
+    printf("passphraseStringToKey: %s,\nsalt: %s,\ncount: %d\n", passphrase, salt, count);
 
-  unsigned char *saltPlusPassphraseExpanded = (unsigned char *)malloc(octetExpansionCount);
+    unsigned char *key = malloc(16);
+    if (key == NULL) {
+        printf("Memory allocation failed for key\n");
+        return NULL;
+    }
 
-  for (int i = 0; i < octetExpansionCount; i++)
-  {
-    if(i%10000==0)printf("i: %d\n",i);
-    memcpy(saltPlusPassphraseExpanded + (i * sizeof(unsigned char)), &saltPlusPassphrase[byteIndex], sizeof(unsigned char));
-    byteIndex++;
-    if (byteIndex == totalLen) // Wrap around end
-      byteIndex = 0;
-  }
-  char result[21];
-  printf("strlen((char *)saltPlusPassphraseExpanded: %ld\n",my_strlen((char *)saltPlusPassphraseExpanded));
-  // calculate hash
-  /*SHA1(result, (char *)saltPlusPassphraseExpanded, my_strlen((char *)saltPlusPassphraseExpanded));
-  // sha256SumData(saltPlusPassphraseExpanded, my_strlen((char *)saltPlusPassphraseExpanded), "saltPlusPassphraseExpanded");
+    size_t passphraseLen = my_strlen(passphrase);
+    size_t saltLen = my_strlen((const char *)salt);
 
-//  print_hex("result: ",result,20);
-  char hexresult[41];
-  size_t offset;
-  // format the hash for comparison
-  for (offset = 0; offset < 20; offset++)
-  {
-    sprintf((hexresult + (2 * offset)), "%02x", result[offset] & 0xff);
-    if (offset < 16) // We only need the first 16 bytes
-      key[offset] = result[offset];
-  }*/
+    // Ensure the salt length is at least 8
+    if (saltLen < 8) {
+        printf("Salt length is too short\n");
+        free(key);
+        return NULL;
+    }
 
-  return key;
+    unsigned char *saltPlusPassphrase = malloc(8 + passphraseLen);
+    if (saltPlusPassphrase == NULL) {
+        printf("Memory allocation failed for saltPlusPassphrase\n");
+        free(key);
+        return NULL;
+    }
+
+    memcpy(saltPlusPassphrase, salt, 8);
+    memcpy(saltPlusPassphrase + 8, passphrase, passphraseLen);
+
+    int octetExpansionCount = ((int32_t)16 + (count & 15)) << ((count >> 4) + EXPBIAS);
+    int totalLen = 8 + passphraseLen;
+
+    printf("octetExpansionCount: %d\ntotalLen: %d\n", octetExpansionCount, totalLen);
+
+    // Use a smaller buffer for the expanded data
+    unsigned char *expandedBuffer = malloc(totalLen);
+    if (expandedBuffer == NULL) {
+        printf("Memory allocation failed for expandedBuffer\n");
+        free(key);
+        free(saltPlusPassphrase);
+        return NULL;
+    }
+    char result[20] = {0}; // Placeholder, implement actual hashing here
+
+    // Expand the salt plus passphrase into the smaller buffer repeatedly
+    int expandedBufferIndex = 0;
+    for (int i = 0; i < octetExpansionCount; i++) {
+        expandedBuffer[expandedBufferIndex] = saltPlusPassphrase[i % totalLen];
+        expandedBufferIndex++;
+        if (expandedBufferIndex == totalLen) {
+            expandedBufferIndex = 0;
+            // Example hash calculation per segment (implement actual hashing here)
+            SHA1(result, (char *)expandedBuffer, totalLen);
+        }
+    }
+
+    printf("Final buffer length: %d\n", octetExpansionCount);
+
+    // Example final hash calculation (replace with actual hash function)
+    // SHA1(result, (char *)expandedBuffer, totalLen);
+
+    // Just a placeholder for actual hash, replace with real hash calculation
+
+    for (size_t offset = 0; offset < 16; offset++) {
+        key[offset] = result[offset];
+    }
+
+    // Free allocated memory
+    free(saltPlusPassphrase);
+    free(expandedBuffer);
+
+    return key;
 }
 
 void doGPG() {

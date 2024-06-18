@@ -19,7 +19,7 @@ A million repetitions of "a"
 
 #include <stdio.h>
 #include <string.h>
-
+#include "printf.h"
 /* for uint32_t */
 #include <stdint.h>
 
@@ -284,6 +284,7 @@ void SHA1(
     const char *str,
     int len)
 {
+    printf('SHA1)\n');
     SHA1_CTX ctx;
     unsigned int ii;
 

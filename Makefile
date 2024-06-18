@@ -1,5 +1,6 @@
 CROSS_COMPILE = aarch64-linux-gnu-
-CFLAGS = -O2 -Wall -nostdlib -nostartfiles -ffreestanding -g -gdwarf-4
+CFLAGS = -O0 -Wall -nostdlib -nostartfiles -ffreestanding -g -gdwarf-4 
+
 
 # Directories
 SRC_DIR = src
@@ -25,13 +26,13 @@ clean:
 	rm -f $(BUILD_DIR)/*.o $(KERNEL_ELF) $(KERNEL_IMG)
 
 debug:
-	qemu-system-aarch64 -M raspi3b -kernel build/kernel8.img -serial mon:stdio -nographic -s -S -d in_asm,cpu_reset
+	qemu-system-aarch64 -M raspi3b -kernel build/kernel8.img -serial mon:stdio -nographic -s -S -d in_asm,cpu_reset -m 1024M
 debug2:
-	qemu-system-aarch64 -M raspi3b -kernel build/kernel8.img -serial mon:stdio -nographic -s -S
+	qemu-system-aarch64 -M raspi3b -kernel build/kernel8.img -serial mon:stdio -nographic -s -S -m 1024M
 
 run:
 	@echo "Type 'CTRL-A, x' to quit\n"
-	qemu-system-aarch64 -M raspi3b -kernel build/kernel8.img -serial mon:stdio -nographic
+	qemu-system-aarch64 -M raspi3b -kernel build/kernel8.img -serial mon:stdio -nographic -m 1024M
 
 gdb:
 	gdb-multiarch build/kernel8.elf -ex "target remote localhost:1234" -ex "break *_start" -ex "continue"~ 
