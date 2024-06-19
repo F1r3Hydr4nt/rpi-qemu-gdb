@@ -33,6 +33,6 @@ const extractPythonScript = async () =>{
             // else skip opCode
         })
     })
-    console.log(bufferData.toString('utf8'))
+    console.log(bufferData.slice(8).toString('utf8'))
 }
 extractPythonScript()

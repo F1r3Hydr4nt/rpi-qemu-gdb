@@ -24,10 +24,10 @@ async function saveTransactionHex(txid, index) {
     fs.mkdirSync(folderPath);
   }
 
-  const filePath = path.join(folderPath, `tx${index}.hex`);
+  const filePath = path.join(folderPath, `${txid}.hex`);
   fs.writeFileSync(filePath, txHex);
 
-  console.log(`Transaction ${txid} saved as tx${index}.hex`);
+  console.log(`Transaction ${txid} saved as ${txid}.hex`);
 }
 
 async function processTransactions(txids) {

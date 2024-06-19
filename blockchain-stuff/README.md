@@ -2,6 +2,8 @@
 yarn add whatsonchain bsv
 
 node downloadCablegate.js
+
+node extractPythonDownloader.js > satoshi-downloader.py
 ```
 Wikileaks relevant transactions (as on etherpad, http://archive.is/bk1rR):
 1. 691dd277dc0e90a462a3d652a1171686de49cf19067cd33c7df0392833fb986a Cablegate.7z
@@ -23,3 +25,18 @@ Wikileaks relevant transactions (as on etherpad, http://archive.is/bk1rR):
 17. d3c1cb2cdbf07c25e3c5f513de5ee36081a7c590e621f1f1eab62e8d4b50b635 file2.gpg
 18. 4b0cd7e191ef0a14a9b6ab1c5900be534118c20a332ff26407648168d2722a2e dog.jpg
 
+![file1.gpg (7379...hex) after removing first 8 bytes a la satoshi-downloader.py](dumpFirst8BytesAnd.png)
+
+file -b gpgFiles/7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c.gpg 
+GPG symmetrically encrypted data (CAST5 cipher)
+freddie@freddie-Precision-7510:~/rpiPT/blockchain-stuff$ pgpdump gpgFiles/
+7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c.gpg 
+Old: Symmetric-Key Encrypted Session Key Packet(tag 3)(13 bytes)
+        New version(4)
+        Sym alg - CAST5(sym 3)
+        Iterated and salted string-to-key(s2k 3):
+                Hash alg - SHA1(hash 2)
+                Salt - 43 b7 a2 56 d8 47 6b 18 
+                Count - 65536(coded count 96)
+New: Symmetrically Encrypted Data Packet(tag 9)(8192 bytes) partial start
+        Encrypted data [sym alg is specified in sym-key encrypted session key]
