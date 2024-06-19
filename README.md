@@ -15,3 +15,5 @@ Run GDB, in a separate terminal:
 
 AI queries used to get up and running:
 https://chatgpt.com/share/547bc108-f1e5-4b09-a92e-cae47f55bd10
+
+See the pdf, and blockchain-stuff folder README.md

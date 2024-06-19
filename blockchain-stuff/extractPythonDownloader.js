@@ -8,8 +8,9 @@ const woc = new WhatsOnChain('main');
 async function fetchTransaction(txid) {
   try {
     // Fetch the transaction details
-    const transaction = await woc.txHash(txid);
-    console.log('Transaction details:', transaction);
+    const transaction = await woc.getRawTxData(txid);
+    // console.log( typeof transaction, transaction)
+    // console.log('Transaction details:', transaction, typeof transaction);
     return transaction
   } catch (error) {
     console.error('Error fetching transaction:', error);
@@ -22,13 +23,11 @@ const extractPythonScript = async () =>{
     // Fetch the transaction
     const satoshiDownloaderTx = await fetchTransaction(txid);
     let bufferData = Buffer.from('')
-    satoshiDownloaderTx.vout.map(vout=>{
-        // console.log(vout.scriptPubKey)
-        const script = bsv.Script.fromHex(vout.scriptPubKey.hex)
-        // console.log({script})
-        script.chunks.map(c=>{
+    const txObj = bsv.Tx.fromHex(satoshiDownloaderTx)
+    txObj.txOuts.map(txOut=>{
+      txOut.script.chunks.map(c=>{
             if(c.buf){
-                console.log(c.buf)
+                // console.log(c.buf)
                 bufferData = Buffer.concat([bufferData, c.buf])
             }
             // else skip opCode
