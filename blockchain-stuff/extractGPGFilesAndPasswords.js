@@ -64,6 +64,8 @@ const outputPasswords = async () => {
     console.log("PW: " + findHexStrings(transactionObjects[txid].toHex()));
   }
 };
+const crc32 = require('crc32');
+
 const extractGpgFile = async (txid) => {
   const folderPath = path.join(__dirname, "wlTxs");
   const filePath = path.join(folderPath, `${txid}.hex`);
@@ -73,16 +75,16 @@ const extractGpgFile = async (txid) => {
     const txObj = bsv.Tx.fromHex(txHex);
     let bufferData = Buffer.from("");
     txObj.txOuts.map((txOut, idx) => {
-      if (idx === 0) {
-        console.log(txOut.script.toAsmString());
+      // if (idx === 0) {
+        // console.log(txOut.script.toAsmString());
         txOut.script.chunks.map((c) => {
           if (c.buf) {
-            console.log(c.buf.toString("hex"));
+            // console.log(c.buf.toString("hex"));
             bufferData = Buffer.concat([bufferData, c.buf]);
           }
         });
         // else skip opCode
-      }
+      // }
     });
 
     // Create the "gpgFiles" folder if it doesn't exist
@@ -93,6 +95,19 @@ const extractGpgFile = async (txid) => {
 
     // Save the bufferData to a file in the "gpgFiles" folder
     const gpgFilePath = path.join(gpgFolderPath, `${txid}.gpg`);
+    const sizeBuf = bufferData.slice(0,4)
+    const crc32Buf = bufferData.slice(4,8)
+    const fileSize = sizeBuf.readUint32LE();
+    console.log({fileSize, bufLen: bufferData.slice(8).length, crc32: crc32Buf.reverse().toString('hex')})
+    let fileBuf = bufferData.slice(8)//, fileSize + 8)
+    if(bufferData.length>fileSize){
+
+// Calculate the CRC32 value
+const crc32Value = crc32();
+
+console.log('Calculated crc32:',crc32Value); // Output: -1639765745
+fileBuf = bufferData.slice(8, fileSize + 8)
+    }
     fs.writeFileSync(gpgFilePath, bufferData.slice(8));
 
     console.log(`Saved GPG file: ${gpgFilePath}`);
