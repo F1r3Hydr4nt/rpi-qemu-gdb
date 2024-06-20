@@ -2476,19 +2476,19 @@ int main(int argc, char *argv[])
 size_t totalFileSize = 0;
 size_t countData = 0;
 char *dataTest = hex2str_alloc(testAAAHex, &countData);
-// uint8_t* gpgFile = encryptToGPGFormat(dataTest, textAAAFilename, testPassphrase, &totalFileSize);
+uint8_t* gpgFile = encryptToGPGFormat(dataTest, textAAAFilename, testPassphrase, &totalFileSize);
 // //     // sha256SumData(gpgFile,totalFileSize, textAAAFilename);
-// decryptGPGFile(gpgFile, testPassphrase, totalFileSize);
-// printf("totalFileSize: %ld\n",totalFileSize);
+decryptGPGFile(gpgFile, testPassphrase, totalFileSize);
+printf("totalFileSize: %ld\n",totalFileSize);
 
 
-//   // Larger file
-//   dataTest = hex2str_alloc(test18kHex, &countData);
-//   gpgFile = encryptToGPGFormat(dataTest, test18kFilename, testPassphrase, &totalFileSize); 
-//   printf("totalFileSize: %ld\n",totalFileSize);
-//   sha256SumData(gpgFile,totalFileSize, test18kFilename);
-//   decryptGPGFile(gpgFile, testPassphrase, totalFileSize);
-//   printf("\nShould MATCH:\nThis command is often\n\n");
+  // Larger file
+  dataTest = hex2str_alloc(test18kHex, &countData);
+  gpgFile = encryptToGPGFormat(dataTest, test18kFilename, testPassphrase, &totalFileSize); 
+  printf("totalFileSize: %ld\n",totalFileSize);
+  sha256SumData(gpgFile,totalFileSize, test18kFilename);
+  decryptGPGFile(gpgFile, testPassphrase, totalFileSize);
+  printf("\nShould MATCH:\nThis command is often\n\n");
 
   // dataTest = hex2str_alloc(test36kHex, &countData);
   // gpgFile = encryptToGPGFormat(dataTest, test36kFilename, testPassphrase, &totalFileSize);
