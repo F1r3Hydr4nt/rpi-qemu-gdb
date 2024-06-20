@@ -1,0 +1,229 @@
+GPG(1)                                                                       GNU Privacy Guard 2.2                                                                       GPG(1)
+
+NAME
+       gpg - OpenPGP encryption and signing tool
+
+SYNOPSIS
+       gpg [--homedir dir] [--options file] [options] command [args]
+
+DESCRIPTION
+       gpg  is the OpenPGP part of the GNU Privacy Guard (GnuPG). It is a tool to provide digital encryption and signing services using the OpenPGP standard. gpg features com‐
+       plete key management and all the bells and whistles you would expect from a full OpenPGP implementation.
+
+       There are two main versions of GnuPG: GnuPG 1.x and GnuPG 2.x.  GnuPG 2.x supports modern encryption algorithms and thus should be preferred over GnuPG 1.x.   You  only
+       need  to  use  GnuPG  1.x if your platform doesn't support GnuPG 2.x, or you need support for some features that GnuPG 2.x has deprecated, e.g., decrypting data created
+       with PGP-2 keys.
+
+       If you are looking for version 1 of GnuPG, you may find that version installed under the name gpg1.
+
+RETURN VALUE
+       The program returns 0 if everything was fine, 1 if at least a signature was bad, and other error codes for fatal errors.
+
+WARNINGS
+       Use a *good* password for your user account and a *good* passphrase to protect your secret key. This passphrase is the weakest part of the whole system. Programs to  do
+       dictionary attacks on your secret keyring are very easy to write and so you should protect your "~/.gnupg/" directory very well.
+
+       Keep in mind that, if this program is used over a network (telnet), it is *very* easy to spy out your passphrase!
+
+       If you are going to verify detached signatures, make sure that the program knows about it; either give both filenames on the command line or use ‘-’ to specify STDIN.
+
+       For  scripted  or other unattended use of gpg make sure to use the machine-parseable interface and not the default interface which is intended for direct use by humans.
+       The machine-parseable interface provides a stable and well documented API independent of the locale or future changes of gpg.  To enable this interface use the  options
+       --with-colons  and  --status-fd.   For certain operations the option --command-fd may come handy too.  See this man page and the file ‘DETAILS’ for the specification of
+       the interface.  Note that the GnuPG ``info'' pages as well as the PDF version of the GnuPG manual features a chapter on unattended use of GnuPG.  As an alternative  the
+       library GPGME can be used as a high-level abstraction on top of that interface.
+
+INTEROPERABILITY
+       GnuPG  tries  to  be  a  very  flexible  implementation of the OpenPGP standard. In particular, GnuPG implements many of the optional parts of the standard, such as the
+       SHA-512 hash, and the ZLIB and BZIP2 compression algorithms. It is important to be aware that not all OpenPGP programs implement these optional algorithms and  that  by
+       forcing their use via the --cipher-algo, --digest-algo, --cert-digest-algo, or --compress-algo options in GnuPG, it is possible to create a perfectly valid OpenPGP mes‐
+       sage, but one that cannot be read by the intended recipient.
+
+       There are dozens of variations of OpenPGP programs available, and each supports a slightly different subset of these optional algorithms.  For example, until  recently,
+       no  (unhacked) version of PGP supported the BLOWFISH cipher algorithm. A message using BLOWFISH simply could not be read by a PGP user. By default, GnuPG uses the stan‐
+       dard OpenPGP preferences system that will always do the right thing and create messages that are usable by all recipients, regardless of which OpenPGP program they use.
+       Only override this safe default if you really know what you are doing.
+
+       If  you absolutely must override the safe default, or if the preferences on a given key are invalid for some reason, you are far better off using the --pgp6, --pgp7, or
+       --pgp8 options. These options are safe as they do not force any particular algorithms in violation of OpenPGP, but rather reduce the available  algorithms  to  a  "PGP-
+       safe" list.
+
+COMMANDS
+       Commands  are not distinguished from options except for the fact that only one command is allowed.  Generally speaking, irrelevant options are silently ignored, and may
+       not be checked for correctness.
+
+       gpg may be run with no commands. In this case it will print a warning perform a reasonable action depending on the type of file it is given as input (an encrypted  mes‐
+       sage is decrypted, a signature is verified, a file containing keys is listed, etc.).
+
+       If you run into any problems, please add the option --verbose to the invocation to see more diagnostics.
+
+   Commands not specific to the function
+
+       --version
+              Print the program version and licensing information.  Note that you cannot abbreviate this command.
+
+       --help
+       -h     Print  a  usage message summarizing the most useful command-line options.  Note that you cannot arbitrarily abbreviate this command (though you can use its short
+              form -h).
+
+       --warranty
+              Print warranty information.
+
+       --dump-options
+              Print a list of all available options and commands.  Note that you cannot abbreviate this command.
+
+   Commands to select the type of operation
+
+       --sign
+       -s     Sign a message. This command may be combined with --encrypt (to sign and encrypt a message), --symmetric (to sign and symmetrically encrypt a message),  or  both
+              --encrypt  and --symmetric (to sign and encrypt a message that can be decrypted using a secret key or a passphrase).  The signing key is chosen by default or can
+              be set explicitly using the --local-user and --default-key options.
+
+       --clear-sign
+       --clearsign
+              Make a cleartext signature.  The content in a cleartext signature is readable without any special software. OpenPGP software is only needed to verify the  signa‐
+              ture.   cleartext signatures may modify end-of-line whitespace for platform independence and are not intended to be reversible.  The signing key is chosen by de‐
+              fault or can be set explicitly using the --local-user and --default-key options.
+
+       --detach-sign
+       -b     Make a detached signature.
+
+       --encrypt
+       -e     Encrypt data to one or more public keys. This command may be combined with --sign (to sign and encrypt a message), --symmetric (to encrypt a message that can  be
+              decrypted  using  a  secret  key  or  a  passphrase),  or  --sign  and  --symmetric  together (for a signed message that can be decrypted using a secret key or a
+              passphrase).  --recipient and related options specify which public keys to use for encryption.
+
+       --symmetric
+       -c     Encrypt with a symmetric cipher using a passphrase. The default symmetric cipher used is AES-128, but may be chosen with the --cipher-algo option.  This  command
+              may be combined with --sign (for a signed and symmetrically encrypted message), --encrypt (for a message that may be decrypted via a secret key or a passphrase),
+              or --sign and --encrypt together (for a signed message that may be decrypted via a secret key or a passphrase).  gpg caches the passphrase used for symmetric en‐
+              cryption  so that a decrypt operation may not require that the user needs to enter the passphrase.  The option --no-symkey-cache can be used to disable this fea‐
+              ture.
+
+       --store
+              Store only (make a simple literal data packet).
+
+       --decrypt
+       -d     Decrypt the file given on the command line (or STDIN if no file is specified) and write it to STDOUT (or the file specified with --output). If the decrypted file
+              is  signed, the signature is also verified. This command differs from the default operation, as it never writes to the filename which is included in the file and
+              it rejects files that don't begin with an encrypted message.
+
+       --verify
+              Assume that the first argument is a signed file and verify it without generating any output.  With no arguments, the signature packet is  read  from  STDIN.   If
+              only one argument is given, the specified file is expected to include a complete signature.
+
+              With  more  than one argument, the first argument should specify a file with a detached signature and the remaining files should contain the signed data. To read
+              the signed data from STDIN, use ‘-’ as the second filename.  For security reasons, a detached signature will not read the signed material from STDIN if  not  ex‐
+              plicitly specified.
+
+              Note:  If the option --batch is not used, gpg may assume that a single argument is a file with a detached signature, and it will try to find a matching data file
+              by stripping certain suffixes.  Using this historical feature to verify a detached signature is strongly discouraged; you should always specify the data file ex‐
+              plicitly.
+
+              Note:  When  verifying a cleartext signature, gpg verifies only what makes up the cleartext signed data and not any extra data outside of the cleartext signature
+              or the header lines directly following the dash marker line.  The option --output may be used to write out the actual signed data, but there are  other  pitfalls
+              with this format as well.  It is suggested to avoid cleartext signatures in favor of detached signatures.
+
+              Note:  Sometimes  the use of the gpgv tool is easier than using the full-fledged gpg with this option.  gpgv is designed to compare signed data against a list of
+              trusted keys and returns with success only for a good signature.  It has its own manual page.
+
+       --multifile
+              This modifies certain other commands to accept multiple files for processing on the command line or read from STDIN with each filename on a separate  line.  This
+              allows  for  many  files to be processed at once. --multifile may currently be used along with --verify, --encrypt, and --decrypt. Note that --multifile --verify
+              may not be used with detached signatures.
+
+       --verify-files
+              Identical to --multifile --verify.
+
+       --encrypt-files
+              Identical to --multifile --encrypt.
+
+       --decrypt-files
+              Identical to --multifile --decrypt.
+
+       --list-keys
+       -k
+       --list-public-keys
+              List the specified keys.  If no keys are specified, then all keys from the configured public keyrings are listed.
+
+              Never use the output of this command in scripts or other programs.  The output is intended only for humans and its format is likely to change.  The --with-colons
+              option emits the output in a stable, machine-parseable format, which is intended for use by scripts and other programs.
+
+       --list-secret-keys
+       -K     List  the  specified  secret keys.  If no keys are specified, then all known secret keys are listed.  A # after the initial tags sec or ssb means that the secret
+              key or subkey is currently not usable.  We also say that this key has been taken offline (for example, a primary key can be taken offline by  exporting  the  key
+              using the command --export-secret-subkeys).  A > after these tags indicate that the key is stored on a smartcard.  See also --list-keys.
+
+       --check-signatures
+       --check-sigs
+              Same  as --list-keys, but the key signatures are verified and listed too.  Note that for performance reasons the revocation status of a signing key is not shown.
+              This command has the same effect as using --list-keys with --with-sig-check.
+
+              The status of the verification is indicated by a flag directly following the "sig" tag (and thus before the flags described below.  A "!" indicates that the sig‐
+              nature  has  been  successfully verified, a "-" denotes a bad signature and a "%" is used if an error occurred while checking the signature (e.g. a non supported
+              algorithm).  Signatures where the public key is not available are not listed; to see their keyids the command --list-sigs can be used.
+
+              For each signature listed, there are several flags in between the signature status flag and keyid.  These flags give additional information about each key signa‐
+              ture.  From left to right, they are the numbers 1-3 for certificate check level (see --ask-cert-level), "L" for a local or non-exportable signature (see --lsign-
+              key), "R" for a nonRevocable signature (see the --edit-key command "nrsign"), "P" for a signature that contains a policy URL (see --cert-policy-url), "N"  for  a
+              signature  that  contains  a notation (see --cert-notation), "X" for an eXpired signature (see --ask-cert-expire), and the numbers 1-9 or "T" for 10 and above to
+              indicate trust signature levels (see the --edit-key command "tsign").
+
+       --locate-keys
+       --locate-external-keys
+              Locate the keys given as arguments.  This command basically uses the same algorithm as used when locating keys for encryption or signing and may thus be used  to
+              see  what  keys  gpg  might  use.  In particular external methods as defined by --auto-key-locate may be used to locate a key.  Only public keys are listed.  The
+              variant --locate-external-keys does not consider a locally existing key and can thus be used to force the refresh of a key via the defined external methods.
+
+       --show-keys
+              This commands takes OpenPGP keys as input and prints information about them in the same way the command --list-keys does for locally stored key.  In addition the
+              list  options  show-unusable-uids,  show-unusable-subkeys, show-notations and show-policy-urls are also enabled.  As usual for automated processing, this command
+              should be combined with the option --with-colons.
+
+       --fingerprint
+              List all keys (or the specified ones) along with their fingerprints. This is the same output as --list-keys but with the additional output of  a  line  with  the
+              fingerprint.  May also be combined with --check-signatures.  If this command is given twice, the fingerprints of all secondary keys are listed too.  This command
+              also forces pretty printing of fingerprints if the keyid format has been set to "none".
+
+       --list-packets
+              List only the sequence of packets.  This command is only useful for debugging.  When used with option --verbose the actual MPI values are  dumped  and  not  only
+              their lengths.  Note that the output of this command may change with new releases.
+
+       --edit-card
+       --card-edit
+              Present  a menu to work with a smartcard. The subcommand "help" provides an overview on available commands. For a detailed description, please see the Card HOWTO
+              at https://gnupg.org/documentation/howtos.html#GnuPG-cardHOWTO .
+
+       --card-status
+              Show the content of the smart card.
+
+       --change-pin
+              Present a menu to allow changing the PIN of a smartcard. This functionality is also available as the subcommand "passwd" with the --edit-card command.
+
+       --delete-keys name
+              Remove key from the public keyring. In batch mode either --yes is required or the key must be specified by fingerprint. This is a  safeguard  against  accidental
+              deletion  of multiple keys.  If the exclamation mark syntax is used with the fingerprint of a subkey only that subkey is deleted; if the exclamation mark is used
+              with the fingerprint of the primary key the entire public key is deleted.
+
+       --delete-secret-keys name
+              Remove key from the secret keyring. In batch mode the key must be specified by fingerprint.  The option --yes can be used to advice gpg-agent not  to  request  a
+              confirmation.   This extra pre-caution is done because gpg can't be sure that the secret key (as controlled by gpg-agent) is only used for the given OpenPGP pub‐
+              lic key.  If the exclamation mark syntax is used with the fingerprint of a subkey only the secret part of that subkey is deleted; if the exclamation mark is used
+              with the fingerprint of the primary key only the secret part of the primary key is deleted.
+
+       --delete-secret-and-public-key name
+              Same as --delete-key, but if a secret key exists, it will be removed first. In batch mode the key must be specified by fingerprint.  The option --yes can be used
+              to advice gpg-agent not to request a confirmation.
+
+       --export
+              Either export all keys from all keyrings (default keyrings and those registered via option --keyring), or if at least one name is given, those of the given name.
+              The exported keys are written to STDOUT or to the file given with option --output.  Use together with --armor to mail those keys.
+
+       --send-keys keyIDs
+              Similar  to --export but sends the keys to a keyserver.  Fingerprints may be used instead of key IDs.  Don't send your complete keyring to a keyserver --- select
+              only those keys which are new or changed by you.  If no keyIDs are given, gpg does nothing.
+
+       --export-secret-keys
+       --export-secret-subkeys
+              Same as --export, but exports the secret keys instead.  The exported keys are written to STDOUT or to the file given with option --output.  This command is often
+ 
