@@ -27,6 +27,7 @@ Wikileaks relevant transactions (as on etherpad, http://archive.is/bk1rR):
 
 ![file1.gpg (7379...hex) after removing first 8 bytes a la satoshi-downloader.py](dumpFirst8BytesAnd.png)
 
+```
 file -b gpgFiles/7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c.gpg 
 GPG symmetrically encrypted data (CAST5 cipher)
 freddie@freddie-Precision-7510:~/rpiPT/blockchain-stuff$ pgpdump gpgFiles/
@@ -40,3 +41,10 @@ Old: Symmetric-Key Encrypted Session Key Packet(tag 3)(13 bytes)
                 Count - 65536(coded count 96)
 New: Symmetrically Encrypted Data Packet(tag 9)(8192 bytes) partial start
         Encrypted data [sym alg is specified in sym-key encrypted session key]
+```
+
+To get the files you need to run:
+```
+node downloadAllWLTxs.js # Gets the transactions from chain
+node extractGPGFilesAndPasswords.js # Gets the passwords and GPG files from the transactions
+```
