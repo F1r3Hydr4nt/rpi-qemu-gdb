@@ -49,4 +49,12 @@ xxd -p -c 100000 encrypted.gpg
 
 # Now we can use it in the program
 # But we are getting a bad key lets check gpg1 instead ...
+
+Key is good:
+gpg --show-session-key  --decrypt --passphrase "password" --b
+atch encrypted.gpg 
+gpg: CAST5.CFB encrypted data
+gpg: encrypted with 1 passphrase
+gpg: session key: '3:896E9344A9E485B8934BBBDA07A59868'
+A small amount of text
 ```
