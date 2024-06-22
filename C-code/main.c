@@ -430,21 +430,21 @@ unsigned char *passphraseStringToKey(const char *passphrase, char *salt, int cou
   // Now we multiply the total length by the repeat count
   // And loop copying a single byte at a time, wrapping around the end to the start
   int byteIndex = 0;
-  unsigned char *saltPlusPassphraseExpanded = (unsigned char *)malloc(octetExpansionCount);
-  for (int i = 0; i < octetExpansionCount; i++)
-  {
-    memcpy(saltPlusPassphraseExpanded + (i * sizeof(unsigned char)), &saltPlusPassphrase[byteIndex], sizeof(unsigned char));
-    byteIndex++;
-    if (byteIndex == totalLen) // Wrap around end
-      byteIndex = 0;
-  }
-  char result[21];
-  printf("strlen((char *)saltPlusPassphraseExpanded: %ld\n", my_strlen((char *)saltPlusPassphraseExpanded));
-  // calculate hash
-  SHA1(result, (char *)saltPlusPassphraseExpanded, my_strlen((char *)saltPlusPassphraseExpanded));
-  // sha256SumData(saltPlusPassphraseExpanded, strlen((char *)saltPlusPassphraseExpanded), "saltPlusPassphraseExpanded");
+  // unsigned char *saltPlusPassphraseExpanded = (unsigned char *)malloc(octetExpansionCount);
+  // for (int i = 0; i < octetExpansionCount; i++)
+  // {
+  //   memcpy(saltPlusPassphraseExpanded + (i * sizeof(unsigned char)), &saltPlusPassphrase[byteIndex], sizeof(unsigned char));
+  //   byteIndex++;
+  //   if (byteIndex == totalLen) // Wrap around end
+  //     byteIndex = 0;
+  // }
+  // char result[21];
+  // printf("strlen((char *)saltPlusPassphraseExpanded: %ld\n", my_strlen((char *)saltPlusPassphraseExpanded));
+  // // calculate hash
+  // SHA1(result, (char *)saltPlusPassphraseExpanded, my_strlen((char *)saltPlusPassphraseExpanded));
+  // // sha256SumData(saltPlusPassphraseExpanded, strlen((char *)saltPlusPassphraseExpanded), "saltPlusPassphraseExpanded");
 
-  print_hex("result: ", result, 20);
+  // print_hex("result: ", result, 20);
 
   // Streaming implemenation (without large malloc)
   byteIndex = 0;
@@ -470,9 +470,9 @@ unsigned char *passphraseStringToKey(const char *passphrase, char *salt, int cou
   // format the hash for comparison
   for (offset = 0; offset < 20; offset++)
   {
-    sprintf((hexresult + (2 * offset)), "%02x", result[offset] & 0xff);
+    sprintf((hexresult + (2 * offset)), "%02x", hash_out[offset] & 0xff);
     if (offset < 16) // We only need the first 16 bytes
-      key[offset] = result[offset];
+      key[offset] = hash_out[offset];
   }
   print_hex("key: ",key,16);
   return key;
