@@ -20,7 +20,7 @@ BOOT_OBJ = $(BUILD_DIR)/boot.o
 KERNEL_ELF = $(BUILD_DIR)/kernel8.elf
 KERNEL_IMG = $(BUILD_DIR)/kernel8.img
 
-all: $(KERNEL_IMG)
+all: $(clean) $(KERNEL_IMG) $(run)
 
 clean:
 	rm -f $(BUILD_DIR)/*.o $(KERNEL_ELF) $(KERNEL_IMG)

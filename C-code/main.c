@@ -1117,10 +1117,10 @@ uint8_t *encryptToGPGFormat(char *data, const char *filename, const char *passph
   for (int i = 0; i < 4; i++)
   {
     key[i] = (decryptionKey[j] << 24) + (decryptionKey[j + 1] << 16) + (decryptionKey[j + 2] << 8) + decryptionKey[j + 3];
-    // printUint32Hex(key[i]);
+    printUint32Hex(key[i]);
     j += 4;
   }
-  // print_hex("Key: ", decryptionKey, keySize);
+  print_hex("Key: ", decryptionKey, keySize);
 
   // Initialise cipher
   // Step by step, here is the procedure:
@@ -2555,6 +2555,17 @@ int main(int argc, char *argv[])
   int s2kCount = 255;
   printf("testPassphrase: %s, %d, %d\n",testPassphrase,my_strlen(testPassphrase), strlen(testPassphrase));
   const unsigned char *decryptionKey = passphraseStringToKey(testPassphrase, salt, s2kCount);
+  printf("decryptionKey: %s\n", &decryptionKey);
+
+  Key key = {0, 0, 0, 0};
+  int j = 0;
+  for (int i = 0; i < 4; i++)
+  {
+    key[i] = (decryptionKey[j] << 24) + (decryptionKey[j + 1] << 16) + (decryptionKey[j + 2] << 8) + decryptionKey[j + 3];
+    printUint32Hex(key[i]);
+    j += 4;
+  }
+  print_hex("Key: ", decryptionKey, keySize);
   // uint8_t* gpgFile = encryptToGPGFormat(dataTest, textAAAFilename, testPassphrase, &totalFileSize);
   // //     // sha256SumData(gpgFile,totalFileSize, textAAAFilename);
   // decryptGPGFile(gpgFile, testPassphrase, totalFileSize);
