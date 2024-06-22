@@ -48,3 +48,5 @@ To get the files you need to run:
 node downloadAllWLTxs.js # Gets the transactions from chain
 node extractGPGFilesAndPasswords.js # Gets the passwords and GPG files from the transactions
 ```
+
+
