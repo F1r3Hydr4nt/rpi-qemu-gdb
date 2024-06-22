@@ -48,4 +48,5 @@ xxd -p -c 100000 encrypted.gpg
 8c0d04030302eb381c55fecc8f2fffd244018c41f4e16990d9c846cafc6b04bc37e07a9248110a6f11104cfe744d2b2646228c15528525668b97f31bab07bfbcedd0628492ee96bf11e8a4be3aa6e9994901d91195
 
 # Now we can use it in the program
+# But we are getting a bad key lets check gpg1 instead ...
 ```

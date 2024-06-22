@@ -88,9 +88,9 @@ static void printBlock(struct Block block)
   printf("%08X%08X\n", block.msb, block.lsb);
 }
 
-// static void printBlock2(const char* prefix, struct Block block){
-//   printf("%s%08X%08X\n", prefix, block.msb, block.lsb);
-// }
+static void printBlock2(const char* prefix, struct Block block){
+  printf("%s%08X%08X\n", prefix, block.msb, block.lsb);
+}
 
 static uint32_t sumMod2_32(uint32_t a, uint32_t b)
 {
@@ -1784,11 +1784,11 @@ uint8_t *decryptGPGFile(uint8_t *fileData, const char *passphrase, size_t dataLe
   int o = 0;
   int *offset = &o;
   int s2kCount = parseGPGFile(fileData, salt, offset);
-  // print_hex("SALT: ", (const char *)salt, strlen((const char *)salt));
-  // printf("s2kCount: %i\n", s2kCount);
+  print_hex("SALT: ", (const char *)salt, strlen((const char *)salt));
+  printf("s2kCount: %i\n", s2kCount);
   uint8_t *decryptionKey = passphraseStringToKey(passphrase, (char *)salt, s2kCount);
   print_hex("decryptionKey: ", (const char *)decryptionKey, strlen((const char *)decryptionKey));
-  // printf("offset: %d\n", *offset);
+  printf("offset: %d\n", *offset);
   uint8_t encPacketTag = fileData[(*offset)++]; // MUST increment offset so keep print
   printf("encPacketTag: %02X\n", encPacketTag);
 
@@ -1824,17 +1824,18 @@ uint8_t *decryptGPGFile(uint8_t *fileData, const char *passphrase, size_t dataLe
 
   // We need to fill up the encryptedBytes array sidestepping the packet tags
   int encPacketLen = fileData[(*offset)++];
-  // printf("encPacketLen: %d\n", encPacketLen);
+  printf("encPacketLen: %d\n", encPacketLen);
   // printf("encPacketLen: %02X\n", encPacketLen);
 
   int remainingLen = dataLen - *offset;
-  // printf("remainingLen: %d\n", remainingLen);
+  printf("dataLen: %d\n", dataLen);
+  printf("remainingLen: %d\n", remainingLen);
   int totalEncBytes = 0;
   uint8_t *encryptedBytes = malloc((sizeof(uint8_t) * remainingLen)); // overfill (minus packet len tags)
   int tagByteCount = 0;
   if (remainingLen >= OP_MIN_PARTIAL_CHUNK)
   {
-    // printf("remainingLen >= OP_MIN_PARTIAL_CHUNK\n");
+    printf("remainingLen >= OP_MIN_PARTIAL_CHUNK\n");
     do
     {
       // printf("DO WHILE\n");
@@ -1857,7 +1858,7 @@ uint8_t *decryptGPGFile(uint8_t *fileData, const char *passphrase, size_t dataLe
         tagByteCount = 512;
         break;
       }
-      // printf("TAG BYTE COUNT: %d\n",tagByteCount);
+      printf("TAG BYTE COUNT: %d\n",tagByteCount);
       //  Copy the data
       for (int i = totalEncBytes; i < (totalEncBytes + tagByteCount); i++)
       {
@@ -1877,8 +1878,8 @@ uint8_t *decryptGPGFile(uint8_t *fileData, const char *passphrase, size_t dataLe
     totalEncBytes += tagByteCount;
   }
   // printf("remainingLen: %d\n", remainingLen);
-  // printf("offset: %d\n", (*offset));
-  // printf("totalEncBytes: %d\n", totalEncBytes);
+  printf("offset: %d\n", (*offset));
+  printf("totalEncBytes: %d\n", totalEncBytes);
   if ((remainingLen) > 192 && (remainingLen < 8384)) // minus 1 for already removed packetTag
   {
     // printf("SKIPPING DOUBLE Byte Header\n");
@@ -1894,55 +1895,40 @@ uint8_t *decryptGPGFile(uint8_t *fileData, const char *passphrase, size_t dataLe
     encryptedBytes[i] = fileData[(*offset)++];
   }
   totalEncBytes += remainingLen;
-  // if(remainingLen<OP_MIN_PARTIAL_CHUNK){
-  //           totalEncBytes+=tagByteCount + 1;
-  // }
+  printf("totalEncBytes: %d\n", totalEncBytes);
 
-  // printf("totalEncBytes: %d\n", totalEncBytes);
-  // print_hex("encryptedBytes: ", encryptedBytes, 10);
+  if(remainingLen<OP_MIN_PARTIAL_CHUNK){
+            totalEncBytes+=tagByteCount + 1;
+  }
+  printf("totalEncBytes: %d\n", totalEncBytes);
+
+  print_hex("encryptedBytes: ", encryptedBytes, 10);
 
   // PArsing packets
   // So we know total data len and the len of the first encrypted packet,
   // Then we can pop of the length of the next until > dataLen
   // int currentPacketLen =
-  /*
-blen: 4096
-c: 12
-iobuf_put (chain, c); ec
-cHex: ec/
-...
-blen: 2048
-c: 11
-iobuf_put (chain, c); eb
-cHex: eb
-(n = nbytes) > blen 1
-WRitign 2048 bytes
-inOffset:  6144
-len:  138
-Writing SINGLE byte header
-pLen + : 8a
-*/
-
+  
   uint8_t *prefixedData = malloc(sizeof(uint8_t) * 10);
   for (int i = 0; i < 10; i++)
     prefixedData[i] = encryptedBytes[i];
-  // print_hex("prefixedData: ", prefixedData, 10);
+    print_hex("prefixedData: ", prefixedData, 10);
 
   // uint64_t decrypted = decrypt(key, (uint64_t*)blockFromBytes(prefixedData));
   // printf("decrypted: %16lX\n", decrypted);
 
   // Now we encrypt a zero value IV (as it is what we are expecting as the decryption of the first block)
   struct Block iv = {.msb = 0x00000000, .lsb = 0x00000000};
-  // printBlock2("iv: ", iv);
+  printBlock2("iv: ", iv);
   struct Block fr = iv;
-  // printBlock2("fr: ", fr);
+  printBlock2("fr: ", fr);
   struct Block fre = encrypt(key, fr);
-  // printBlock2("fre: ", fre);
+  printBlock2("fre: ", fre);
 
   uint8_t *decryptedPrefix10Bytes = malloc((sizeof(uint8_t) * 10)); // packet + mode bytes + extra byte
   decryptedPrefix10Bytes = do_cfb_decrypt(key, bytesFromBlock(iv), bytesFromBlock(fr), blocksize, decryptedPrefix10Bytes, prefixedData, 10, 0);
 
-  // print_hex("decryptedPrefix10Bytes: ", decryptedPrefix10Bytes, 10);
+  print_hex("decryptedPrefix10Bytes: ", decryptedPrefix10Bytes, 10);
   if (decryptedPrefix10Bytes[6] != decryptedPrefix10Bytes[8] &&
       decryptedPrefix10Bytes[7] != decryptedPrefix10Bytes[9])
   {
