@@ -2550,11 +2550,11 @@ int main(int argc, char *argv[])
   char *dataTest = hex2str_alloc(testAAAHex, &countData);
 
   size_t *count = 0;
-  char *salt = hex2str_alloc("c99a13a5944b4f4a", count); // genRandomBytes(8);
+  char *salt1 = hex2str_alloc("c99a13a5944b4f4a", count); // genRandomBytes(8);
 
-  int s2kCount = 255;
+  int s2kCount1 = 255;
   printf("testPassphrase: %s, %d, %d\n",testPassphrase,my_strlen(testPassphrase), strlen(testPassphrase));
-  const unsigned char *decryptionKey = passphraseStringToKey(testPassphrase, salt, s2kCount);
+  const unsigned char *decryptionKey = passphraseStringToKey(testPassphrase, salt1, s2kCount1);
   printf("decryptionKey: %s\n", &decryptionKey);
 
   Key key = {0, 0, 0, 0};
@@ -2566,9 +2566,23 @@ int main(int argc, char *argv[])
     j += 4;
   }
   print_hex("Key: ", decryptionKey, keySize);
+
+  size_t *encCount = 0;
+  char *encryptedFileASmallAmountOfText = hex2str_alloc("8c0d0403030289a71db66a8c902effd244019109abb415910e93142e3aa4482ce3106c4ada74bc22e1a6ae31b9090e10dea2ecb81bf60cebb3017e98c22d9c6bd4ef58060d99f1158465ec680071ac746c1bf909bf", encCount); // genRandomBytes(8);
+
   // uint8_t* gpgFile = encryptToGPGFormat(dataTest, textAAAFilename, testPassphrase, &totalFileSize);
   // //     // sha256SumData(gpgFile,totalFileSize, textAAAFilename);
-  // decryptGPGFile(gpgFile, testPassphrase, totalFileSize);
+  // decryptGPGFile(encryptedFileASmallAmountOfText, testPassphrase, encCount);
+  printf("\n\n\nDECRYPTING\n");
+  // int dataLen = strlen((const char *)fileData);
+  // printf("dataLen: %li\n", dataLen);
+  uint8_t *salt = malloc(8);
+  int o = 0;
+  int *offset = &o;
+  int s2kCount = parseGPGFile(encryptedFileASmallAmountOfText, salt, offset);
+  print_hex("SALT: ", (const char *)salt, strlen((const char *)salt));
+  printf("s2kCount: %i\n", s2kCount);
+  
   // printf("totalFileSize: %ld\n",totalFileSize);
 
   // // Larger file
