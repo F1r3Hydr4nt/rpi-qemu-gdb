@@ -534,14 +534,48 @@ void printUint32Hex(uint32_t data)
 {
   printf("%08X\n", data);
 }
+
+int parseGPGFile(uint8_t *data, uint8_t *salt, int *offset)
+{
+  // int offset = 0;
+  int dataLength = my_strlen((const char *)data);
+  printf("parseGPGFile len: %d\n", dataLength);
+  // print("GpgData: ", data);
+  uint8_t gpgPacket = data[(*offset)++];
+  uint8_t packetLen = data[(*offset)++];
+  uint8_t version = data[(*offset)++];
+  uint8_t algo = data[(*offset)++];
+  uint8_t s2k = data[(*offset)++];
+  uint8_t hashAlgo = data[(*offset)++];
+  printf("gpg byte: %x\npacketLen: %d\nversion: %d\nalgo: %d\ns2k: %d\nhashAlgo: %d, (*offset) %d\n", gpgPacket, packetLen, version, algo, s2k, hashAlgo, (*offset));
+  if (algo != 3 || s2k != 3 || hashAlgo != 2)
+  {
+    printf("This program only decrypts Cast-5 encrypted files\n");
+    printf("with a salted and iterated string-to-key\n");
+    printf("using SHA-1 as the hash algorithm.\n");
+    // exit(-1);
+  }
+  // Now parse the salt
+  for (int i = 0; i < 8; i++)
+  {
+    salt[i] = data[(*offset)];
+    (*offset)++;
+  }
+  int s2kCount = data[(*offset)];
+  (*offset)++;
+  data += (*offset);
+  return s2kCount;
+}
+
+
 void doGPG() {
   testVector();
 
   size_t *count = 0;
-  char *salt = hex2str_alloc("c99a13a5944b4f4a", count); // genRandomBytes(8);
+  char *salt1 = hex2str_alloc("c99a13a5944b4f4a", count); // genRandomBytes(8);
  
-  int s2kCount = 255;
-  const unsigned char *decryptionKey = passphraseStringToKey(testPassphrase, salt, s2kCount);
+  int s2kCount1 = 255;
+  const unsigned char *decryptionKey = passphraseStringToKey(testPassphrase, salt1, s2kCount1);
   printf("decryptionKey: %s\n", &decryptionKey);
 
   Key key = {0, 0, 0, 0};
@@ -553,4 +587,19 @@ void doGPG() {
     j += 4;
   }
   print_hex("Key: ", decryptionKey, keySize);
+
+
+
+  size_t *encCount = 0;
+  char *encryptedFileASmallAmountOfText = hex2str_alloc("8c0d0403030289a71db66a8c902effd244019109abb415910e93142e3aa4482ce3106c4ada74bc22e1a6ae31b9090e10dea2ecb81bf60cebb3017e98c22d9c6bd4ef58060d99f1158465ec680071ac746c1bf909bf", encCount); // genRandomBytes(8);
+
+  printf("\n\n\nDECRYPTING\n");
+  // int dataLen = strlen((const char *)fileData);
+  // printf("dataLen: %li\n", dataLen);
+  uint8_t *salt = malloc(8);
+  int o = 0;
+  int *offset = &o;
+  int s2kCount = parseGPGFile(encryptedFileASmallAmountOfText, salt, offset);
+  print_hex("SALT: ", (const char *)salt, my_strlen((const char *)salt));
+  printf("s2kCount: %d\n", s2kCount);
 }

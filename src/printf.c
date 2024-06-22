@@ -161,7 +161,8 @@ void tfp_format(void* putp,putcf putf,char *fmt, va_list va)
                     putchw(putp,putf,w,lz,bf);
                     break;
                     }
-                case 'd' :  {
+                case 'd' :  
+                    case 'i' : {
 #ifdef  PRINTF_LONG_SUPPORT
                     if (lng)
                         li2a(va_arg(va, unsigned long int),bf);
