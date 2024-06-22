@@ -11,7 +11,7 @@ SRC_DIR = src
 BUILD_DIR = build
 
 # Source files
-SRCS = $(SRC_DIR)/main.c
+SRCS = $(wildcard $(SRC_DIR)/*.c)
 ASM_SRCS = $(SRC_DIR)/start.s
 
 # Object files
