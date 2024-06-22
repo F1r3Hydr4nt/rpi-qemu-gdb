@@ -414,14 +414,14 @@ size_t my_strlen(const char *str) {
 unsigned char *passphraseStringToKey(const char *passphrase, char *salt, int count)
 {
   printf("passphraseStringToKey: %s,\nsalt: %s,\ncount: %d\n", passphrase, salt, count);
-    printf("passphrase: %s, %d, %d\n",passphrase,my_strlen(passphrase), strlen(passphrase));
+    printf("passphrase: %s, %ld, %ld\n",passphrase,my_strlen(passphrase), strlen(passphrase));
 
   unsigned char *key = malloc(16);
   unsigned char saltPlusPassphrase[8 + my_strlen(passphrase)];
   memcpy(saltPlusPassphrase, salt, my_strlen((const char *)(salt)));
   memcpy(saltPlusPassphrase + 8, passphrase, my_strlen((const char *)passphrase));
   print_hex("saltPlusPassphrase (hex): ", saltPlusPassphrase, my_strlen((const char *)saltPlusPassphrase));
-  printf("saltPlusPassphrase: %s %d\n", saltPlusPassphrase, my_strlen((const char *)saltPlusPassphrase));
+  printf("saltPlusPassphrase: %s %ld\n", saltPlusPassphrase, my_strlen((const char *)saltPlusPassphrase));
 
   int octetExpansionCount = ((int32_t)16 + (count & 15)) << ((count >> 4) + EXPBIAS);
   int totalLen = 8 + strlen(passphrase);
@@ -2543,45 +2543,194 @@ int main(int argc, char *argv[])
   // printf("\n\nTesting...\n");
   testVector();
   // testConvertedFunctions();
+ size_t totalFileSize = 0;
+size_t countData = 0;
+char *dataTest = hex2str_alloc(testAAAHex, &countData);
+uint8_t* gpgFile = encryptToGPGFormat(dataTest, textAAAFilename, testPassphrase, &totalFileSize);
+//     // sha256SumData(gpgFile,totalFileSize, textAAAFilename);
+decryptGPGFile(gpgFile, testPassphrase, totalFileSize);
+printf("totalFileSize: %ld\n",totalFileSize);
 
-  // // // // //   // // // // Smaller file
-  size_t totalFileSize = 0;
-  size_t countData = 0;
-  char *dataTest = hex2str_alloc(testAAAHex, &countData);
+size_t encCount = 0;
+char *fileData = hex2str_alloc("8c0d0403030289a71db66a8c902effd244019109abb415910e93142e3aa4482ce3106c4ada74bc22e1a6ae31b9090e10dea2ecb81bf60cebb3017e98c22d9c6bd4ef58060d99f1158465ec680071ac746c1bf909bf", &encCount);
+decryptGPGFile(fileData, testPassphrase, encCount);
+  // // // // // //   // // // // Smaller file
+  // size_t totalFileSize = 0;
+  // size_t countData = 0;
+  // char *dataTest = hex2str_alloc(testAAAHex, &countData);
 
-  size_t *count = 0;
-  char *salt1 = hex2str_alloc("c99a13a5944b4f4a", count); // genRandomBytes(8);
+  // size_t *count = 0;
+  // char *salt1 = hex2str_alloc("c99a13a5944b4f4a", count); // genRandomBytes(8);
 
-  int s2kCount1 = 255;
-  printf("testPassphrase: %s, %d, %d\n",testPassphrase,my_strlen(testPassphrase), strlen(testPassphrase));
-  const unsigned char *decryptionKey = passphraseStringToKey(testPassphrase, salt1, s2kCount1);
-  printf("decryptionKey: %s\n", &decryptionKey);
+  // int s2kCount1 = 255;
+  // printf("testPassphrase: %s, %d, %d\n",testPassphrase,my_strlen(testPassphrase), strlen(testPassphrase));
+  // const unsigned char *decryptionKey = passphraseStringToKey(testPassphrase, salt1, s2kCount1);
+  // printf("decryptionKey: %s\n", &decryptionKey);
 
-  Key key = {0, 0, 0, 0};
-  int j = 0;
-  for (int i = 0; i < 4; i++)
-  {
-    key[i] = (decryptionKey[j] << 24) + (decryptionKey[j + 1] << 16) + (decryptionKey[j + 2] << 8) + decryptionKey[j + 3];
-    printUint32Hex(key[i]);
-    j += 4;
-  }
-  print_hex("Key: ", decryptionKey, keySize);
+  // Key key = {0, 0, 0, 0};
+  // int j = 0;
+  // for (int i = 0; i < 4; i++)
+  // {
+  //   key[i] = (decryptionKey[j] << 24) + (decryptionKey[j + 1] << 16) + (decryptionKey[j + 2] << 8) + decryptionKey[j + 3];
+  //   printUint32Hex(key[i]);
+  //   j += 4;
+  // }
+  // print_hex("Key: ", decryptionKey, keySize);
 
-  size_t *encCount = 0;
-  char *encryptedFileASmallAmountOfText = hex2str_alloc("8c0d0403030289a71db66a8c902effd244019109abb415910e93142e3aa4482ce3106c4ada74bc22e1a6ae31b9090e10dea2ecb81bf60cebb3017e98c22d9c6bd4ef58060d99f1158465ec680071ac746c1bf909bf", encCount); // genRandomBytes(8);
+  // size_t *encCount = 0;
+  // char *fileData = hex2str_alloc("8c0d0403030289a71db66a8c902effd244019109abb415910e93142e3aa4482ce3106c4ada74bc22e1a6ae31b9090e10dea2ecb81bf60cebb3017e98c22d9c6bd4ef58060d99f1158465ec680071ac746c1bf909bf", encCount); // genRandomBytes(8);
+  // uint8_t *decrypted = decryptGPGFile(fileData, testPassphrase, *encCount);
 
-  // uint8_t* gpgFile = encryptToGPGFormat(dataTest, textAAAFilename, testPassphrase, &totalFileSize);
-  // //     // sha256SumData(gpgFile,totalFileSize, textAAAFilename);
-  // decryptGPGFile(encryptedFileASmallAmountOfText, testPassphrase, encCount);
-  printf("\n\n\nDECRYPTING\n");
-  // int dataLen = strlen((const char *)fileData);
-  // printf("dataLen: %li\n", dataLen);
-  uint8_t *salt = malloc(8);
-  int o = 0;
-  int *offset = &o;
-  int s2kCount = parseGPGFile(encryptedFileASmallAmountOfText, salt, offset);
-  print_hex("SALT: ", (const char *)salt, strlen((const char *)salt));
-  printf("s2kCount: %i\n", s2kCount);
+  // printf("\n\n\nDECRYPTING\n");
+  // uint8_t *salt = malloc(8);
+  // int o = 0;
+  // int *offset = &o;
+  // // int s2kCount = parseGPGFile(fileData, salt, offset);
+  // int dataLength = strlen((const char *)fileData);
+  // printf("parseGPGFile len: %i\n", dataLength);
+  // // print("GpgData: ", data);
+  // uint8_t gpgPacket = fileData[(*offset)++];
+  // uint8_t packetLen = fileData[(*offset)++];
+  // uint8_t version = fileData[(*offset)++];
+  // uint8_t algo = fileData[(*offset)++];
+  // uint8_t s2k = fileData[(*offset)++];
+  // uint8_t hashAlgo = fileData[(*offset)++];
+  // printf("gpg byte: %x\npacketLen: %i\nversion: %i\nalgo: %i\ns2k: %i\nhashAlgo: %i, (*offset) %i\n", gpgPacket, packetLen, version, algo, s2k, hashAlgo, (*offset));
+  // if (algo != 3 || s2k != 3 || hashAlgo != 2)
+  // {
+  //   printf("This program only decrypts Cast-5 encrypted files\n");
+  //   printf("with a salted and iterated string-to-key\n");
+  //   printf("using SHA-1 as the hash algorithm.\n");
+  //   exit(-1);
+  // }
+  // // Now parse the salt
+  // for (int i = 0; i < 8; i++)
+  // {
+  //   salt[i] = fileData[(*offset)];
+  //   (*offset)++;
+  // }
+  // int s2kCount = fileData[(*offset)];
+  // (*offset)++;
+  // fileData += (*offset);
+  // print_hex("SALT: ", (const char *)salt, strlen((const char *)salt));
+  // printf("s2kCount: %i\n", s2kCount);
+  // uint8_t *decryptionKey = passphraseStringToKey(testPassphrase, (char *)salt, s2kCount);
+  // uint8_t encPacketTag = fileData[(*offset)++]; // MUST increment offset so keep print
+  // printf("encPacketTag: %02X\n", encPacketTag);
+
+  // Key key = {0, 0, 0, 0};
+  // int j = 0;
+  // for (int i = 0; i < 4; i++)
+  // {
+  //   key[i] = (decryptionKey[j] << 24) + (decryptionKey[j + 1] << 16) + (decryptionKey[j + 2] << 8) + decryptionKey[j + 3];
+  //   j += 4;
+  // }
+  // print_hex("Key: ", decryptionKey, keySize);
+
+  // int encPacketLen = fileData[(*offset)++];
+  // printf("encPacketLen: %d\n", encPacketLen);
+  // int remainingLen = dataLength - *offset;
+  // printf("remainingLen: %d\n", remainingLen);
+  // int totalEncBytes = 0;
+  // uint8_t *encryptedBytes = malloc((sizeof(uint8_t) * remainingLen)); // overfill (minus packet len tags)
+  // int tagByteCount = 0;
+  // if (remainingLen >= OP_MIN_PARTIAL_CHUNK)
+  // {
+  //   printf("remainingLen >= OP_MIN_PARTIAL_CHUNK\n");
+  //   do
+  //   {
+  //     totalEncBytes += tagByteCount;
+  //     switch (encPacketLen)
+  //     {
+  //     case 0xed:
+  //       tagByteCount = 8192;
+  //       break;
+  //     case 0xec:
+  //       tagByteCount = 4096;
+  //       break;
+  //     case 0xeb:
+  //       tagByteCount = 2048;
+  //       break;
+  //     case 0xea:
+  //       tagByteCount = 1024;
+  //       break;
+  //     case 0xe9:
+  //       tagByteCount = 512;
+  //       break;
+  //     }
+  //     //  Copy the data
+  //     for (int i = totalEncBytes; i < (totalEncBytes + tagByteCount); i++)
+  //     {
+  //       encryptedBytes[i] = fileData[(*offset)++];
+  //     }
+  //     // Update and skip the tag len
+  //     encPacketLen = fileData[(*offset)++];
+  //     // Not handling double or greater byte header
+  //     remainingLen -= (tagByteCount + 1);
+  //   } while (remainingLen >= OP_MIN_PARTIAL_CHUNK);
+  //   totalEncBytes += tagByteCount;
+  // }
+  // if ((remainingLen) > 192 && (remainingLen < 8384)) // minus 1 for already removed packetTag
+  // {
+  //   // printf("SKIPPING DOUBLE Byte Header\n");
+  //   encPacketLen = fileData[(*offset)++];
+  //   remainingLen--;
+  // }
+  // // Now fill up the remaining
+  // for (int i = totalEncBytes; i < (totalEncBytes + remainingLen); i++)
+  // {
+  //   encryptedBytes[i] = fileData[(*offset)++];
+  // }
+  // totalEncBytes += remainingLen;  
+  // // if(remainingLen<OP_MIN_PARTIAL_CHUNK){
+  // //           totalEncBytes+=tagByteCount + 1;
+  // //             printf("remainingLen: %d\n", remainingLen);
+  // //             printf("totalEncBytes: %d\n", totalEncBytes);
+  // // }
+  // // Working til here
+  // uint8_t *prefixedData = malloc(sizeof(uint8_t) * 10);
+  // for (int i = 0; i < 10; i++)
+  //   prefixedData[i] = encryptedBytes[i];
+  // // Now we encrypt a zero value IV (as it is what we are expecting as the decryption of the first block)
+  // struct Block iv = {.msb = 0x00000000, .lsb = 0x00000000};
+  // struct Block fr = iv;
+  // struct Block fre = encrypt(key, fr);
+  // uint8_t *decryptedPrefix10Bytes = malloc((sizeof(uint8_t) * 10)); // packet + mode bytes + extra byte
+  // decryptedPrefix10Bytes = do_cfb_decrypt(key, bytesFromBlock(iv), bytesFromBlock(fr), blocksize, decryptedPrefix10Bytes, prefixedData, 10, 0);
+  // if (decryptedPrefix10Bytes[6] != decryptedPrefix10Bytes[8] &&
+  //     decryptedPrefix10Bytes[7] != decryptedPrefix10Bytes[9])
+  // {
+  //   printf("BAD KEY");
+  //   exit(-1);
+  // }
+  // fr = blockFromBytes(encryptedBytes);
+  // //    5.  FR is encrypted to produce FRE, the encryption of the first 8
+  // //        octets of ciphertext.
+  // fre = encrypt(key, fr);
+  // //    6.  The left two octets of FRE get xored with the next two octets of
+  // //        data that were prefixed to the plaintext.  This produces C9-C10,
+  // //        the next two octets of ciphertext.
+  // uint8_t *tmp = bytesFromBlock(fre);
+  // tmp[0] = tmp[0] ^ decryptedPrefix10Bytes[8];
+  // tmp[1] = tmp[1] ^ decryptedPrefix10Bytes[9];
+  // //    7.  (The resync step) FR is loaded with C3-C10.
+  // // fr = blockFromBytes((uint8_t *)encryptedData + 2);
+  // struct Block lastiv = fr;
+  // uint8_t *newIv = malloc(8);
+  // for (int i = 0; i < 6; i++)
+  // {
+  //   newIv[i] = bytesFromBlock(fr)[i + 2]; //:[]
+  // }
+  // newIv[6] = tmp[0];
+  // newIv[7] = tmp[1];
+  // // SYNC complete, decrypt the rest
+  // int remainingByteCount = totalEncBytes - 10; // minus the header
+  // uint8_t *decryptedCompressed = malloc((sizeof(uint8_t) * remainingByteCount)); // packet + mode bytes + extra byte ?
+  // decryptedCompressed = do_cfb_decrypt(key, newIv, bytesFromBlock(lastiv), blocksize, decryptedCompressed, encryptedBytes + 10, remainingByteCount, 0);
+
+  // return prefixedData; // return anything who cares
+  
+  
   
   // printf("totalFileSize: %ld\n",totalFileSize);
 

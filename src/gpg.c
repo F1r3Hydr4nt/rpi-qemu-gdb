@@ -27,7 +27,8 @@ print_hex(const char *text, const void *buf, size_t n)
   printf(text);
   for (; n; n--, p++)
     printf("%02X", *p);
-  printf('\n');
+  printf("\n");
+  // printf('\n');
 }
 
 enum
@@ -571,22 +572,22 @@ int parseGPGFile(uint8_t *data, uint8_t *salt, int *offset)
 void doGPG() {
   testVector();
 
-  size_t *count = 0;
-  char *salt1 = hex2str_alloc("c99a13a5944b4f4a", count); // genRandomBytes(8);
+//   size_t *count = 0;
+//   char *salt1 = hex2str_alloc("c99a13a5944b4f4a", count); // genRandomBytes(8);
  
-  int s2kCount1 = 255;
-  const unsigned char *decryptionKey = passphraseStringToKey(testPassphrase, salt1, s2kCount1);
-  printf("decryptionKey: %s\n", &decryptionKey);
+//   int s2kCount1 = 255;
+//   const unsigned char *decryptionKey = passphraseStringToKey(testPassphrase, salt1, s2kCount1);
+//   printf("decryptionKey: %s\n", &decryptionKey);
 
-  Key key = {0, 0, 0, 0};
-  int j = 0;
-  for (int i = 0; i < 4; i++)
-  {
-    key[i] = (decryptionKey[j] << 24) + (decryptionKey[j + 1] << 16) + (decryptionKey[j + 2] << 8) + decryptionKey[j + 3];
-    printUint32Hex(key[i]);
-    j += 4;
-  }
-  print_hex("Key: ", decryptionKey, keySize);
+//   Key key = {0, 0, 0, 0};
+//   int j = 0;
+//   for (int i = 0; i < 4; i++)
+//   {
+//     key[i] = (decryptionKey[j] << 24) + (decryptionKey[j + 1] << 16) + (decryptionKey[j + 2] << 8) + decryptionKey[j + 3];
+//     printUint32Hex(key[i]);
+//     j += 4;
+//   }
+//   print_hex("Key: ", decryptionKey, keySize);
 
 
 
@@ -602,4 +603,16 @@ void doGPG() {
   int s2kCount = parseGPGFile(encryptedFileASmallAmountOfText, salt, offset);
   print_hex("SALT: ", (const char *)salt, my_strlen((const char *)salt));
   printf("s2kCount: %d\n", s2kCount);
+  uint8_t *decryptionKey = passphraseStringToKey(testPassphrase, (char *)salt, s2kCount);
+  uint8_t encPacketTag = encryptedFileASmallAmountOfText[(*offset)++]; // MUST increment offset so keep print
+  printf("encPacketTag: %02X\n", encPacketTag);
+
+  Key key = {0, 0, 0, 0};
+  int j = 0;
+  for (int i = 0; i < 4; i++)
+  {
+    key[i] = (decryptionKey[j] << 24) + (decryptionKey[j + 1] << 16) + (decryptionKey[j + 2] << 8) + decryptionKey[j + 3];
+    j += 4;
+  }
+  print_hex("Key: ", decryptionKey, keySize);
 }
