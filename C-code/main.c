@@ -2552,7 +2552,7 @@ decryptGPGFile(gpgFile, testPassphrase, totalFileSize);
 printf("totalFileSize: %ld\n",totalFileSize);
 
 size_t encCount = 0;
-char *fileData = hex2str_alloc("8c0d0403030289a71db66a8c902effd244019109abb415910e93142e3aa4482ce3106c4ada74bc22e1a6ae31b9090e10dea2ecb81bf60cebb3017e98c22d9c6bd4ef58060d99f1158465ec680071ac746c1bf909bf", &encCount);
+char *fileData = hex2str_alloc("8c0d04030302eb381c55fecc8f2fffd244018c41f4e16990d9c846cafc6b04bc37e07a9248110a6f11104cfe744d2b2646228c15528525668b97f31bab07bfbcedd0628492ee96bf11e8a4be3aa6e9994901d91195", &encCount);
 decryptGPGFile(fileData, testPassphrase, encCount);
   // // // // // //   // // // // Smaller file
   // size_t totalFileSize = 0;

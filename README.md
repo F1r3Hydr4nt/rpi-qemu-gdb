@@ -38,14 +38,14 @@ Hash: SHA1, RIPEMD160, SHA256, SHA384, SHA512, SHA224
 Compression: Uncompressed, ZIP, ZLIB, BZIP2
 
 # Encrypt...
-echo "A small amount of text" | gpg --symmetric --cipher-algo CAST5 --passphrase "password" --batch > encrypted.gpg
+echo "A small amount of text" | gpg --symmetric --cipher-algo CAST5 --passphrase "password" --s2k-digest-algo SHA1 --batch > encrypted.gpg
 
 # And decrypt...
 gpg --decrypt --passphrase "password" --batch encrypted.gpg
 
 # Taking the encrypted file hex
 xxd -p -c 100000 encrypted.gpg 
-8c0d0403030289a71db66a8c902effd244019109abb415910e93142e3aa4482ce3106c4ada74bc22e1a6ae31b9090e10dea2ecb81bf60cebb3017e98c22d9c6bd4ef58060d99f1158465ec680071ac746c1bf909bf
+8c0d04030302eb381c55fecc8f2fffd244018c41f4e16990d9c846cafc6b04bc37e07a9248110a6f11104cfe744d2b2646228c15528525668b97f31bab07bfbcedd0628492ee96bf11e8a4be3aa6e9994901d91195
 
 # Now we can use it in the program
 ```
