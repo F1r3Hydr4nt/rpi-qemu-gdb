@@ -479,102 +479,78 @@ size_t my_strlen(const char *str) {
 
 unsigned char *passphraseStringToKey(const char *passphrase, char *salt, int count)
 {
-    printf("passphraseStringToKey: %s,\nsalt: %s,\ncount: %d\n", passphrase, salt, count);
+  printf("passphraseStringToKey: %s,\nsalt: %s,\ncount: %d\n", passphrase, salt, count);
+    printf("passphrase: %s, %d, %d\n",passphrase,my_strlen(passphrase), my_strlen(passphrase));
 
-    unsigned char *key = malloc(16);
-    if (key == NULL) {
-        printf("Memory allocation failed for key\n");
-        return NULL;
-    }
+  unsigned char *key = malloc(16);
+  unsigned char saltPlusPassphrase[8 + my_strlen(passphrase)];
+  memcpy(saltPlusPassphrase, salt, my_strlen((const char *)(salt)));
+  memcpy(saltPlusPassphrase + 8, passphrase, my_strlen((const char *)passphrase));
+  print_hex("saltPlusPassphrase (hex): ", saltPlusPassphrase, my_strlen((const char *)saltPlusPassphrase));
+  printf("saltPlusPassphrase: %s %d\n", saltPlusPassphrase, my_strlen((const char *)saltPlusPassphrase));
 
-    size_t passphraseLen = my_strlen(passphrase);
-    size_t saltLen = my_strlen((const char *)salt);
+  int octetExpansionCount = ((int32_t)16 + (count & 15)) << ((count >> 4) + EXPBIAS);
+  int totalLen = 8 + my_strlen(passphrase);
+  printf("octetExpansionCount: %d\ntotalLen: %d\n", octetExpansionCount, totalLen);
 
-    // Ensure the salt length is at least 8
-    if (saltLen < 8) {
-        printf("Salt length is too short\n");
-        free(key);
-        return NULL;
-    }
+  // Now we multiply the total length by the repeat count
+  // And loop copying a single byte at a time, wrapping around the end to the start
+  int byteIndex = 0;
+  // Streaming implemenation (without large malloc)
+  byteIndex = 0;
+  char *hash_out = (char *)malloc(21);
+  int byteRepeatCount = 65011712;
+  SHA1_CTX ctx;
+  SHA1Init(&ctx);
+  for (int i = 0; i < byteRepeatCount; i++)
+  {
+    SHA1Update(&ctx, (const unsigned char *)saltPlusPassphrase + byteIndex, 1);
+    byteIndex++;
+    if (byteIndex == totalLen) // Wrap around end
+      byteIndex = 0;
+  }
 
-    unsigned char *saltPlusPassphrase = malloc(8 + passphraseLen);
-    if (saltPlusPassphrase == NULL) {
-        printf("Memory allocation failed for saltPlusPassphrase\n");
-        free(key);
-        return NULL;
-    }
+  SHA1Final((unsigned char *)hash_out, &ctx);
+  print_hex("result: \n", hash_out, 20);
 
-    memcpy(saltPlusPassphrase, salt, 8);
-    memcpy(saltPlusPassphrase + 8, passphrase, passphraseLen);
-
-    int octetExpansionCount = ((int32_t)16 + (count & 15)) << ((count >> 4) + EXPBIAS);
-    int totalLen = 8 + passphraseLen;
-
-    printf("octetExpansionCount: %d\ntotalLen: %d\n", octetExpansionCount, totalLen);
-
-    // Use a smaller buffer for the expanded data
-    unsigned char *expandedBuffer = malloc(totalLen);
-    if (expandedBuffer == NULL) {
-        printf("Memory allocation failed for expandedBuffer\n");
-        free(key);
-        free(saltPlusPassphrase);
-        return NULL;
-    }
-    char result[20] = {0}; // Placeholder, implement actual hashing here
-
-    // Expand the salt plus passphrase into the smaller buffer repeatedly
-    int expandedBufferIndex = 0;
-    for (int i = 0; i < octetExpansionCount; i++) {
-        expandedBuffer[expandedBufferIndex] = saltPlusPassphrase[i % totalLen];
-        expandedBufferIndex++;
-        if (expandedBufferIndex == totalLen) {
-            expandedBufferIndex = 0;
-            // Example hash calculation per segment (implement actual hashing here)
-            SHA1(result, (char *)expandedBuffer, totalLen);
-        }
-    }
-
-    printf("Final buffer length: %d\n", octetExpansionCount);
-
-    // Example final hash calculation (replace with actual hash function)
-    // SHA1(result, (char *)expandedBuffer, totalLen);
-
-    // Just a placeholder for actual hash, replace with real hash calculation
-
-    for (size_t offset = 0; offset < 16; offset++) {
-        key[offset] = result[offset];
-    }
-
-    // Free allocated memory
-    free(saltPlusPassphrase);
-    free(expandedBuffer);
-
-    return key;
+  char hexresult[41];
+  size_t offset;
+  // format the hash for comparison
+  for (offset = 0; offset < 20; offset++)
+  {
+    sprintf((hexresult + (2 * offset)), "%02x", hash_out[offset] & 0xff);
+    if (offset < 16) // We only need the first 16 bytes
+      key[offset] = hash_out[offset];
+  }
+  print_hex("key: \n",key,16);
+  return key;
 }
 
+// Generate Key
+int keySize = 16;
+int blocksize = 8;
+
+void printUint32Hex(uint32_t data)
+{
+  printf("%08X\n", data);
+}
 void doGPG() {
   testVector();
-  size_t totalFileSize = 0;
-  size_t countData = 0;
-  char *dataTest = hex2str_alloc(testAAAHex, &countData);
-  // Ensure dataTest is not NULL before proceeding
-  if (dataTest) {
-    printf("Decoded data:\n");
-    for (size_t i = 0; i < countData; i++) {
-      printf("%c", dataTest[i]);
-    }
-    printf("\n");
-    
-    // Free the allocated memory
-    free(dataTest);
-  } else {
-    printf("Failed to decode hex string.\n");
-  }
 
   size_t *count = 0;
   char *salt = hex2str_alloc("c99a13a5944b4f4a", count); // genRandomBytes(8);
  
   int s2kCount = 255;
   const unsigned char *decryptionKey = passphraseStringToKey(testPassphrase, salt, s2kCount);
+  printf("decryptionKey: %s\n", &decryptionKey);
 
+  Key key = {0, 0, 0, 0};
+  int j = 0;
+  for (int i = 0; i < 4; i++)
+  {
+    key[i] = (decryptionKey[j] << 24) + (decryptionKey[j + 1] << 16) + (decryptionKey[j + 2] << 8) + decryptionKey[j + 3];
+    printUint32Hex(key[i]);
+    j += 4;
+  }
+  print_hex("Key: ", decryptionKey, keySize);
 }
