@@ -356,6 +356,15 @@ int parseGPGFile(uint8_t *data, uint8_t *salt, int *offset)
   data += (*offset);
   return s2kCount;
 }
+
+size_t my_strlen(const char *str) {
+    size_t len = 0;
+    while (str[len] != '\0') {
+        len++;
+    }
+    return len;
+}
+
 // /*
 
 // 3.7.1.3.  Iterated and Salted S2K
@@ -405,12 +414,14 @@ int parseGPGFile(uint8_t *data, uint8_t *salt, int *offset)
 unsigned char *passphraseStringToKey(const char *passphrase, char *salt, int count)
 {
   printf("passphraseStringToKey: %s,\nsalt: %s,\ncount: %d\n", passphrase, salt, count);
+    printf("passphrase: %s, %d, %d\n",passphrase,my_strlen(passphrase), strlen(passphrase));
+
   unsigned char *key = malloc(16);
-  unsigned char saltPlusPassphrase[8 + strlen(passphrase)];
-  memcpy(saltPlusPassphrase, salt, strlen((const char *)(salt)));
-  memcpy(saltPlusPassphrase + 8, passphrase, strlen((const char *)passphrase));
-  print_hex("saltPlusPassphrase (hex): ", saltPlusPassphrase, strlen((const char *)saltPlusPassphrase));
-  printf("saltPlusPassphrase: %s %d\n", saltPlusPassphrase, strlen((const char *)saltPlusPassphrase));
+  unsigned char saltPlusPassphrase[8 + my_strlen(passphrase)];
+  memcpy(saltPlusPassphrase, salt, my_strlen((const char *)(salt)));
+  memcpy(saltPlusPassphrase + 8, passphrase, my_strlen((const char *)passphrase));
+  print_hex("saltPlusPassphrase (hex): ", saltPlusPassphrase, my_strlen((const char *)saltPlusPassphrase));
+  printf("saltPlusPassphrase: %s %d\n", saltPlusPassphrase, my_strlen((const char *)saltPlusPassphrase));
 
   int octetExpansionCount = ((int32_t)16 + (count & 15)) << ((count >> 4) + EXPBIAS);
   int totalLen = 8 + strlen(passphrase);
@@ -428,9 +439,9 @@ unsigned char *passphraseStringToKey(const char *passphrase, char *salt, int cou
       byteIndex = 0;
   }
   char result[21];
-  printf("strlen((char *)saltPlusPassphraseExpanded: %ld\n", strlen((char *)saltPlusPassphraseExpanded));
+  printf("strlen((char *)saltPlusPassphraseExpanded: %ld\n", my_strlen((char *)saltPlusPassphraseExpanded));
   // calculate hash
-  SHA1(result, (char *)saltPlusPassphraseExpanded, strlen((char *)saltPlusPassphraseExpanded));
+  SHA1(result, (char *)saltPlusPassphraseExpanded, my_strlen((char *)saltPlusPassphraseExpanded));
   // sha256SumData(saltPlusPassphraseExpanded, strlen((char *)saltPlusPassphraseExpanded), "saltPlusPassphraseExpanded");
 
   print_hex("result: ", result, 20);
@@ -1097,6 +1108,8 @@ uint8_t *encryptToGPGFormat(char *data, const char *filename, const char *passph
   int s2kCount = 255;
   encryptedGpgFile[offset++] = s2kCount; // s2key count
   // print_hex("Header: ", encryptedGpgFile, offset);
+
+
 
   const unsigned char *decryptionKey = passphraseStringToKey(passphrase, salt, s2kCount);
   Key key = {0, 0, 0, 0};
@@ -2540,6 +2553,7 @@ int main(int argc, char *argv[])
   char *salt = hex2str_alloc("c99a13a5944b4f4a", count); // genRandomBytes(8);
 
   int s2kCount = 255;
+  printf("testPassphrase: %s, %d, %d\n",testPassphrase,my_strlen(testPassphrase), strlen(testPassphrase));
   const unsigned char *decryptionKey = passphraseStringToKey(testPassphrase, salt, s2kCount);
   // uint8_t* gpgFile = encryptToGPGFormat(dataTest, textAAAFilename, testPassphrase, &totalFileSize);
   // //     // sha256SumData(gpgFile,totalFileSize, textAAAFilename);
