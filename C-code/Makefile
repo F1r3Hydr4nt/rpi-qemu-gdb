@@ -35,5 +35,9 @@ build/%.o: %.c $(HDRS)
 clean:
 	rm -rf build $(TARGET)
 
+# run
+all:
+	$(clean) $(build) ./$(TARGET)
+
 # PHONY targets to avoid conflicts with files of the same name
 .PHONY: all clean build
