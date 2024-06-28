@@ -1,8 +1,11 @@
 #include <stdint.h>
 #include <stddef.h>
-#include "sboxes.h"
 #include "sha1.h"
 #include "printf.h"
+#include <string.h>
+// #include "cast5.h"
+#include "sboxes.h"
+#include "memory.h"
 // QEMU Versatile PB UART0 address
 #define UART0_DR *((volatile uint32_t *)0x101f1000)
 
@@ -13,24 +16,10 @@ void print_hex(uint8_t byte);
 uint8_t hex_to_nibble(char hex);
 void hex_to_bytes(const char *hex, uint8_t *bytes, unsigned int len);
 void derive_key(const uint8_t *salt, const char *password, unsigned int pass_len, uint32_t iterations, uint8_t *key);
-// void cast5_init(uint32_t *key_schedule, const uint8_t *key);
-// void cast5_decrypt_block(uint32_t *key_schedule, uint8_t *block);
-// void cfb_decrypt(uint8_t *data, unsigned int data_len, const uint8_t *iv, const uint8_t *key);
 
-
-// Encrypted data as a byte array
-static const uint8_t encrypted_data[] = {
-    0x8c, 0x0d, 0x04, 0x03, 0x03, 0x02, 0xeb, 0x38, 0x1c, 0x55, 0xfe, 0xcc, 0x8f, 0x2f, 0xff, 0xd2,
-    0x44, 0x01, 0x8c, 0x41, 0xf4, 0xe1, 0x69, 0x90, 0xd9, 0xc8, 0x46, 0xca, 0xfc, 0x6b, 0x04, 0xbc,
-    0x37, 0xe0, 0x7a, 0x92, 0x48, 0x11, 0x0a, 0x6f, 0x11, 0x10, 0x4c, 0xfe, 0x74, 0x4d, 0x2b, 0x26,
-    0x46, 0x22, 0x8c, 0x15, 0x52, 0x85, 0x25, 0x66, 0x8b, 0x97, 0xf3, 0x1b, 0xab, 0x07, 0xbf, 0xbc,
-    0xed, 0xd0, 0x62, 0x84, 0x92, 0xee, 0x96, 0xbf, 0x11, 0xe8, 0xa4, 0xbe, 0x3a, 0xa6, 0xe9, 0x99,
-    0x49, 0x01, 0xd9, 0x11, 0x95
-};
-static const char password[] = "password";
-
-void putc_uart(void* p, char c) {
-    (void)p;  // This parameter is not used in this implementation
+void putc_uart(void *p, char c)
+{
+    (void)p; // This parameter is not used in this implementation
     uart_putc(c);
 }
 
@@ -52,6 +41,16 @@ void print_hex(uint8_t byte)
     const char hex_chars[] = "0123456789ABCDEF";
     uart_putc(hex_chars[byte >> 4]);
     uart_putc(hex_chars[byte & 0x0F]);
+}
+
+void printData(const char *msg, const uint8_t *data, size_t length)
+{
+    printf("%s: ", msg);
+    for (size_t i = 0; i < length; i++)
+    {
+        printf("%02X", data[i]);
+    }
+    printf("\n");
 }
 
 // Convert a hex character to its 4-bit value
@@ -91,15 +90,19 @@ void derive_key(const uint8_t *salt, const char *password, unsigned int pass_len
     SHA1_CTX ctx;
     SHA1Init(&ctx);
 
-    unsigned int saltPlusPasswordLen = 8 + pass_len;  // 8 bytes of salt + password length
+    unsigned int saltPlusPasswordLen = 8 + pass_len; // 8 bytes of salt + password length
     unsigned int bytesProcessed = 0;
     unsigned int index = 0;
 
-    while (bytesProcessed < iterations) {
+    while (bytesProcessed < iterations)
+    {
         uint8_t byte;
-        if (index < 8) {
+        if (index < 8)
+        {
             byte = salt[index];
-        } else {
+        }
+        else
+        {
             byte = password[index - 8];
         }
 
@@ -108,56 +111,354 @@ void derive_key(const uint8_t *salt, const char *password, unsigned int pass_len
         index++;
 
         // If we've reached the end of saltPlusPassword, wrap around
-        if (index >= saltPlusPasswordLen) {
+        if (index >= saltPlusPasswordLen)
+        {
             index = 0;
         }
     }
 
     SHA1Final(key, &ctx);
 }
+// Add this function at the top of your file or in a separate header
+int is_printable(char c)
+{
+    return (c >= 32 && c <= 126);
+}
+
+#define TRUE 1
+#define FALSE 0
+
+// static const size_t BYTE_SIZE = 8; // in bits
+
+enum
+{
+    KEY_LEN = 128 / 32,
+    MSG_LEN = 2
+};
+
+typedef uint32_t Key[KEY_LEN];
+
+struct Block
+{
+    uint32_t msb;
+    uint32_t lsb;
+};
+
+#define ROUND_COUNT 16
+
+static const uint8_t K_MAP[sizeof(Key)] = {
+    3, 2, 1, 0,
+    7, 6, 5, 4,
+    11, 10, 9, 8,
+    15, 14, 13, 12};
+
+static uint8_t g(const Key key, uint8_t i)
+{
+    return ((uint8_t *)key)[K_MAP[i]];
+}
+
+static void splitI(uint32_t I, uint8_t *Ia, uint8_t *Ib, uint8_t *Ic, uint8_t *Id)
+{
+    *Ia = (I >> 24) & 0xFF;
+    *Ib = (I >> 16) & 0xFF;
+    *Ic = (I >> 8) & 0xFF;
+    *Id = (I) & 0xFF;
+}
+
+// Need to take this out
+static const uint64_t MOD_2_32 = (uint64_t)2 << 31;
+static const uint32_t MOD_2_32_MINUS_1 = 0xFFFFFFFF;
+
+static void printBlock(struct Block block)
+{
+    printf("%08X%08X\n", block.msb, block.lsb);
+}
+
+static uint32_t sumMod2_32(uint32_t a, uint32_t b)
+{
+    // its just a remainder
+    return ((a) + b) % MOD_2_32;
+}
+
+static uint32_t sumMod2_32b(uint32_t a, uint32_t b)
+{
+
+    return ((a) + b); // % MOD_2_32;
+}
+
+static uint32_t subtractMod2_32(uint32_t a, uint32_t b)
+{
+    // it's not just a remainder
+    // you need to use 2 ^ 32 -1
+    if (b <= a)
+    {
+        return a - b;
+    }
+
+    return (MOD_2_32 + a) - b;
+}
+
+static uint32_t subtractMod2_32b(uint32_t a, uint32_t b)
+{
+    if (b <= a)
+    {
+        return a - b;
+    }
+
+    return (MOD_2_32_MINUS_1 + a) - b + 1;
+}
+
+static uint32_t cyclicShift(uint32_t x, uint8_t shift)
+{
+    uint8_t s = shift % 32;
+    return (x << s) | (x >> (32 - s));
+}
+
+static struct Block run(const Key key, struct Block data, int reverse)
+{
+    /*uint32_t MSB = data.msb;
+    uint32_t LSB = data.lsb
+    Message msg = {MSB, LSB};*/
+    Key x = {0};
+    memcpy(x, key, sizeof(Key));
+    Key z = {0};
+
+    uint32_t K[32] = {0};
+
+    for (int i = 0; i < 2; ++i)
+    {
+        z[0] = x[0] ^ S5[g(x, 0xD)] ^ S6[g(x, 0xF)] ^ S7[g(x, 0xC)] ^ S8[g(x, 0xE)] ^ S7[g(x, 0x8)];
+        z[1] = x[2] ^ S5[g(z, 0x0)] ^ S6[g(z, 0x2)] ^ S7[g(z, 0x1)] ^ S8[g(z, 0x3)] ^ S8[g(x, 0xA)];
+        z[2] = x[3] ^ S5[g(z, 0x7)] ^ S6[g(z, 0x6)] ^ S7[g(z, 0x5)] ^ S8[g(z, 0x4)] ^ S5[g(x, 0x9)];
+        z[3] = x[1] ^ S5[g(z, 0xA)] ^ S6[g(z, 0x9)] ^ S7[g(z, 0xB)] ^ S8[g(z, 0x8)] ^ S6[g(x, 0xB)];
+
+        K[0 + i * 16] = S5[g(z, 0x8)] ^ S6[g(z, 0x9)] ^ S7[g(z, 0x7)] ^ S8[g(z, 0x6)] ^ S5[g(z, 0x2)];
+        K[1 + i * 16] = S5[g(z, 0xA)] ^ S6[g(z, 0xB)] ^ S7[g(z, 0x5)] ^ S8[g(z, 0x4)] ^ S6[g(z, 0x6)];
+        K[2 + i * 16] = S5[g(z, 0xC)] ^ S6[g(z, 0xD)] ^ S7[g(z, 0x3)] ^ S8[g(z, 0x2)] ^ S7[g(z, 0x9)];
+        K[3 + i * 16] = S5[g(z, 0xE)] ^ S6[g(z, 0xF)] ^ S7[g(z, 0x1)] ^ S8[g(z, 0x0)] ^ S8[g(z, 0xC)];
+
+        x[0] = z[2] ^ S5[g(z, 0x5)] ^ S6[g(z, 0x7)] ^ S7[g(z, 0x4)] ^ S8[g(z, 0x6)] ^ S7[g(z, 0x0)];
+        x[1] = z[0] ^ S5[g(x, 0x0)] ^ S6[g(x, 0x2)] ^ S7[g(x, 0x1)] ^ S8[g(x, 0x3)] ^ S8[g(z, 0x2)];
+        x[2] = z[1] ^ S5[g(x, 0x7)] ^ S6[g(x, 0x6)] ^ S7[g(x, 0x5)] ^ S8[g(x, 0x4)] ^ S5[g(z, 0x1)];
+        x[3] = z[3] ^ S5[g(x, 0xA)] ^ S6[g(x, 0x9)] ^ S7[g(x, 0xB)] ^ S8[g(x, 0x8)] ^ S6[g(z, 0x3)];
+
+        K[4 + i * 16] = S5[g(x, 0x3)] ^ S6[g(x, 0x2)] ^ S7[g(x, 0xC)] ^ S8[g(x, 0xD)] ^ S5[g(x, 0x8)];
+        K[5 + i * 16] = S5[g(x, 0x1)] ^ S6[g(x, 0x0)] ^ S7[g(x, 0xE)] ^ S8[g(x, 0xF)] ^ S6[g(x, 0xD)];
+        K[6 + i * 16] = S5[g(x, 0x7)] ^ S6[g(x, 0x6)] ^ S7[g(x, 0x8)] ^ S8[g(x, 0x9)] ^ S7[g(x, 0x3)];
+        K[7 + i * 16] = S5[g(x, 0x5)] ^ S6[g(x, 0x4)] ^ S7[g(x, 0xA)] ^ S8[g(x, 0xB)] ^ S8[g(x, 0x7)];
+
+        z[0] = x[0] ^ S5[g(x, 0xD)] ^ S6[g(x, 0xF)] ^ S7[g(x, 0xC)] ^ S8[g(x, 0xE)] ^ S7[g(x, 0x8)];
+        z[1] = x[2] ^ S5[g(z, 0x0)] ^ S6[g(z, 0x2)] ^ S7[g(z, 0x1)] ^ S8[g(z, 0x3)] ^ S8[g(x, 0xA)];
+        z[2] = x[3] ^ S5[g(z, 0x7)] ^ S6[g(z, 0x6)] ^ S7[g(z, 0x5)] ^ S8[g(z, 0x4)] ^ S5[g(x, 0x9)];
+        z[3] = x[1] ^ S5[g(z, 0xA)] ^ S6[g(z, 0x9)] ^ S7[g(z, 0xB)] ^ S8[g(z, 0x8)] ^ S6[g(x, 0xB)];
+
+        K[8 + i * 16] = S5[g(z, 0x3)] ^ S6[g(z, 0x2)] ^ S7[g(z, 0xC)] ^ S8[g(z, 0xD)] ^ S5[g(z, 0x9)];
+        K[9 + i * 16] = S5[g(z, 0x1)] ^ S6[g(z, 0x0)] ^ S7[g(z, 0xE)] ^ S8[g(z, 0xF)] ^ S6[g(z, 0xC)];
+        K[10 + i * 16] = S5[g(z, 0x7)] ^ S6[g(z, 0x6)] ^ S7[g(z, 0x8)] ^ S8[g(z, 0x9)] ^ S7[g(z, 0x2)];
+        K[11 + i * 16] = S5[g(z, 0x5)] ^ S6[g(z, 0x4)] ^ S7[g(z, 0xA)] ^ S8[g(z, 0xB)] ^ S8[g(z, 0x6)];
+
+        x[0] = z[2] ^ S5[g(z, 0x5)] ^ S6[g(z, 0x7)] ^ S7[g(z, 0x4)] ^ S8[g(z, 0x6)] ^ S7[g(z, 0x0)];
+        x[1] = z[0] ^ S5[g(x, 0x0)] ^ S6[g(x, 0x2)] ^ S7[g(x, 0x1)] ^ S8[g(x, 0x3)] ^ S8[g(z, 0x2)];
+        x[2] = z[1] ^ S5[g(x, 0x7)] ^ S6[g(x, 0x6)] ^ S7[g(x, 0x5)] ^ S8[g(x, 0x4)] ^ S5[g(z, 0x1)];
+        x[3] = z[3] ^ S5[g(x, 0xA)] ^ S6[g(x, 0x9)] ^ S7[g(x, 0xB)] ^ S8[g(x, 0x8)] ^ S6[g(z, 0x3)];
+
+        K[12 + i * 16] = S5[g(x, 0x8)] ^ S6[g(x, 0x9)] ^ S7[g(x, 0x7)] ^ S8[g(x, 0x6)] ^ S5[g(x, 0x3)];
+        K[13 + i * 16] = S5[g(x, 0xA)] ^ S6[g(x, 0xB)] ^ S7[g(x, 0x5)] ^ S8[g(x, 0x4)] ^ S6[g(x, 0x7)];
+        K[14 + i * 16] = S5[g(x, 0xC)] ^ S6[g(x, 0xD)] ^ S7[g(x, 0x3)] ^ S8[g(x, 0x2)] ^ S7[g(x, 0x8)];
+        K[15 + i * 16] = S5[g(x, 0xE)] ^ S6[g(x, 0xF)] ^ S7[g(x, 0x1)] ^ S8[g(x, 0x0)] ^ S8[g(x, 0xD)];
+    }
+
+    uint32_t L[ROUND_COUNT + 1] = {0};
+    L[0] = data.msb;
+
+    uint32_t R[ROUND_COUNT + 1] = {0};
+    R[0] = data.lsb;
+
+    for (int i = 0; i < ROUND_COUNT; ++i)
+    {
+        int rIndex = reverse ? (ROUND_COUNT - 1 - i) : i;
+        uint32_t Kmi = K[rIndex];
+        uint8_t Kri = K[16 + rIndex] & 0x1F;
+
+        uint32_t I = 0;
+        uint32_t f = 0;
+
+        uint8_t Ia, Ib, Ic, Id;
+
+        switch (rIndex % 3)
+        {
+        case 0:
+            I = cyclicShift(sumMod2_32(Kmi, R[i]), Kri);
+            splitI(I, &Ia, &Ib, &Ic, &Id);
+            f = sumMod2_32(subtractMod2_32(S1[Ia] ^ S2[Ib], S3[Ic]), S4[Id]);
+            break;
+
+        case 1:
+            I = cyclicShift(Kmi ^ R[i], Kri);
+            splitI(I, &Ia, &Ib, &Ic, &Id);
+            f = sumMod2_32(subtractMod2_32(S1[Ia], S2[Ib]), S3[Ic]) ^ S4[Id];
+            break;
+
+        case 2:
+            I = cyclicShift(subtractMod2_32(Kmi, R[i]), Kri);
+            splitI(I, &Ia, &Ib, &Ic, &Id);
+            f = subtractMod2_32(sumMod2_32(S1[Ia], S2[Ib]) ^ S3[Ic], S4[Id]);
+            break;
+        }
+
+        L[i + 1] = R[i];
+        R[i + 1] = L[i] ^ f;
+        // printf(" L[i + 1]: %02X  R[i + 1]: %02X\n", L[i + 1], R[i + 1]);
+    }
+
+    data.msb = R[ROUND_COUNT];
+    data.lsb = L[ROUND_COUNT];
+    return data;
+}
+
+struct Block encrypt(const Key key, struct Block data)
+{
+    return run(key, data, FALSE);
+}
+
+struct Block decrypt(const Key key, struct Block data)
+{
+    return run(key, data, TRUE);
+}
+
+struct Block xorBlock(struct Block block, struct Block val)
+{
+    struct Block result = {
+        .msb = block.msb ^ val.msb,
+        .lsb = block.lsb ^ val.lsb};
+    return result;
+}
+
+struct Block blockFromBytes(uint8_t *bytes)
+{
+    struct Block block = {
+        .msb = 0,
+        .lsb = 0};
+    for (int i = 0; i < 8; i++)
+    {
+        if (i < 4)
+            block.msb = (block.msb << 8) | bytes[i];
+        else
+            block.lsb = (block.lsb << 8) | bytes[i];
+    }
+    return block;
+}
+
+// Feistel Cast-128 (Cast-5) test vector test function
+void testVector()
+{
+    int testPassing = 1;
+    Key KEY = {0x01234567, 0x12345678, 0x23456789, 0x3456789A};
+    struct Block msg = {
+        .msb = 0x01234567,
+        .lsb = 0x89ABCDEF};
+    struct Block block = encrypt(KEY, msg);
+    // printf("encrypted: %016lX\n", (long unsigned int)block);
+    testPassing = block.msb == 0x238B4FE5 && block.lsb == 0x847E44B2;
+    block = decrypt(KEY, block);
+    // printf("decrypted: %016lX\n", (long unsigned int)block);
+    testPassing = block.msb == 0x01234567 && block.lsb == 0x89ABCDEF;
+    if (testPassing)
+        printf("Test vectors passing\n");
+    else
+    {
+        printf("Tests failing...\n");
+    }
+}
+
+// Encrypted data as a byte array
+static const uint8_t target_data[] = {
+    0x8c, 0x0d, 0x04, 0x03, 0x03, 0x02, 0x0a, 0x0b,
+    0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0xf8, 0xc9,
+    0x1f, 0xa6, 0xca, 0x6c, 0x8a, 0xee, 0xf4, 0xae,
+    0x83, 0x5e, 0xe0, 0xb8, 0xbe, 0x11, 0x22, 0xe0,
+    0x36, 0x90, 0xcf, 0x3f, 0x28, 0xd6, 0x0d, 0x27,
+    0xd6, 0x68, 0xd1, 0x17, 0xef, 0xfd, 0xba, 0x09};
+
+static const char password[] = "password";
+static const uint8_t salt[] = {0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11};
+static const uint8_t random[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF};
+static const uint8_t timestamp[] = {0x60, 0xD8, 0x30, 0x00};
+static const char *fileData = "Hello World!";
 
 void main()
 {
     init_printf(0, putc_uart);
     printf("Printf initialised!\n");
-    
-    printf("parseGPGFile\n");
+    testVector();
+    uint8_t symKeyPacket[2 + 13] = {0}; // Header + length + packet bytes (5) + salt (8)
+    const uint8_t symKeyPkt_ctb = 0x8C;
+    const uint8_t symKeyPkt_length = 0x0d;
+    const uint8_t symKeyPkt_version = 0x04;
+    const uint8_t symKeyPkt_algo = 0x03;
+    const uint8_t symKeyPkt_s2kMode = 0x03;
+    const uint8_t symKeyPkt_s2kAlgo = 0x02;
+    int offset = 0;
+    symKeyPacket[offset++] = symKeyPkt_ctb;
+    symKeyPacket[offset++] = symKeyPkt_length;
+    symKeyPacket[offset++] = symKeyPkt_version;
+    symKeyPacket[offset++] = symKeyPkt_algo;
+    symKeyPacket[offset++] = symKeyPkt_s2kMode;
+    symKeyPacket[offset++] = symKeyPkt_s2kAlgo;
+    int saltIndex = 0;
+    symKeyPacket[offset++] = salt[saltIndex++];
+    symKeyPacket[offset++] = salt[saltIndex++];
+    symKeyPacket[offset++] = salt[saltIndex++];
+    symKeyPacket[offset++] = salt[saltIndex++];
+    symKeyPacket[offset++] = salt[saltIndex++];
+    symKeyPacket[offset++] = salt[saltIndex++];
+    symKeyPacket[offset++] = salt[saltIndex++];
+    symKeyPacket[offset++] = salt[saltIndex++];
+    const uint8_t symKeyPkt_s2kCount = 0xF8;
+    symKeyPacket[offset++] = symKeyPkt_s2kCount;
+    uint32_t iterations = ((uint32_t)16 + (symKeyPkt_s2kCount & 15)) << ((symKeyPkt_s2kCount >> 4) + 6);
+    printData("symKeyPacket", symKeyPacket, sizeof(symKeyPacket));
 
-    uint8_t packet_byte = encrypted_data[0];
-    uint8_t length_byte = encrypted_data[1];
-    uint8_t version_byte = encrypted_data[2];
-    uint8_t algo_byte = encrypted_data[3];
-    uint8_t s2k_byte = encrypted_data[4];
-    uint8_t hashAlgo_byte = encrypted_data[5];
-
-    if (algo_byte != 3 || s2k_byte != 3 || hashAlgo_byte != 2)
-    {
-        printf("This program only decrypts Cast-5 encrypted files, with a salted and iterated string-to-key, using SHA-1 as the hash algorithm.\n");
-        return;
-    }
-    // Extract salt (8 bytes)
-    const uint8_t *salt = &encrypted_data[6];
-    printf("Salt: ");
-    for (int i = 0; i < 8; i++) {
-        printf("%02X", salt[i]);
-    }
-    printf("\n");
-    // Parse s2kCount (1 byte)
-    uint8_t s2kCount = encrypted_data[14];
-    // Calculate the actual iteration count
-    uint32_t iterations = 16 + (s2kCount & 15);
-    iterations <<= ((s2kCount >> 4) + 6);
-    printf("Iteration count: %u\n", iterations);
-
-    printf("Starting key derivation...\r\n");
-    uint8_t key[20];
+    uint8_t key[16];
     derive_key(salt, password, sizeof(password) - 1, iterations, key);
-    printf("Key derived: ");
-    for (unsigned int i = 0; i < sizeof(key); i++)
+    printf("Derived Key: ");
+    for (int i = 0; i < 16; i++)
     {
         printf("%02X", key[i]);
     }
     printf("\n");
 
-    while (1){} // Loop forever
+    // Initialise cipher
+    // Step by step, here is the procedure:
+    //    1.  The feedback register (FR) is set to the IV, which is all zeros.
+    struct Block iv = {.msb = 0x00000000, .lsb = 0x00000000};
+    struct Block fr = iv;
+    printBlock(fr);
+    //    2.  FR is encrypted to produce FRE (FR Encrypted).  This is the
+    //        encryption of an all-zero value.
+    struct Block encrypted = encrypt(key, fr);
+    printBlock(encrypted);
+    //    3.  FRE is xored with the first 8 octets of random data prefixed to
+    //        the plaintext to produce C1-C8, the first 8 octets of ciphertext.
+    struct Block freXored = xorBlock(encrypted, blockFromBytes((uint8_t *)random));
+    printBlock(freXored);
+    int encOffset = 0;
+    // appendBytes(encryptedData, encOffset, bytesFromBlock(freXored), 8);
+    encOffset += 8;
+    //    4.  FR is loaded with C1-C8.
+    fr = freXored;
+    printBlock(fr);
+
+    //    5.  FR is encrypted to produce FRE, the encryption of the first 8
+    //        octets of ciphertext.
+    encrypted = encrypt(key, fr); // This needs an iv of all zeros
+    printBlock(encrypted);
+    // // Encrypt random data
+    // uint8_t ciphertext[10];
+    // cast5_encrypt(key, random, ciphertext);
+    // printData("ciphertext", ciphertext, sizeof(ciphertext));
+
+    while (1)
+    {
+    } // Loop forever
 }
