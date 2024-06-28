@@ -58,3 +58,24 @@ gpg: encrypted with 1 passphrase
 gpg: session key: '3:896E9344A9E485B8934BBBDA07A59868'
 A small amount of text
 ```
+
+echo "Hello World!" | ./g10/gpg --symmetric --cipher-algo CAST5 --passphrase "password" --s2k-digest-algo SHA1 --compress-algo none --batch --rfc2440 --verbose > encrypted.gpg && xxd encrypted.gpg
+
+00000000: 8c0d 0403 0302 7600 e37f 7d84 7c00 e6c9  ......v...}.|...
+00000010: 1f3c 9911 a8bd 78c7 f823 d800 5596 dfff  .<....x..#..U...
+00000020: 075f 07ba 605a 615e 8cf8 aa74 7fee bc04  ._..`Za^...t....
+
+00000000: 8c0d 0403 0302 7600 e37f 7d84 7c00 e6c9
+        -- Symmetric-key encrypted data
+        -- Packet type: Symmetric-key encrypted data packet (9)
+        -- Packet length: 13 bytes
+        -- Cipher algorithm: CAST5 (3)
+        -- S2K (string-to-key) usage: Iterated and salted (3)
+        -- S2K hash algorithm: SHA1 (2)
+        -- Initialization Vector (IV)
+
+00000010: 1f3c 9911 a8bd 78c7 f823 d800 5596 dfff
+        -- Ciphertext
+
+00000020: 075f 07ba 605a 615e 8cf8 aa74 7fee bc04
+        -- Ciphertext

@@ -1293,30 +1293,6 @@ uint8_t *encryptToGPGFormat(char *data, const char *filename, const char *passph
 
   // Taken from gnupg/common/iobuf.c -> block_filter(...)
 
-  /*
-  So the packet encoding works as follows:
-  block_filter
-  IOBUFCTRL_FLUSH
-  a->partial
-  size: 6282
-  a->buflen: 0
-  nbytes: 6282
-  ENCRYPTED DATA START: FC09213C151FA84E0E6A
-  ENCRYPTED DATA END: 251E36FD770120D73E57
-  // okay, we can write out something
-  blen: 4096
-  c: 12
-  iobuf_put (chain, c); ec
-  blen: 2048
-  c: 11
-  iobuf_put (chain, c); eb
-  // store the rest in the buffer
-  block_filter
-  IOBUFCTRL_FREE
-  WRITE THE END MARKERS
-  a-partial BUFLEN: 138
-  */
-
   char *pLen = malloc(10);
   int pByteCount = 0;
 
@@ -2533,13 +2509,15 @@ int main(int argc, char *argv[])
 size_t countData = 0;
 char *dataTest = hex2str_alloc(testAAAHex, &countData);
 uint8_t* gpgFile = encryptToGPGFormat(dataTest, textAAAFilename, testPassphrase, &totalFileSize);
-//     // sha256SumData(gpgFile,totalFileSize, textAAAFilename);
-decryptGPGFile(gpgFile, testPassphrase, totalFileSize);
-printf("totalFileSize: %ld\n",totalFileSize);
+print_hex("Encrypted: ",gpgFile,strlen(gpgFile));
+// //     // sha256SumData(gpgFile,totalFileSize, textAAAFilename);
+// decryptGPGFile(gpgFile, testPassphrase, totalFileSize);
+// printf("totalFileSize: %ld\n",totalFileSize);
 
-size_t encCount = 0;
-char *fileData = hex2str_alloc("8c0d04030302eb381c55fecc8f2fffd244018c41f4e16990d9c846cafc6b04bc37e07a9248110a6f11104cfe744d2b2646228c15528525668b97f31bab07bfbcedd0628492ee96bf11e8a4be3aa6e9994901d91195", &encCount);
-decryptGPGFile(fileData, testPassphrase, encCount);
+// size_t encCount = 0;
+// char *fileData = hex2str_alloc("8c0d04030302eb381c55fecc8f2fffd244018c41f4e16990d9c846cafc6b04bc37e07a9248110a6f11104cfe744d2b2646228c15528525668b97f31bab07bfbcedd0628492ee96bf11e8a4be3aa6e9994901d91195", &encCount);
+// decryptGPGFile(fileData, testPassphrase, encCount);
+
   // // // // // //   // // // // Smaller file
   // size_t totalFileSize = 0;
   // size_t countData = 0;
