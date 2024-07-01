@@ -138,6 +138,16 @@ enum
 
 typedef uint32_t Key[KEY_LEN];
 
+void convert_to_key(const uint8_t input_array[16], uint32_t key[KEY_LEN])
+{
+    for (int i = 0; i < KEY_LEN; i++)
+    {
+        key[i] = (((uint32_t)input_array[i * 4]) << 24) |
+                 (((uint32_t)input_array[i * 4 + 1]) << 16) |
+                 (((uint32_t)input_array[i * 4 + 2]) << 8) |
+                 ((uint32_t)input_array[i * 4 + 3]);
+    }
+}
 struct Block
 {
     uint32_t msb;
@@ -386,6 +396,102 @@ static const uint8_t random[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF}
 static const uint8_t timestamp[] = {0x60, 0xD8, 0x30, 0x00};
 static const char *fileData = "Hello World!";
 
+void logBuffer(const unsigned char *buffer, size_t length) {
+    // log_printf("Buffer: ");
+    for (size_t i = 0; i < length; i++) {
+        printf("%02x ", buffer[i]);
+    }
+    printf("\n");
+}
+
+
+void bytesFromBlock(struct Block block, uint8_t* bytes) {
+    bytes[7] = (block.lsb & 0x000000FF) >> 0;
+    bytes[6] = (block.lsb & 0x0000FF00) >> 8;
+    bytes[5] = (block.lsb & 0x00FF0000) >> 16;
+    bytes[4] = (block.lsb & 0xFF000000) >> 24;
+    bytes[3] = (block.msb & 0x000000FF) >> 0;
+    bytes[2] = (block.msb & 0x0000FF00) >> 8;
+    bytes[1] = (block.msb & 0x00FF0000) >> 16;
+    bytes[0] = (block.msb & 0xFF000000) >> 24;
+}
+
+// taken and modified from libgcrypt
+void
+do_cfb_encrypt(Key key, uint8_t *iv, uint8_t *lastiv, size_t blocksize, const uint8_t *inbuf, unsigned nbytes)
+{
+    uint8_t outbuf[nbytes];
+    int encCount = 0;
+    if (nbytes >= blocksize)
+    {
+        printData("inbuf", inbuf, nbytes);
+        // printf("inbuf: ");
+        // logBuffer(inbuf, nbytes);
+        /* Save the current IV and then encrypt the IV. */
+        printf("c->u_iv.iv: ");
+        logBuffer(iv, blocksize);
+        printData("iv", inbuf, blocksize);
+
+        /* encrypt the IV (and save the current one) */
+        memcpy(lastiv, iv, blocksize);
+        struct Block ivEncrypted = encrypt(key, blockFromBytes(iv));
+        printf("c->u_iv.iv encrypted: ");
+        printBlock(ivEncrypted);
+        struct Block xored = xorBlock(ivEncrypted, blockFromBytes(inbuf));
+        printf("outbuf: ");
+        printBlock(xored);
+        uint8_t block[8];
+        bytesFromBlock(xored,block);
+        printData("BLock:",block,blocksize);
+        for(int i = 0;i<blocksize; i++){
+            outbuf[i] = block[i];
+        }
+        printData("Encrypted:",outbuf,blocksize);
+        nbytes -= blocksize;
+        encCount += blocksize;
+        inbuf+=blocksize;
+    }
+    /* bla bla */
+    if (nbytes)
+    { /* process the remaining bytes */
+               printData("if (nbytes) == inbuf", inbuf, nbytes);
+
+        printf("c->u_iv.iv: ");
+        logBuffer(iv, blocksize);
+        printData("iv", inbuf, blocksize);
+        /* encrypt the IV (and save the current one) */
+        memcpy(lastiv, iv, blocksize);
+        struct Block ivEncrypted = encrypt(key, blockFromBytes(iv));
+        printf("c->u_iv.iv encrypted: ");
+        printBlock(ivEncrypted);
+        uint8_t final[8];
+        for(int i = 0;i<8;i++){
+            if(i<nbytes){
+                final[i] = inbuf[i];
+            }else{
+                final[i] = 0x00;
+            }
+        }
+        printData("final", final, blocksize);
+        struct Block finalBlock = blockFromBytes(final);
+        printBlock(finalBlock);
+        struct Block xored = xorBlock(ivEncrypted, finalBlock);
+        printf("outbuf: ");
+        printBlock(xored);
+        uint8_t* ivp;
+         for (ivp = iv; nbytes; nbytes--)
+            {
+            uint8_t b = (*ivp++ ^= *inbuf++);
+            printf("%02x ", b);
+            }
+    }
+}
+
+void printUint32Hex(uint32_t data)
+{
+    printf("%08X\n", data);
+}
+
 void main()
 {
     init_printf(0, putc_uart);
@@ -414,7 +520,7 @@ void main()
     symKeyPacket[offset++] = salt[saltIndex++];
     symKeyPacket[offset++] = salt[saltIndex++];
     symKeyPacket[offset++] = salt[saltIndex++];
-    const uint8_t symKeyPkt_s2kCount = 0xF8;
+    const uint8_t symKeyPkt_s2kCount = 0xFF;
     symKeyPacket[offset++] = symKeyPkt_s2kCount;
     uint32_t iterations = ((uint32_t)16 + (symKeyPkt_s2kCount & 15)) << ((symKeyPkt_s2kCount >> 4) + 6);
     printData("symKeyPacket", symKeyPacket, sizeof(symKeyPacket));
@@ -427,37 +533,27 @@ void main()
         printf("%02X", key[i]);
     }
     printf("\n");
-
-    // Initialise cipher
-    // Step by step, here is the procedure:
-    //    1.  The feedback register (FR) is set to the IV, which is all zeros.
-    struct Block iv = {.msb = 0x00000000, .lsb = 0x00000000};
-    struct Block fr = iv;
-    printBlock(fr);
-    //    2.  FR is encrypted to produce FRE (FR Encrypted).  This is the
-    //        encryption of an all-zero value.
-    struct Block encrypted = encrypt(key, fr);
-    printBlock(encrypted);
-    //    3.  FRE is xored with the first 8 octets of random data prefixed to
-    //        the plaintext to produce C1-C8, the first 8 octets of ciphertext.
-    struct Block freXored = xorBlock(encrypted, blockFromBytes((uint8_t *)random));
-    printBlock(freXored);
-    int encOffset = 0;
-    // appendBytes(encryptedData, encOffset, bytesFromBlock(freXored), 8);
-    encOffset += 8;
-    //    4.  FR is loaded with C1-C8.
-    fr = freXored;
-    printBlock(fr);
-
-    //    5.  FR is encrypted to produce FRE, the encryption of the first 8
-    //        octets of ciphertext.
-    encrypted = encrypt(key, fr); // This needs an iv of all zeros
-    printBlock(encrypted);
-    // // Encrypt random data
-    // uint8_t ciphertext[10];
-    // cast5_encrypt(key, random, ciphertext);
-    // printData("ciphertext", ciphertext, sizeof(ciphertext));
-
+    Key encKey = {0, 0, 0, 0};
+    int j = 0;
+    for (int i = 0; i < 4; i++)
+    {
+        encKey[i] = (key[j] << 24) + (key[j + 1] << 16) + (key[j + 2] << 8) + key[j + 3];
+        // printUint32Hex(encKey[i]);
+        j += 4;
+    }
+    // Now we take the random and duplicate the last two bytes
+    uint8_t randomQuickCheck[10] = {0};
+    for (int i = 0; i < 8; i++)
+    {
+        randomQuickCheck[i] = random[i];
+    }
+    randomQuickCheck[8] = random[6];
+    randomQuickCheck[9] = random[7];
+    uint8_t iv[8] = {0};
+    uint8_t lastIv[8] = {0};
+   
+do_cfb_encrypt(encKey,iv,lastIv,8,randomQuickCheck,10);
+   
     while (1)
     {
     } // Loop forever
