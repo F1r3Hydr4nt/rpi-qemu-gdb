@@ -137,3 +137,33 @@ void main()
     {
     } // Loop forever
 }
+/*// Initialise cipher
+    // Step by step, here is the procedure:
+    //    1.  The feedback register (FR) is set to the IV, which is all zeros.
+    struct Block iv = {.msb = 0x00000000, .lsb = 0x00000000};
+    struct Block fr = iv;
+    printBlock(fr);
+    //    2.  FR is encrypted to produce FRE (FR Encrypted).  This is the
+    //        encryption of an all-zero value.
+    struct Block encrypted = encrypt(key, fr);
+    printBlock(encrypted);
+    //    3.  FRE is xored with the first 8 octets of random data prefixed to
+    //        the plaintext to produce C1-C8, the first 8 octets of ciphertext.
+    struct Block freXored = xorBlock(encrypted, blockFromBytes((uint8_t *)random));
+    printBlock(freXored);
+    int encOffset = 0;
+    // appendBytes(encryptedData, encOffset, bytesFromBlock(freXored), 8);
+    encOffset += 8;
+    //    4.  FR is loaded with C1-C8.
+    fr = freXored;
+    printBlock(fr);
+
+    //    5.  FR is encrypted to produce FRE, the encryption of the first 8
+    //        octets of ciphertext.
+    encrypted = encrypt(key, fr); // This needs an iv of all zeros
+    printBlock(encrypted);
+    // // Encrypt random data
+    // uint8_t ciphertext[10];
+    // cast5_encrypt(key, random, ciphertext);
+    // printData("ciphertext", ciphertext, sizeof(ciphertext));
+*/
