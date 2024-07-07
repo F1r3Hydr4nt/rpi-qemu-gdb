@@ -396,16 +396,18 @@ static const uint8_t random[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF}
 static const uint8_t timestamp[] = {0x60, 0xD8, 0x30, 0x00};
 static const char *fileData = "Hello World!";
 
-void logBuffer(const unsigned char *buffer, size_t length) {
+void logBuffer(const unsigned char *buffer, size_t length)
+{
     // log_printf("Buffer: ");
-    for (size_t i = 0; i < length; i++) {
+    for (size_t i = 0; i < length; i++)
+    {
         printf("%02x ", buffer[i]);
     }
     printf("\n");
 }
 
-
-void bytesFromBlock(struct Block block, uint8_t* bytes) {
+void bytesFromBlock(struct Block block, uint8_t *bytes)
+{
     bytes[7] = (block.lsb & 0x000000FF) >> 0;
     bytes[6] = (block.lsb & 0x0000FF00) >> 8;
     bytes[5] = (block.lsb & 0x00FF0000) >> 16;
@@ -417,11 +419,11 @@ void bytesFromBlock(struct Block block, uint8_t* bytes) {
 }
 
 // taken and modified from libgcrypt
-void
-do_cfb_encrypt(Key key, uint8_t *iv, uint8_t *lastiv, size_t blocksize, const uint8_t *inbuf, unsigned nbytes)
+void do_cfb_encrypt(Key key, uint8_t *iv, uint8_t *lastiv, size_t blocksize, const uint8_t *inbuf, unsigned nbytes)
 {
     uint8_t outbuf[nbytes];
     int encCount = 0;
+    int totalIn = nbytes;
     if (nbytes >= blocksize)
     {
         printData("inbuf", inbuf, nbytes);
@@ -441,20 +443,23 @@ do_cfb_encrypt(Key key, uint8_t *iv, uint8_t *lastiv, size_t blocksize, const ui
         printf("outbuf: ");
         printBlock(xored);
         uint8_t block[8];
-        bytesFromBlock(xored,block);
-        printData("BLock:",block,blocksize);
-        for(int i = 0;i<blocksize; i++){
+        bytesFromBlock(xored, block);
+        printData("BLock:", block, blocksize);
+        for (int i = 0; i < blocksize; i++)
+        {
             outbuf[i] = block[i];
         }
-        printData("Encrypted:",outbuf,blocksize);
+        printData("Encrypted:", outbuf, blocksize);
         nbytes -= blocksize;
         encCount += blocksize;
-        inbuf+=blocksize;
+        inbuf += blocksize;
+        bytesFromBlock(xored, iv);
     }
     /* bla bla */
     if (nbytes)
     { /* process the remaining bytes */
-               printData("if (nbytes) == inbuf", inbuf, nbytes);
+        printf("UGH\n\n");
+        printData("if (nbytes) == inbuf", inbuf, nbytes);
 
         printf("c->u_iv.iv: ");
         logBuffer(iv, blocksize);
@@ -464,27 +469,16 @@ do_cfb_encrypt(Key key, uint8_t *iv, uint8_t *lastiv, size_t blocksize, const ui
         struct Block ivEncrypted = encrypt(key, blockFromBytes(iv));
         printf("c->u_iv.iv encrypted: ");
         printBlock(ivEncrypted);
-        uint8_t final[8];
-        for(int i = 0;i<8;i++){
-            if(i<nbytes){
-                final[i] = inbuf[i];
-            }else{
-                final[i] = 0x00;
-            }
-        }
-        printData("final", final, blocksize);
-        struct Block finalBlock = blockFromBytes(final);
-        printBlock(finalBlock);
-        struct Block xored = xorBlock(ivEncrypted, finalBlock);
-        printf("outbuf: ");
-        printBlock(xored);
-        uint8_t* ivp;
-         for (ivp = iv; nbytes; nbytes--)
-            {
+        uint8_t *ivp;
+        bytesFromBlock(ivEncrypted, iv);
+        for (ivp = iv; nbytes; nbytes--)
+        {
             uint8_t b = (*ivp++ ^= *inbuf++);
-            printf("%02x ", b);
-            }
+            // printf("%02x ", b);
+            outbuf[encCount++] = b;
+        }
     }
+    printData("Encrypted:", outbuf, totalIn);
 }
 
 void printUint32Hex(uint32_t data)
@@ -551,9 +545,9 @@ void main()
     randomQuickCheck[9] = random[7];
     uint8_t iv[8] = {0};
     uint8_t lastIv[8] = {0};
-   
-do_cfb_encrypt(encKey,iv,lastIv,8,randomQuickCheck,10);
-   
+
+    do_cfb_encrypt(encKey, iv, lastIv, 8, randomQuickCheck, 10);
+
     while (1)
     {
     } // Loop forever
