@@ -419,68 +419,46 @@ void bytesFromBlock(struct Block block, uint8_t *bytes)
 }
 
 // taken and modified from libgcrypt
-void do_cfb_encrypt(Key key, uint8_t *iv, uint8_t *lastiv, size_t blocksize, const uint8_t *inbuf, unsigned nbytes)
+void do_cfb_encrypt(Key key, uint8_t *iv, uint8_t *lastiv, size_t blocksize, const uint8_t *inbuf, unsigned nbytes, uint8_t *outbuf, uint8_t *return_iv)
 {
-    uint8_t outbuf[nbytes];
     int encCount = 0;
     int totalIn = nbytes;
+
     if (nbytes >= blocksize)
     {
-        printData("inbuf", inbuf, nbytes);
-        // printf("inbuf: ");
-        // logBuffer(inbuf, nbytes);
-        /* Save the current IV and then encrypt the IV. */
-        printf("c->u_iv.iv: ");
-        logBuffer(iv, blocksize);
-        printData("iv", inbuf, blocksize);
-
-        /* encrypt the IV (and save the current one) */
+        // Save the current IV and then encrypt the IV.
         memcpy(lastiv, iv, blocksize);
+        printData("LAST IV:", iv, blocksize);
         struct Block ivEncrypted = encrypt(key, blockFromBytes(iv));
-        printf("c->u_iv.iv encrypted: ");
-        printBlock(ivEncrypted);
         struct Block xored = xorBlock(ivEncrypted, blockFromBytes(inbuf));
-        printf("outbuf: ");
-        printBlock(xored);
-        uint8_t block[8];
-        bytesFromBlock(xored, block);
-        printData("BLock:", block, blocksize);
-        for (int i = 0; i < blocksize; i++)
-        {
-            outbuf[i] = block[i];
-        }
-        printData("Encrypted:", outbuf, blocksize);
+        bytesFromBlock(xored, outbuf);
+        bytesFromBlock(xored, iv);
+        printData("IV:", iv, blocksize);
         nbytes -= blocksize;
         encCount += blocksize;
         inbuf += blocksize;
-        bytesFromBlock(xored, iv);
+        outbuf += blocksize;
     }
-    /* bla bla */
-    if (nbytes)
-    { /* process the remaining bytes */
-        printf("UGH\n\n");
-        printData("if (nbytes) == inbuf", inbuf, nbytes);
 
-        printf("c->u_iv.iv: ");
-        logBuffer(iv, blocksize);
-        printData("iv", inbuf, blocksize);
-        /* encrypt the IV (and save the current one) */
+    // Process the remaining bytes
+    if (nbytes)
+    {
         memcpy(lastiv, iv, blocksize);
+        printData("LAST IV", lastiv, blocksize);
         struct Block ivEncrypted = encrypt(key, blockFromBytes(iv));
-        printf("c->u_iv.iv encrypted: ");
-        printBlock(ivEncrypted);
         uint8_t *ivp;
         bytesFromBlock(ivEncrypted, iv);
+        printData("IV", iv, blocksize);
+        // Copy the final IV to the return_iv parameter
+        memcpy(return_iv, iv, blocksize);
         for (ivp = iv; nbytes; nbytes--)
         {
-            uint8_t b = (*ivp++ ^= *inbuf++);
-            // printf("%02x ", b);
-            outbuf[encCount++] = b;
+            *outbuf++ = (*ivp++ ^= *inbuf++);
         }
     }
-    printData("Encrypted:", outbuf, totalIn);
-}
 
+    return;
+}
 void printUint32Hex(uint32_t data)
 {
     printf("%08X\n", data);
@@ -546,8 +524,24 @@ void main()
     uint8_t iv[8] = {0};
     uint8_t lastIv[8] = {0};
 
-    do_cfb_encrypt(encKey, iv, lastIv, 8, randomQuickCheck, 10);
+    uint8_t outbuf[10];
+    uint8_t return_iv[8];
 
+    do_cfb_encrypt(encKey, iv, lastIv, 8, randomQuickCheck, 10, outbuf, return_iv);
+
+    printf("Latest IV: ");
+    for (int i = 0; i < 8; i++)
+    {
+        printf("%02X ", return_iv[i]);
+    }
+    printf("\n");
+
+    printf("Encrypted Data: ");
+    for (int i = 0; i < 10; i++)
+    {
+        printf("%02X ", outbuf[i]);
+    }
+    printf("\n");
     while (1)
     {
     } // Loop forever
