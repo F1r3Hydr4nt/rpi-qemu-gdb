@@ -450,10 +450,23 @@ void do_cfb_encrypt(Key key, uint8_t *iv, uint8_t *lastiv, size_t blocksize, con
         bytesFromBlock(ivEncrypted, iv);
         printData("IV", iv, blocksize);
         // Copy the final IV to the return_iv parameter
-        memcpy(return_iv, iv, blocksize);
+        //memcpy(return_iv, iv, blocksize);
+        int leftover = nbytes;
         for (ivp = iv; nbytes; nbytes--)
         {
             *outbuf++ = (*ivp++ ^= *inbuf++);
+            encCount++;
+        }
+        printData("IV", iv, blocksize);
+        printData("outbuf", outbuf-encCount, totalIn);
+        for(int i = 0;i < blocksize;i++){
+            if(i<blocksize-leftover){
+                return_iv[i] = lastiv[i+leftover];
+            }else{
+                // 10 - 2 + (i+leftover) - blocksize
+                // printf("i: %d\n",totalIn-blocksize+i);
+                return_iv[i] = (outbuf-encCount)[totalIn-blocksize+i];
+            }
         }
     }
 
