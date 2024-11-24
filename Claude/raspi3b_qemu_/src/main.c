@@ -418,142 +418,6 @@ void bytesFromBlock(struct Block block, uint8_t *bytes)
     bytes[0] = (block.msb & 0xFF000000) >> 24;
 }
 
-size_t do_cfb_encrypt(Key key, uint8_t *iv, uint8_t *lastiv, size_t blocksize,
-                      const uint8_t *inbuf, unsigned nbytes, uint8_t *outbuf,
-                      uint8_t *return_iv, size_t unused, size_t inbuflen, size_t outbuflen)
-{
-    printf("=== Starting CFB encrypt ===\n");
-    // printf("Input bytes: %d\n", nbytes);
-    unsigned char *ivp;
-
-    int shouldShift = nbytes > blocksize;
-    if ( inbuflen <= unused )
-    {
-    printf("cfb_encrypt 1 %d %d %d\n",inbuflen,outbuflen,unused);
-    printf("cfb_encrypt 1 THIS NEEDS TO BE IMPLEMENTED%d %d %d\n");
-      /* Short enough to be encoded by the remaining XOR mask. */
-      /* XOR the input with the IV and store input into IV. */
-    ivp = iv + blocksize - unused;
-    printData("ivp IV:", ivp, blocksize);
-
-    //   buf_xor_2dst(outbuf, ivp, inbuf, inbuflen);
-    //   c->unused -= inbuflen;
-    //   log_printhex("IV", c->u_iv.iv, blocksize);
-    //   return 0;
-    }
-    printf("Input data: ");
-    for (unsigned int i = 0; i < nbytes; i++)
-    {
-        printf("%02X ", inbuf[i]);
-    }
-    printf("\n");
-    printf("Starting unused: %d\n", unused);
-    printData("Start IV:", iv, blocksize);
-
-    if (unused)
-    {
-      printf("cfb_encrypt 2 %d\n", unused);
-      /* XOR the input with the IV and store input into IV */
-      inbuflen -= unused;
-      ivp = iv + blocksize - unused;
-      // buf_xor_2dst(outbuf, ivp, inbuf, unused);
-      for (unsigned i = 0; i < unused; i++)
-        {
-            outbuf[i] = inbuf[i] ^ ivp[blocksize - unused + i];
-
-            printf("XOR: input[%d]=%02X with encIV[%d]=%02X -> %02X\n",
-                   i, inbuf[i], i, ivp[blocksize - unused + i], outbuf[i]);
-        }
-      outbuf += unused;
-      inbuf += unused;
-      unused = 0;
-      // log_printhex("IV", c->u_iv.iv, blocksize);
-    }
-
-    while (nbytes >= blocksize)
-    {
-        printf("Processing full block\n");
-        memcpy(lastiv, iv, blocksize);
-        struct Block ivEncrypted = encrypt(key, blockFromBytes(iv));
-        uint8_t tempIV[blocksize];
-        bytesFromBlock(ivEncrypted, tempIV);
-        printData("Encrypted IV:", tempIV, blocksize);
-
-        printf("XORing input with encrypted IV:\n");
-        for (unsigned i = 0; i < blocksize; i++)
-        {
-            outbuf[i] = inbuf[i] ^ tempIV[i];
-            /*printf("XOR: input[%d]=%02X with encIV[%d]=%02X -> %02X\n",
-                   i, inbuf[i], i, tempIV[i], outbuf[i]);*/
-        }
-
-        memcpy(iv, outbuf, blocksize);
-        printData("New IV (from ciphertext):", iv, blocksize);
-
-        nbytes -= blocksize;
-        inbuf += blocksize;
-        outbuf += blocksize;
-        printf("Remaining bytes: %d\n", nbytes);
-    }
-
-    if (nbytes)
-    {
-        printf("Processing partial block of %d bytes\n", nbytes);
-        memcpy(lastiv, iv, blocksize);
-        // printData("Saved lastiv:", lastiv, blocksize);
-
-        struct Block ivEncrypted = encrypt(key, blockFromBytes(iv));
-        uint8_t tempIV[blocksize];
-        bytesFromBlock(ivEncrypted, tempIV);
-        printData("Encrypted IV:", tempIV, blocksize);
-
-        // printf("XORing remaining bytes:\n");
-        for (unsigned i = 0; i < nbytes; i++)
-        {
-            outbuf[i] = inbuf[i] ^ tempIV[i];
-            /*printf("XOR: input[%d]=%02X with encIV[%d]=%02X -> %02X\n",
-                   i, inbuf[i], i, tempIV[i], outbuf[i]);*/
-        }
-
-        // For partial blocks, combine output with remaining encrypted IV bytes
-        for (unsigned i = 0; i < blocksize; i++)
-        {
-            if (i < nbytes)
-            {
-                iv[i] = outbuf[i]; // Use encrypted output for processed bytes
-            }
-            else
-            {
-                iv[i] = tempIV[i]; // Use remaining encrypted IV bytes
-            }
-        }
-        printData("New IV (combined output+encrypted):", iv, blocksize);
-        if (shouldShift)
-        {
-
-            // Set up next IV by shifting
-            uint8_t next_iv[blocksize];
-            for (size_t i = 0; i < blocksize - nbytes; i++)
-            {
-                next_iv[i] = lastiv[i + nbytes]; // Copy shifted portion
-            }
-            for (size_t i = 0; i < nbytes; i++)
-            {
-                next_iv[blocksize - nbytes + i] = iv[i]; // Append new output bytes
-            }
-            memcpy(iv, next_iv, blocksize);
-        }
-        else unused = blocksize - nbytes;
-
-        // unused = blocksize - nbytes;
-        // printf("Setting unused=%d for next operation\n", unused);
-    }
-
-    memcpy(return_iv, iv, blocksize);
-    printf("=== CFB encrypt complete ===\n\n");
-    return unused;
-}
-
 void printUint32Hex(uint32_t data)
 {
     printf("%08X\n", data);
@@ -661,36 +525,7 @@ static inline void buf_put_le64(void *_buf, u64 val)
 # define buf_put_he64 buf_put_le64
 /* Optimized function for cipher block xoring with two destination cipher
    blocks.  Used mainly by CFB mode encryption.  */
-// static inline void
-// cipher_block_xor_2dst(void *_dst1, void *_dst2, const void *_src,
-//                       size_t blocksize)
-// {
-//   byte *dst1 = _dst1;
-//   byte *dst2 = _dst2;
-//   const byte *src = _src;
-//   u64 d2[2];
-//   u64 s[2];
 
-//   if (blocksize == 8)
-//     {
-//       d2[0] = buf_get_he64(dst2 + 0) ^ buf_get_he64(src + 0);
-//       buf_put_he64(dst2 + 0, d2[0]);
-//       buf_put_he64(dst1 + 0, d2[0]);
-//     }
-//   else /* blocksize == 16 */
-//     {
-//       s[0] = buf_get_he64(src + 0);
-//       s[1] = buf_get_he64(src + 8);
-//       d2[0] = buf_get_he64(dst2 + 0);
-//       d2[1] = buf_get_he64(dst2 + 8);
-//       d2[0] = d2[0] ^ s[0];
-//       d2[1] = d2[1] ^ s[1];
-//       buf_put_he64(dst2 + 0, d2[0]);
-//       buf_put_he64(dst2 + 8, d2[1]);
-//       buf_put_he64(dst1 + 0, d2[0]);
-//       buf_put_he64(dst1 + 8, d2[1]);
-//     }
-// }
 static inline void
 cipher_block_xor_2dst(void *_dst1, void *_dst2, const void *_src, size_t blocksize)
 {
@@ -930,6 +765,46 @@ if (inbuflen >= blocksize_x_2 && 0){} //c->bulk.cfb_enc)
   return 0;
 }
 
+void formatGPGOutput(const uint8_t* symKeyPacket, size_t symKeyPacketLen,
+                    const uint8_t* encHeader, 
+                    const uint8_t* randomEncrypted, size_t randomEncryptedLen,
+                    const uint8_t* packetEncrypted,
+                    const uint8_t* dataEncrypted, size_t dataEncryptedLen,
+                    uint8_t* output, size_t* outputLen) {
+    size_t offset = 0;
+    
+    // Copy symmetric key packet
+    memcpy(output + offset, symKeyPacket, symKeyPacketLen);
+    offset += symKeyPacketLen;
+    
+    // Add encrypted packet header (0xC9 0x1F)
+    output[offset++] = 0xC9;
+    output[offset++] = 0x1F;
+    
+    // Copy encrypted random data
+    memcpy(output + offset, randomEncrypted, randomEncryptedLen);
+    offset += randomEncryptedLen;
+    
+    // Copy encrypted packet byte 
+    memcpy(output + offset, packetEncrypted, 1);
+    offset += 1;
+    
+    // Copy encrypted data
+    memcpy(output + offset, dataEncrypted, dataEncryptedLen);
+    offset += dataEncryptedLen;
+    
+    *outputLen = offset;
+}
+
+// Helper function to print the final output in hex format
+void printFinalOutput(const uint8_t* data, size_t len) {
+    for(size_t i = 0; i < len; i++) {
+        printf("%02x", data[i]);
+        if((i + 1) % 32 == 0) printf("\n");
+    }
+    printf("\n");
+}
+
 void main()
 {
     init_printf(0, putc_uart);
@@ -970,15 +845,7 @@ void main()
     {
         printf("%02X", key[i]);
     }
-    printf("\n");
-    Key encKey = {0, 0, 0, 0};
-    int j = 0;
-    for (int i = 0; i < 4; i++)
-    {
-        encKey[i] = (key[j] << 24) + (key[j + 1] << 16) + (key[j + 2] << 8) + key[j + 3];
-        // printUint32Hex(encKey[i]);
-        j += 4;
-    }
+   
     // Now we take the random and duplicate the last two bytes
     uint8_t randomQuickCheck[10] = {0};
     for (int i = 0; i < 8; i++)
@@ -992,22 +859,9 @@ void main()
     uint8_t outbuf[10];
     uint8_t return_iv[8];
     size_t unused = 0;
-
-    int nBytes = 10;
-    unused = do_cfb_encrypt(encKey, iv, lastIv, 8, randomQuickCheck, nBytes, outbuf, return_iv, unused, 10, 10);
-    printData("Encrypted", outbuf, nBytes);
-    printData("Latest IV", return_iv, sizeof(return_iv));
-    printf("unused %d\n", unused);
-
-
     uint8_t packetByte[1] = {0xcb}; // Plaintext
-    nBytes = 1;
 
     uint8_t outbuf2[1];
-    unused = do_cfb_encrypt(encKey, return_iv, lastIv, 8, packetByte, nBytes, outbuf2, return_iv, unused, 1, 1);
-    printData("Encrypted", outbuf2, nBytes);
-    printData("Latest IV", return_iv, sizeof(return_iv));
-    printf("unused %d\n", unused);
    
     uint8_t modeByte =0x62;
 // gpg: Writing namelen: 0
@@ -1033,10 +887,7 @@ void main()
         lengthPkt, modeByte, nameLen, 0x60, 0xd8, 0x30, 0x00, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x21, 0x0a};
 
     uint8_t outbuf3[sizeof(plaintextData)];
-    unused = do_cfb_encrypt(encKey, return_iv, lastIv, 8, plaintextData, sizeof(outbuf3), outbuf3, return_iv, unused, 20, 20);
-    printData("Encrypted", outbuf3, sizeof(outbuf3));
-    printData("Latest IV", return_iv, sizeof(return_iv));
-    printf("unused %d\n", unused);
+    
 
     printf("\n\nCompared with:\n");
     // Create and initialize cipher handle
@@ -1048,7 +899,7 @@ void main()
     
     // Set up the key in the context
     Key *ctx_key = (Key *)&c->context.c;
-    j = 0;
+    int j = 0;
 
     for (int i = 0; i < 4; i++)
     {
@@ -1080,7 +931,24 @@ _gcry_cipher_cfb_encrypt(c, outbuf3, sizeof(outbuf3),
     printData("Encrypted", outbuf3, sizeof(outbuf3));
     printData("Latest IV", c->u_iv.iv, 8);
     printf("unused %d\n", c->unused);
+// In main(), after your encryption operations:
 
+uint8_t finalOutput[256]; // Make sure this is large enough
+size_t outputLen;
+
+// Format the complete GPG output
+formatGPGOutput(
+    symKeyPacket, sizeof(symKeyPacket),
+    NULL, // No separate header needed as it's part of the symKeyPacket
+    outbuf, sizeof(outbuf), // Include all 10 bytes
+    outbuf2,
+    outbuf3, sizeof(outbuf3),
+    finalOutput, &outputLen
+);
+
+// Print the final output in hex format
+printf("\nFinal GPG Output:\n");
+printFinalOutput(finalOutput, outputLen);
 
     while (1)
     {
