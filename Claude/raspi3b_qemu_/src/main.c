@@ -419,111 +419,136 @@ void bytesFromBlock(struct Block block, uint8_t *bytes)
 }
 
 size_t do_cfb_encrypt(Key key, uint8_t *iv, uint8_t *lastiv, size_t blocksize,
-                    const uint8_t *inbuf, unsigned nbytes, uint8_t *outbuf, 
-                    uint8_t *return_iv, size_t unused)
+                      const uint8_t *inbuf, unsigned nbytes, uint8_t *outbuf,
+                      uint8_t *return_iv, size_t unused, size_t inbuflen, size_t outbuflen)
 {
     printf("=== Starting CFB encrypt ===\n");
-    printf("Input bytes: %d\n", nbytes);
+    // printf("Input bytes: %d\n", nbytes);
+    unsigned char *ivp;
+
+    int shouldShift = nbytes > blocksize;
+    if ( inbuflen <= unused )
+    {
+    printf("cfb_encrypt 1 %d %d %d\n",inbuflen,outbuflen,unused);
+    printf("cfb_encrypt 1 THIS NEEDS TO BE IMPLEMENTED%d %d %d\n");
+      /* Short enough to be encoded by the remaining XOR mask. */
+      /* XOR the input with the IV and store input into IV. */
+    ivp = iv + blocksize - unused;
+    printData("ivp IV:", ivp, blocksize);
+
+    //   buf_xor_2dst(outbuf, ivp, inbuf, inbuflen);
+    //   c->unused -= inbuflen;
+    //   log_printhex("IV", c->u_iv.iv, blocksize);
+    //   return 0;
+    }
     printf("Input data: ");
-    for(unsigned int i = 0; i < nbytes; i++) {
+    for (unsigned int i = 0; i < nbytes; i++)
+    {
         printf("%02X ", inbuf[i]);
     }
     printf("\n");
     printf("Starting unused: %d\n", unused);
     printData("Start IV:", iv, blocksize);
 
-    if (unused && nbytes) {
-        printf("Using %d unused bytes from previous operation\n", unused);
-        size_t bytes_to_use = (nbytes < unused) ? nbytes : unused;
-        printf("Will use %d bytes with current IV\n", bytes_to_use);
-        
-        for (unsigned i = 0; i < bytes_to_use; i++) {
-            outbuf[i] = inbuf[i] ^ iv[blocksize - unused + i];
-            printf("XOR: input[%d]=%02X with iv[%d]=%02X -> %02X\n", 
-                   i, inbuf[i], blocksize - unused + i, iv[blocksize - unused + i], outbuf[i]);
+    if (unused)
+    {
+      printf("cfb_encrypt 2 %d\n", unused);
+      /* XOR the input with the IV and store input into IV */
+      inbuflen -= unused;
+      ivp = iv + blocksize - unused;
+      // buf_xor_2dst(outbuf, ivp, inbuf, unused);
+      for (unsigned i = 0; i < unused; i++)
+        {
+            outbuf[i] = inbuf[i] ^ ivp[blocksize - unused + i];
+
+            printf("XOR: input[%d]=%02X with encIV[%d]=%02X -> %02X\n",
+                   i, inbuf[i], i, ivp[blocksize - unused + i], outbuf[i]);
         }
-        
-        nbytes -= bytes_to_use;
-        inbuf += bytes_to_use;
-        outbuf += bytes_to_use;
-        unused -= bytes_to_use;
-        
-        printf("After unused: remaining bytes=%d, unused=%d\n", nbytes, unused);
-        printData("Current IV:", iv, blocksize);
-        
-        if (nbytes == 0) {
-            memcpy(return_iv, iv, blocksize);
-            return unused;
-        }
+      outbuf += unused;
+      inbuf += unused;
+      unused = 0;
+      // log_printhex("IV", c->u_iv.iv, blocksize);
     }
 
-    while (nbytes >= blocksize) {
+    while (nbytes >= blocksize)
+    {
         printf("Processing full block\n");
         memcpy(lastiv, iv, blocksize);
-        printData("Saved lastiv:", lastiv, blocksize);
-        
         struct Block ivEncrypted = encrypt(key, blockFromBytes(iv));
         uint8_t tempIV[blocksize];
         bytesFromBlock(ivEncrypted, tempIV);
         printData("Encrypted IV:", tempIV, blocksize);
-        
+
         printf("XORing input with encrypted IV:\n");
-        for (unsigned i = 0; i < blocksize; i++) {
+        for (unsigned i = 0; i < blocksize; i++)
+        {
             outbuf[i] = inbuf[i] ^ tempIV[i];
-            printf("XOR: input[%d]=%02X with encIV[%d]=%02X -> %02X\n", 
-                   i, inbuf[i], i, tempIV[i], outbuf[i]);
+            /*printf("XOR: input[%d]=%02X with encIV[%d]=%02X -> %02X\n",
+                   i, inbuf[i], i, tempIV[i], outbuf[i]);*/
         }
-        
+
         memcpy(iv, outbuf, blocksize);
         printData("New IV (from ciphertext):", iv, blocksize);
-        
+
         nbytes -= blocksize;
         inbuf += blocksize;
         outbuf += blocksize;
         printf("Remaining bytes: %d\n", nbytes);
     }
 
-    if (nbytes) {
+    if (nbytes)
+    {
         printf("Processing partial block of %d bytes\n", nbytes);
         memcpy(lastiv, iv, blocksize);
-        printData("Saved lastiv:", lastiv, blocksize);
-        
+        // printData("Saved lastiv:", lastiv, blocksize);
+
         struct Block ivEncrypted = encrypt(key, blockFromBytes(iv));
         uint8_t tempIV[blocksize];
         bytesFromBlock(ivEncrypted, tempIV);
         printData("Encrypted IV:", tempIV, blocksize);
-        
-        printf("XORing remaining bytes:\n");
-        for (unsigned i = 0; i < nbytes; i++) {
+
+        // printf("XORing remaining bytes:\n");
+        for (unsigned i = 0; i < nbytes; i++)
+        {
             outbuf[i] = inbuf[i] ^ tempIV[i];
-            printf("XOR: input[%d]=%02X with encIV[%d]=%02X -> %02X\n", 
-                   i, inbuf[i], i, tempIV[i], outbuf[i]);
+            /*printf("XOR: input[%d]=%02X with encIV[%d]=%02X -> %02X\n",
+                   i, inbuf[i], i, tempIV[i], outbuf[i]);*/
         }
-        
+
         // For partial blocks, combine output with remaining encrypted IV bytes
-        for (unsigned i = 0; i < blocksize; i++) {
-            if (i < nbytes) {
-                iv[i] = outbuf[i];  // Use encrypted output for processed bytes
-            } else {
-                iv[i] = tempIV[i];  // Use remaining encrypted IV bytes
+        for (unsigned i = 0; i < blocksize; i++)
+        {
+            if (i < nbytes)
+            {
+                iv[i] = outbuf[i]; // Use encrypted output for processed bytes
+            }
+            else
+            {
+                iv[i] = tempIV[i]; // Use remaining encrypted IV bytes
             }
         }
         printData("New IV (combined output+encrypted):", iv, blocksize);
-        
-        // Set up next IV by shifting
-        uint8_t next_iv[blocksize];
-        for (size_t i = 0; i < blocksize - nbytes; i++) {
-            next_iv[i] = lastiv[i + nbytes];  // Copy shifted portion
+        if (shouldShift)
+        {
+
+            // Set up next IV by shifting
+            uint8_t next_iv[blocksize];
+            for (size_t i = 0; i < blocksize - nbytes; i++)
+            {
+                next_iv[i] = lastiv[i + nbytes]; // Copy shifted portion
+            }
+            for (size_t i = 0; i < nbytes; i++)
+            {
+                next_iv[blocksize - nbytes + i] = iv[i]; // Append new output bytes
+            }
+            memcpy(iv, next_iv, blocksize);
         }
-        for (size_t i = 0; i < nbytes; i++) {
-            next_iv[blocksize - nbytes + i] = iv[i];  // Append new output bytes
-        }
-        memcpy(iv, next_iv, blocksize);
-        
+        else unused = blocksize - nbytes;
+
         // unused = blocksize - nbytes;
         // printf("Setting unused=%d for next operation\n", unused);
     }
-    
+
     memcpy(return_iv, iv, blocksize);
     printf("=== CFB encrypt complete ===\n\n");
     return unused;
@@ -532,6 +557,377 @@ size_t do_cfb_encrypt(Key key, uint8_t *iv, uint8_t *lastiv, size_t blocksize,
 void printUint32Hex(uint32_t data)
 {
     printf("%08X\n", data);
+}
+
+/* The data object used to hold a handle to an encryption object.  */
+struct gcry_cipher_handle;
+typedef struct gcry_cipher_handle *gcry_cipher_hd_t;
+
+   typedef unsigned long u64;
+      typedef unsigned int  u32;
+
+   typedef unsigned char byte;
+typedef union
+{
+  int a;
+  short b;
+  char c[1];
+  long d;
+  u64 e;
+  float f;
+  double g;
+} PROPERLY_ALIGNED_TYPE;
+typedef union
+{
+  PROPERLY_ALIGNED_TYPE foo;
+#ifdef NEED_16BYTE_ALIGNED_CONTEXT
+  char bar[16] __attribute__ ((aligned (16)));
+#endif
+  char c[1];
+} cipher_context_alignment_t;
+
+
+/* The maximum supported size of a block in bytes.  */
+#define MAX_BLOCKSIZE 16
+/* The handle structure.  */
+struct gcry_cipher_handle
+{
+  /* The initialization vector.  For best performance we make sure
+     that it is properly aligned.  In particular some implementations
+     of bulk operations expect an 16 byte aligned IV.  IV is also used
+     to store CBC-MAC in CCM mode; counter IV is stored in U_CTR.  For
+     OCB mode it is used for the offset value.  */
+  union {
+    cipher_context_alignment_t iv_align;
+    unsigned char iv[MAX_BLOCKSIZE];
+  } u_iv;
+
+  /* Space to save an IV or CTR for chaining operations.  */
+  unsigned char lastiv[MAX_BLOCKSIZE];
+  int unused;  /* Number of unused bytes in LASTIV. */
+
+
+  /* What follows are two contexts of the cipher in use.  The first
+     one needs to be aligned well enough for the cipher operation
+     whereas the second one is a copy created by cipher_setkey and
+     used by cipher_reset.  That second copy has no need for proper
+     aligment because it is only accessed by memcpy.  */
+  cipher_context_alignment_t context;
+};
+
+
+
+static inline u32 buf_get_le32(const void *_buf)
+{
+  const byte *in = _buf;
+  return ((u32)in[3] << 24) | ((u32)in[2] << 16) | \
+         ((u32)in[1] << 8) | (u32)in[0];
+}
+static inline void buf_put_le32(void *_buf, u32 val)
+{
+  byte *out = _buf;
+  out[3] = val >> 24;
+  out[2] = val >> 16;
+  out[1] = val >> 8;
+  out[0] = val;
+}
+
+
+static inline u64 buf_get_le64(const void *_buf)
+{
+  const byte *in = _buf;
+  return ((u64)in[7] << 56) | ((u64)in[6] << 48) | \
+         ((u64)in[5] << 40) | ((u64)in[4] << 32) | \
+         ((u64)in[3] << 24) | ((u64)in[2] << 16) | \
+         ((u64)in[1] << 8) | (u64)in[0];
+}
+static inline void buf_put_le64(void *_buf, u64 val)
+{
+  byte *out = _buf;
+  out[7] = val >> 56;
+  out[6] = val >> 48;
+  out[5] = val >> 40;
+  out[4] = val >> 32;
+  out[3] = val >> 24;
+  out[2] = val >> 16;
+  out[1] = val >> 8;
+  out[0] = val;
+}
+
+
+# define buf_get_he32 buf_get_le32
+# define buf_put_he32 buf_put_le32
+# define buf_get_he64 buf_get_le64
+# define buf_put_he64 buf_put_le64
+/* Optimized function for cipher block xoring with two destination cipher
+   blocks.  Used mainly by CFB mode encryption.  */
+// static inline void
+// cipher_block_xor_2dst(void *_dst1, void *_dst2, const void *_src,
+//                       size_t blocksize)
+// {
+//   byte *dst1 = _dst1;
+//   byte *dst2 = _dst2;
+//   const byte *src = _src;
+//   u64 d2[2];
+//   u64 s[2];
+
+//   if (blocksize == 8)
+//     {
+//       d2[0] = buf_get_he64(dst2 + 0) ^ buf_get_he64(src + 0);
+//       buf_put_he64(dst2 + 0, d2[0]);
+//       buf_put_he64(dst1 + 0, d2[0]);
+//     }
+//   else /* blocksize == 16 */
+//     {
+//       s[0] = buf_get_he64(src + 0);
+//       s[1] = buf_get_he64(src + 8);
+//       d2[0] = buf_get_he64(dst2 + 0);
+//       d2[1] = buf_get_he64(dst2 + 8);
+//       d2[0] = d2[0] ^ s[0];
+//       d2[1] = d2[1] ^ s[1];
+//       buf_put_he64(dst2 + 0, d2[0]);
+//       buf_put_he64(dst2 + 8, d2[1]);
+//       buf_put_he64(dst1 + 0, d2[0]);
+//       buf_put_he64(dst1 + 8, d2[1]);
+//     }
+// }
+static inline void
+cipher_block_xor_2dst(void *_dst1, void *_dst2, const void *_src, size_t blocksize)
+{
+    byte *dst1 = _dst1;
+    byte *dst2 = _dst2;
+    const byte *src = _src;
+
+    // Process complete blocks
+    if (blocksize == 8)
+    {
+        // For 64-bit blocks
+        for (size_t i = 0; i < 8; i++)
+        {
+            byte temp = dst2[i] ^ src[i];
+            dst2[i] = temp;
+            dst1[i] = temp;
+        }
+    }
+    else /* blocksize == 16 */
+    {
+        // For 128-bit blocks
+        for (size_t i = 0; i < 16; i++)
+        {
+            byte temp = dst2[i] ^ src[i];
+            dst2[i] = temp;
+            dst1[i] = temp;
+        }
+    }
+}
+
+// Helper function to XOR buffers of any length
+static inline void
+buf_xor_2dst_v2(void *_dst1, void *_dst2, const void *_src, size_t len)
+{
+    byte *dst1 = _dst1;
+    byte *dst2 = _dst2;
+    const byte *src = _src;
+
+    // Process all bytes
+    for (size_t i = 0; i < len; i++)
+    {
+        byte temp = dst2[i] ^ src[i];
+        dst2[i] = temp;
+        dst1[i] = temp;
+    }
+}
+/* Optimized function for buffer xoring with two destination buffers.  Used
+   mainly by CFB mode encryption.  */
+static inline void
+buf_xor_2dst(void *_dst1, void *_dst2, const void *_src, size_t len)
+{
+  byte *dst1 = _dst1;
+  byte *dst2 = _dst2;
+  const byte *src = _src;
+
+  while (len >= sizeof(u64))
+    {
+      u64 temp = buf_get_he64(dst2) ^ buf_get_he64(src);
+      buf_put_he64(dst2, temp);
+      buf_put_he64(dst1, temp);
+      dst2 += sizeof(u64);
+      dst1 += sizeof(u64);
+      src += sizeof(u64);
+      len -= sizeof(u64);
+    }
+
+  if (len >= sizeof(u32))
+    {
+      u32 temp = buf_get_he32(dst2) ^ buf_get_he32(src);
+      buf_put_he32(dst2, temp);
+      buf_put_he32(dst1, temp);
+      dst2 += sizeof(u32);
+      dst1 += sizeof(u32);
+      src += sizeof(u32);
+      len -= sizeof(u32);
+    }
+
+  /* Handle tail.  */
+  for (; len; len--)
+    *dst1++ = (*dst2++ ^= *src++);
+}
+
+/* Optimized function for cipher block copying */
+static inline void
+cipher_block_cpy(void *_dst, const void *_src, size_t blocksize)
+{
+  byte *dst = _dst;
+  const byte *src = _src;
+  u64 s[2];
+
+  if (blocksize == 8)
+    {
+      buf_put_he64(dst + 0, buf_get_he64(src + 0));
+    }
+  else /* blocksize == 16 */
+    {
+      s[0] = buf_get_he64(src + 0);
+      s[1] = buf_get_he64(src + 8);
+      buf_put_he64(dst + 0, s[0]);
+      buf_put_he64(dst + 8, s[1]);
+    }
+}
+
+// gcry_err_code_t
+int _gcry_cipher_cfb_encrypt (gcry_cipher_hd_t c,
+                          unsigned char *outbuf, size_t outbuflen,
+                          const unsigned char *inbuf, size_t inbuflen)
+{  
+  unsigned char *ivp;
+  size_t blocksize = 8; //1 << blocksize_shift;
+  size_t blocksize_x_2 = blocksize + blocksize;
+  unsigned int burn, nburn;
+  int shouldShift = inbuflen > blocksize;
+  if (outbuflen < inbuflen)
+    return -1; //GPG_ERR_BUFFER_TOO_SHORT;
+
+  if ( inbuflen <= c->unused )
+    {
+        printf("cfb_encrypt 1 %d %d %d\n",inbuflen,outbuflen,c->unused);
+      /* Short enough to be encoded by the remaining XOR mask. */
+      /* XOR the input with the IV and store input into IV. */
+      ivp = c->u_iv.iv + blocksize - c->unused;
+      buf_xor_2dst_v2(outbuf, ivp, inbuf, inbuflen);
+      c->unused -= inbuflen;
+      return 0;
+    }
+
+  burn = 0;
+
+  if ( c->unused )
+    {
+      printf("cfb_encrypt 2 %d %d %d\n",inbuflen,outbuflen,c->unused);
+      /* XOR the input with the IV and store input into IV */
+      inbuflen -= c->unused;
+      ivp = c->u_iv.iv + blocksize - c->unused;
+      buf_xor_2dst_v2(outbuf, ivp, inbuf, c->unused);
+      outbuf += c->unused;
+      inbuf += c->unused;
+      c->unused = 0;
+      // log_printhex("IV", c->u_iv.iv, blocksize);
+    }
+
+  /* Now we can process complete blocks.  We use a loop as long as we
+     have at least 2 blocks and use conditions for the rest.  This
+     also allows to use a bulk encryption function if available.  */
+if (inbuflen >= blocksize_x_2 && 0){} //c->bulk.cfb_enc)
+  else
+    {
+    printf("cfb_encrypt 4 %d %d %d\n",inbuflen,outbuflen,c->unused);
+
+      while ( inbuflen >= blocksize_x_2 )
+        {
+          /* Encrypt the IV. */
+        //   nburn = enc_fn ( &c->context.c, c->u_iv.iv, c->u_iv.iv );
+        //   burn = nburn > burn ? nburn : burn;
+        struct Block ivBlock = blockFromBytes(c->u_iv.iv);
+        printBlock(ivBlock);
+
+        // Encrypt the IV using our encrypt function
+        ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
+        printBlock(ivBlock);
+        // Convert encrypted block back to IV
+        bytesFromBlock(ivBlock, c->u_iv.iv);
+          /* XOR the input with the IV and store input into IV.  */
+          cipher_block_xor_2dst(outbuf, c->u_iv.iv, inbuf, blocksize);
+                        printBlock(blockFromBytes(c->u_iv.iv));
+
+          outbuf += blocksize;
+          inbuf += blocksize;
+          inbuflen -= blocksize;
+          // log_printhex("IV", c->u_iv.iv, blocksize);
+        }
+        // log_printhex("IV", c->u_iv.iv, blocksize);
+    }
+
+  if ( inbuflen >= blocksize )
+    {
+    printf("cfb_encrypt 5 %d %d %d\n",inbuflen,outbuflen,c->unused);
+      /* Save the current IV and then encrypt the IV. */
+      cipher_block_cpy( c->lastiv, c->u_iv.iv, blocksize );
+      // nburn = enc_fn ( &c->context.c, c->u_iv.iv, c->u_iv.iv );
+      // burn = nburn > burn ? nburn : burn;
+
+      // Convert IV to block structure and encrypt
+      struct Block ivBlock = blockFromBytes(c->u_iv.iv);
+                    printBlock(ivBlock);
+
+      ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
+      bytesFromBlock(ivBlock, c->u_iv.iv);
+        printBlock(ivBlock);
+
+      /* XOR the input with the IV and store input into IV */
+      cipher_block_xor_2dst(outbuf, c->u_iv.iv, inbuf, blocksize);
+                              printBlock(blockFromBytes(c->u_iv.iv));
+
+      outbuf += blocksize;
+      inbuf += blocksize;
+      inbuflen -= blocksize;
+      // log_printhex("IV", c->u_iv.iv, blocksize);
+    }
+   if (inbuflen)
+    {
+        printf("cfb_encrypt 6 %d %d %d\n", inbuflen, outbuflen, c->unused);
+
+        /* Save the current IV before encryption */
+        unsigned char saved_iv[blocksize];
+        memcpy(saved_iv, c->u_iv.iv, blocksize);
+        
+        struct Block ivBlock = blockFromBytes(c->u_iv.iv);
+        printBlock(ivBlock);
+
+        ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
+        bytesFromBlock(ivBlock, c->u_iv.iv);
+        printBlock(ivBlock);
+
+        /* XOR with input to get output */
+        buf_xor_2dst_v2(outbuf, c->u_iv.iv, inbuf, inbuflen);
+        if(shouldShift){
+            /* Copy entire shifted value: 1829ACA2C86DC2EA */
+            memcpy(c->u_iv.iv, saved_iv + inbuflen, blocksize - inbuflen);  // Copy 1829ACA2C86D
+            memcpy(c->u_iv.iv + blocksize - inbuflen, outbuf, inbuflen);         // Copy C2EA
+        }else{
+            // replace first byte of ivBlock with first byte of outbuf
+            memcpy(c->u_iv.iv, outbuf, inbuflen);  // Copy 1829ACA2C86D
+            c->unused = blocksize - inbuflen;
+        }
+
+        outbuf += inbuflen;
+        inbuf += inbuflen;
+        inbuflen = 0;
+    }
+
+  if (burn > 0){
+    printf("SHOULD BE BURNING?");//// _gcry_burn_stack (burn + 4 * sizeof(void *));
+  }
+
+  return 0;
 }
 
 void main()
@@ -592,21 +988,100 @@ void main()
     randomQuickCheck[8] = random[6];
     randomQuickCheck[9] = random[7];
     uint8_t iv[8] = {0};
-uint8_t lastIv[8] = {0};
-uint8_t outbuf[10];
-uint8_t return_iv[8];
-size_t unused = 0;
+    uint8_t lastIv[8] = {0};
+    uint8_t outbuf[10];
+    uint8_t return_iv[8];
+    size_t unused = 0;
 
-int nBytes = 10;
-unused = do_cfb_encrypt(encKey, iv, lastIv, 8, randomQuickCheck, nBytes, outbuf, return_iv, unused);
-printData("Encrypted", outbuf, nBytes);
-printData("Latest IV", return_iv, sizeof(return_iv));
+    int nBytes = 10;
+    unused = do_cfb_encrypt(encKey, iv, lastIv, 8, randomQuickCheck, nBytes, outbuf, return_iv, unused, 10, 10);
+    printData("Encrypted", outbuf, nBytes);
+    printData("Latest IV", return_iv, sizeof(return_iv));
+    printf("unused %d\n", unused);
 
-uint8_t packetByte[1] = {0xcb}; // Plaintext
-nBytes = 1;
-unused = do_cfb_encrypt(encKey, return_iv, lastIv, 8, packetByte, nBytes, outbuf, return_iv, unused);
-printData("Encrypted", outbuf, nBytes);
-printData("Latest IV", return_iv, sizeof(return_iv));
+
+    uint8_t packetByte[1] = {0xcb}; // Plaintext
+    nBytes = 1;
+
+    uint8_t outbuf2[1];
+    unused = do_cfb_encrypt(encKey, return_iv, lastIv, 8, packetByte, nBytes, outbuf2, return_iv, unused, 1, 1);
+    printData("Encrypted", outbuf2, nBytes);
+    printData("Latest IV", return_iv, sizeof(return_iv));
+    printf("unused %d\n", unused);
+   
+    uint8_t modeByte =0x62;
+// gpg: Writing namelen: 0
+// gpg: DBG: iobuf_writebyte 62 00
+    uint8_t nameLen=0x00;
+    // gpg: Writing name: 
+    // gpg: DBG: iobuf_write: 62 00
+    // gpg: Writing timestamp: 1624780800
+    // gpg: write_32 60d83000
+    // gpg: DBG: iobuf_writebyte 62 00 60
+    // gpg: DBG: iobuf_writebyte 62 00 60 D8
+    // gpg: DBG: iobuf_writebyte 62 00 60 D8 30
+    // gpg: DBG: iobuf_writebyte 62 00 60 D8 30 00
+    // uint8_t timestamp[1] ={ 0x00 }; DEFINED ABOVE
+    // gpg: DBG: iobuf_write: 62 00 60 D8 30 00 48 65 6C 6C 6F 20 57 6F 72 6C 64 21 0A
+    // Hello World!
+    // gpg: DBG: iobuf_writebyte 13 // LENGTH
+
+    // gpg: DBG: iobuf_write: 13 62 00 60 D8 30 00 48 65 6C 6C 6F 20 57 6F 72 6C 64 21 0A
+    // gpg: cipher_filter_cfb
+    uint8_t lengthPkt = 0x13;
+    uint8_t plaintextData[20] = {
+        lengthPkt, modeByte, nameLen, 0x60, 0xd8, 0x30, 0x00, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x21, 0x0a};
+
+    uint8_t outbuf3[sizeof(plaintextData)];
+    unused = do_cfb_encrypt(encKey, return_iv, lastIv, 8, plaintextData, sizeof(outbuf3), outbuf3, return_iv, unused, 20, 20);
+    printData("Encrypted", outbuf3, sizeof(outbuf3));
+    printData("Latest IV", return_iv, sizeof(return_iv));
+    printf("unused %d\n", unused);
+
+    printf("\n\nCompared with:\n");
+    // Create and initialize cipher handle
+    struct gcry_cipher_handle hd;
+    gcry_cipher_hd_t c = &hd;
+    
+    // Clear the handle structure
+    memset(c, 0, sizeof(*c));
+    
+    // Set up the key in the context
+    Key *ctx_key = (Key *)&c->context.c;
+    j = 0;
+
+    for (int i = 0; i < 4; i++)
+    {
+        (*ctx_key)[i] = (key[j] << 24) + (key[j + 1] << 16) + (key[j + 2] << 8) + key[j + 3];
+        j += 4;
+    }
+
+    // Clear IV
+    memset(c->u_iv.iv, 0, sizeof(c->u_iv.iv));
+    c->unused = 0;
+
+    // First encryption of random data
+    // uint8_t outbuf[10];
+    _gcry_cipher_cfb_encrypt(c, outbuf, sizeof(outbuf), 
+                            randomQuickCheck, sizeof(randomQuickCheck));
+    printData("Encrypted", outbuf, sizeof(outbuf));
+    printData("Latest IV", c->u_iv.iv, 8);
+    printf("unused %d\n", c->unused);
+
+
+    _gcry_cipher_cfb_encrypt(c, outbuf2, sizeof(outbuf2), 
+                            packetByte, sizeof(packetByte));
+    printData("Encrypted", outbuf2, sizeof(outbuf2));
+    printData("Latest IV", c->u_iv.iv, 8);
+    printf("unused %d\n", c->unused);
+
+_gcry_cipher_cfb_encrypt(c, outbuf3, sizeof(outbuf3), 
+                            plaintextData, sizeof(plaintextData));
+    printData("Encrypted", outbuf3, sizeof(outbuf3));
+    printData("Latest IV", c->u_iv.iv, 8);
+    printf("unused %d\n", c->unused);
+
+
     while (1)
     {
     } // Loop forever
