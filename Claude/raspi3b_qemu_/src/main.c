@@ -83,40 +83,30 @@ size_t my_strlen(const char *str)
     }
     return len;
 }
-
-// Key derivation function using SHA1
-void derive_key(const uint8_t *salt, const char *password, unsigned int pass_len, uint32_t iterations, uint8_t *key)
-{
+void derive_key(const uint8_t *salt, const char *password, unsigned int pass_len, uint32_t iterations, uint8_t *key) {
     SHA1_CTX ctx;
     SHA1Init(&ctx);
-
-    unsigned int saltPlusPasswordLen = 8 + pass_len; // 8 bytes of salt + password length
+//-   unsigned int saltPlusPasswordLen = 8 + pass_len;
     unsigned int bytesProcessed = 0;
     unsigned int index = 0;
 
-    while (bytesProcessed < iterations)
-    {
+    while (bytesProcessed < iterations) {
         uint8_t byte;
-        if (index < 8)
-        {
+        if (index < 8) {
             byte = salt[index];
+        } else {
+// -           byte = password[index - 8];
+           byte = password[(index - 8) % pass_len];
         }
-        else
-        {
-            byte = password[index - 8];
-        }
-
         SHA1Update(&ctx, &byte, 1);
         bytesProcessed++;
         index++;
-
-        // If we've reached the end of saltPlusPassword, wrap around
-        if (index >= saltPlusPasswordLen)
-        {
+        
+// -       if (index >= saltPlusPasswordLen) {
+       if (index >= 8 + pass_len) {
             index = 0;
         }
     }
-
     SHA1Final(key, &ctx);
 }
 // Add this function at the top of your file or in a separate header
@@ -390,7 +380,6 @@ static const uint8_t target_data[] = {
     0x36, 0x90, 0xcf, 0x3f, 0x28, 0xd6, 0x0d, 0x27,
     0xd6, 0x68, 0xd1, 0x17, 0xef, 0xfd, 0xba, 0x09};
 
-static const char password[] = "password";
 static const uint8_t salt[] = {0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11};
 static const uint8_t random[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF};
 static const uint8_t timestamp[] = {0x60, 0xD8, 0x30, 0x00};
@@ -629,6 +618,109 @@ cipher_block_cpy(void *_dst, const void *_src, size_t blocksize)
     }
 }
 
+
+/* Optimized function for combined cipher block xoring and copying.
+   Used by mainly CBC mode decryption.  */
+static inline void
+cipher_block_xor_n_copy_2(void *_dst_xor, const void *_src_xor,
+                          void *_srcdst_cpy, const void *_src_cpy,
+                          size_t blocksize)
+{
+  byte *dst_xor = _dst_xor;
+  byte *srcdst_cpy = _srcdst_cpy;
+  const byte *src_xor = _src_xor;
+  const byte *src_cpy = _src_cpy;
+  u64 sc[2];
+  u64 sx[2];
+  u64 sdc[2];
+
+  if (blocksize == 8)
+    {
+      sc[0] = buf_get_he64(src_cpy + 0);
+      buf_put_he64(dst_xor + 0,
+                   buf_get_he64(srcdst_cpy + 0) ^ buf_get_he64(src_xor + 0));
+      buf_put_he64(srcdst_cpy + 0, sc[0]);
+    }
+  else /* blocksize == 16 */
+    {
+      sc[0] = buf_get_he64(src_cpy + 0);
+      sc[1] = buf_get_he64(src_cpy + 8);
+      sx[0] = buf_get_he64(src_xor + 0);
+      sx[1] = buf_get_he64(src_xor + 8);
+      sdc[0] = buf_get_he64(srcdst_cpy + 0);
+      sdc[1] = buf_get_he64(srcdst_cpy + 8);
+      sx[0] ^= sdc[0];
+      sx[1] ^= sdc[1];
+      buf_put_he64(dst_xor + 0, sx[0]);
+      buf_put_he64(dst_xor + 8, sx[1]);
+      buf_put_he64(srcdst_cpy + 0, sc[0]);
+      buf_put_he64(srcdst_cpy + 8, sc[1]);
+    }
+}
+
+/* Optimized function for combined buffer xoring and copying.  Used by mainly
+   CBC mode decryption.  */
+static inline void
+buf_xor_n_copy_2(void *_dst_xor, const void *_src_xor, void *_srcdst_cpy,
+		 const void *_src_cpy, size_t len)
+{
+  byte *dst_xor = _dst_xor;
+  byte *srcdst_cpy = _srcdst_cpy;
+  const byte *src_xor = _src_xor;
+  const byte *src_cpy = _src_cpy;
+
+  while (len >= sizeof(u64))
+    {
+      u64 temp = buf_get_he64(src_cpy);
+      buf_put_he64(dst_xor, buf_get_he64(srcdst_cpy) ^ buf_get_he64(src_xor));
+      buf_put_he64(srcdst_cpy, temp);
+      dst_xor += sizeof(u64);
+      srcdst_cpy += sizeof(u64);
+      src_xor += sizeof(u64);
+      src_cpy += sizeof(u64);
+      len -= sizeof(u64);
+    }
+
+  if (len >= sizeof(u32))
+    {
+      u32 temp = buf_get_he32(src_cpy);
+      buf_put_he32(dst_xor, buf_get_he32(srcdst_cpy) ^ buf_get_he32(src_xor));
+      buf_put_he32(srcdst_cpy, temp);
+      dst_xor += sizeof(u32);
+      srcdst_cpy += sizeof(u32);
+      src_xor += sizeof(u32);
+      src_cpy += sizeof(u32);
+      len -= sizeof(u32);
+    }
+
+  /* Handle tail.  */
+  for (; len; len--)
+    {
+      byte temp = *src_cpy++;
+      *dst_xor++ = *srcdst_cpy ^ *src_xor++;
+      *srcdst_cpy++ = temp;
+    }
+}
+
+
+/* Optimized function for combined buffer xoring and copying.  Used by mainly
+   CFB mode decryption.  */
+static inline void
+buf_xor_n_copy(void *_dst_xor, void *_srcdst_cpy, const void *_src, size_t len)
+{
+  buf_xor_n_copy_2(_dst_xor, _src, _srcdst_cpy, _src, len);
+}
+
+/* Optimized function for combined cipher block xoring and copying.
+   Used by mainly CFB mode decryption.  */
+static inline void
+cipher_block_xor_n_copy(void *_dst_xor, void *_srcdst_cpy, const void *_src,
+                        size_t blocksize)
+{
+  cipher_block_xor_n_copy_2(_dst_xor, _src, _srcdst_cpy, _src, blocksize);
+}
+
+
 // gcry_err_code_t
 int _gcry_cipher_cfb_encrypt (gcry_cipher_hd_t c,
                           unsigned char *outbuf, size_t outbuflen,
@@ -691,7 +783,7 @@ if (inbuflen >= blocksize_x_2 && 0){} //c->bulk.cfb_enc)
         bytesFromBlock(ivBlock, c->u_iv.iv);
           /* XOR the input with the IV and store input into IV.  */
           cipher_block_xor_2dst(outbuf, c->u_iv.iv, inbuf, blocksize);
-                        printBlock(blockFromBytes(c->u_iv.iv));
+        printBlock(blockFromBytes(c->u_iv.iv));
 
           outbuf += blocksize;
           inbuf += blocksize;
@@ -765,6 +857,125 @@ if (inbuflen >= blocksize_x_2 && 0){} //c->bulk.cfb_enc)
   return 0;
 }
 
+size_t
+_gcry_cipher_cfb_decrypt (gcry_cipher_hd_t c,
+                          unsigned char *outbuf, size_t outbuflen,
+                          const unsigned char *inbuf, size_t inbuflen)
+{
+  printf("gcry_cipher_cfb_decrypt inbuflen %d outbuflen %d\n",inbuflen,outbuflen);
+  unsigned char *ivp;
+  // gcry_cipher_encrypt_t enc_fn = c->spec->encrypt;
+  size_t blocksize_shift = 8; //gcry_blocksize_shift(c);
+  size_t blocksize = 1 << blocksize_shift;
+  size_t blocksize_x_2 = blocksize + blocksize;
+  unsigned int burn, nburn;
+  int shouldShift = inbuflen > blocksize;
+
+  if (outbuflen < inbuflen)
+    return -1; // GPG_ERR_BUFFER_TOO_SHORT;
+
+  if (inbuflen <= c->unused)
+    {
+      /* Short enough to be encoded by the remaining XOR mask. */
+      /* XOR the input with the IV and store input into IV. */
+      ivp = c->u_iv.iv + blocksize - c->unused;
+      buf_xor_n_copy(outbuf, ivp, inbuf, inbuflen);
+      c->unused -= inbuflen;
+      return 0;
+    }
+
+  burn = 0;
+
+  if (c->unused)
+    {
+      /* XOR the input with the IV and store input into IV. */
+      inbuflen -= c->unused;
+      ivp = c->u_iv.iv + blocksize - c->unused;
+      buf_xor_n_copy(outbuf, ivp, inbuf, c->unused);
+      outbuf += c->unused;
+      inbuf += c->unused;
+      c->unused = 0;
+    }
+
+  /* Now we can process complete blocks.  We use a loop as long as we
+     have at least 2 blocks and use conditions for the rest.  This
+     also allows to use a bulk encryption function if available.  */
+  if (inbuflen >= blocksize_x_2 && 0)//c->bulk.cfb_dec)
+    {
+    
+    }
+  else
+    {
+      while (inbuflen >= blocksize_x_2 )
+        {
+          /* Encrypt the IV. */
+         struct Block ivBlock = blockFromBytes(c->u_iv.iv);
+          printBlock(ivBlock);
+
+          ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
+          printBlock(ivBlock);
+          /* XOR the input with the IV and store input into IV. */
+          bytesFromBlock(ivBlock, c->u_iv.iv);
+          cipher_block_xor_n_copy(outbuf, c->u_iv.iv, inbuf, blocksize);
+          printBlock(blockFromBytes(c->u_iv.iv));          outbuf += blocksize;
+          inbuf += blocksize;
+          inbuflen -= blocksize;
+        }
+    }
+
+  if (inbuflen >= blocksize )
+    {
+      /* Save the current IV and then encrypt the IV. */
+      cipher_block_cpy ( c->lastiv, c->u_iv.iv, blocksize);
+ struct Block ivBlock = blockFromBytes(c->u_iv.iv);
+      printBlock(ivBlock);
+      ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
+      bytesFromBlock(ivBlock, c->u_iv.iv);
+      printBlock(ivBlock);
+      /* XOR the input with the IV and store input into IV */
+      cipher_block_xor_n_copy(outbuf, c->u_iv.iv, inbuf, blocksize);
+      printBlock(blockFromBytes(c->u_iv.iv));
+      outbuf += blocksize;
+      inbuf += blocksize;
+      inbuflen -= blocksize;
+    }
+
+  if (inbuflen)
+    {
+      /* Save the current IV and then encrypt the IV. */
+      cipher_block_cpy ( c->lastiv, c->u_iv.iv, blocksize );
+   struct Block ivBlock = blockFromBytes(c->u_iv.iv);
+      printBlock(ivBlock);
+
+      ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
+      bytesFromBlock(ivBlock, c->u_iv.iv);
+      printBlock(ivBlock);
+      c->unused = blocksize;
+      /* Apply the XOR. */
+      c->unused -= inbuflen;
+      /*   if(shouldShift) {
+        unsigned char saved_iv[blocksize];
+        memcpy(saved_iv, c->u_iv.iv, blocksize);
+        buf_xor_n_copy(outbuf, c->u_iv.iv, inbuf, inbuflen);
+        memcpy(c->u_iv.iv, saved_iv + inbuflen, blocksize - inbuflen);
+        memcpy(c->u_iv.iv + blocksize - inbuflen, outbuf, inbuflen);
+      } else {
+        buf_xor_n_copy(outbuf, c->u_iv.iv, inbuf, inbuflen);
+        memcpy(c->u_iv.iv, outbuf, inbuflen);
+      }*/
+      buf_xor_n_copy(outbuf, c->u_iv.iv, inbuf, inbuflen);
+      outbuf += inbuflen;
+      inbuf += inbuflen;
+      inbuflen = 0;
+    }
+
+  if (burn > 0)
+    printf("SHOULD BE BURNING?");//// _gcry_burn_stack (burn + 4 * sizeof(void *));
+
+  return 0;
+}
+
+
 void formatGPGOutput(const uint8_t* symKeyPacket, size_t symKeyPacketLen,
                     const uint8_t* encHeader, 
                     const uint8_t* randomEncrypted, size_t randomEncryptedLen,
@@ -792,6 +1003,9 @@ void formatGPGOutput(const uint8_t* symKeyPacket, size_t symKeyPacketLen,
     // Copy encrypted data
     memcpy(output + offset, dataEncrypted, dataEncryptedLen);
     offset += dataEncryptedLen;
+
+    // Add the final byte 0xB4
+    output[offset++] = 0xB4;
     
     *outputLen = offset;
 }
@@ -805,152 +1019,249 @@ void printFinalOutput(const uint8_t* data, size_t len) {
     printf("\n");
 }
 
+// Maximum sizes for static buffers
+
+#define MAX_FILENAME_LEN 64
+#define MAX_DATA_LEN 256
+#define MAX_PLAINTEXT_SIZE (1 + 1 + 1 + 4 + MAX_FILENAME_LEN + MAX_DATA_LEN)
+// Global static buffers
+static uint8_t g_finalOutput[512];
+static uint8_t g_plaintextData[328];
+static uint8_t g_encryptedData[328];
+static uint8_t g_symKeyPacket[15];
+uint8_t hex_char_to_int(char c) {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    return 0;
+}
+
+void hex_string_to_bytes(const char *hex, uint8_t *bytes, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        bytes[i] = (hex_char_to_int(hex[i*2]) << 4) | hex_char_to_int(hex[i*2 + 1]);
+    }
+}
+
+uint8_t *encryptToGPGFormat(const char *data, const char *filename, const char *passphrase, const char *derivedKey) {
+    printf("Function start\n");
+    
+    size_t outputLen = 0;
+    const uint8_t salt[] = {0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11};
+    const uint8_t random[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF};
+    
+    // Initialize symmetric key packet
+    memset(g_symKeyPacket, 0, sizeof(g_symKeyPacket));
+    int offset = 0;
+    g_symKeyPacket[offset++] = 0x8C;
+    g_symKeyPacket[offset++] = 0x0d;
+    g_symKeyPacket[offset++] = 0x04;
+    g_symKeyPacket[offset++] = 0x03;
+    g_symKeyPacket[offset++] = 0x03;
+    g_symKeyPacket[offset++] = 0x02;
+    memcpy(g_symKeyPacket + offset, salt, 8);
+    offset += 8;
+    g_symKeyPacket[offset++] = 0xFF;
+
+    // Get key either from derived key string or generate it
+    uint8_t key[16];
+    if (derivedKey) {
+        hex_string_to_bytes(derivedKey, key, 16);
+    } else {
+        uint8_t last_byte = g_symKeyPacket[14];
+        uint32_t iterations = ((uint32_t)16 + (g_symKeyPacket[offset-1] & 15)) << ((g_symKeyPacket[offset-1] >> 4) + 6);
+        printf("Last byte: %02X\n", last_byte);
+        printf("Lower 4 bits: %d\n", last_byte & 15);
+        printf("Upper 4 bits shifted: %d\n", last_byte >> 4);
+        printf("Iterations: %u\n", iterations);
+        printf("Password length: %d\n", my_strlen(passphrase));
+        derive_key(salt, passphrase, my_strlen(passphrase), iterations, key);
+    }
+    printf("Derived Key: ");
+    for (int i = 0; i < 16; i++) {
+        printf("%02X", key[i]);
+    }printf("\n");
+    printf("PASSPHRASE: %s\n",passphrase);
+    // Prepare random data with quick check bytes
+    uint8_t randomQuickCheck[10] = {0};
+    memcpy(randomQuickCheck, random, 8);
+    randomQuickCheck[8] = random[6];  // Duplicate last two bytes
+    randomQuickCheck[9] = random[7];
+    
+    // Initialize cipher handle
+    struct gcry_cipher_handle hd;
+    gcry_cipher_hd_t c = &hd;
+    memset(c, 0, sizeof(*c));
+    
+    // Set up key in context
+    Key *ctx_key = (Key *)&c->context.c;
+    for (int i = 0, j = 0; i < 4; i++, j += 4) {
+        (*ctx_key)[i] = (key[j] << 24) | (key[j + 1] << 16) | 
+                        (key[j + 2] << 8) | key[j + 3];
+    }
+    
+    // Clear IV
+    memset(c->u_iv.iv, 0, sizeof(c->u_iv.iv));
+    c->unused = 0;
+    
+    // Encrypt random data
+    uint8_t encryptedRandom[10];
+    _gcry_cipher_cfb_encrypt(c, encryptedRandom, sizeof(encryptedRandom),
+                            randomQuickCheck, sizeof(randomQuickCheck));
+    
+    // Encrypt packet byte
+    uint8_t packetByte[1] = {0xcb};
+    uint8_t encryptedPacket[1];
+    _gcry_cipher_cfb_encrypt(c, encryptedPacket, sizeof(encryptedPacket),
+                            packetByte, sizeof(packetByte));
+    
+    // Prepare and encrypt data packet
+    size_t filenameLen = filename ? my_strlen(filename) : 0;
+    size_t dataLen = my_strlen(data);
+    
+    // Verify sizes are within bounds
+    if (filenameLen > MAX_FILENAME_LEN || dataLen > MAX_DATA_LEN) {
+        return NULL; // Error condition
+    }
+    
+    // Calculate plaintext size
+    size_t plaintextSize = 1 + 1 + 1 + 4 + filenameLen + dataLen; // length + mode + namelen + timestamp + filename + data
+    
+    offset = 0;
+    g_plaintextData[offset++] = plaintextSize;// - 1;  // Length (excluding length byte itself)
+    /* The data's formatting.  This is either 'b', 't', 'u', 'l' or '1'
+     (however, the last two are deprecated).  */
+    g_plaintextData[offset++] = 0x62;               // Mode byte 
+    g_plaintextData[offset++] = filenameLen;        // Filename length
+    
+    // Add filename if present
+    if (filename && filenameLen > 0) {
+        memcpy(g_plaintextData + offset, filename, filenameLen);
+        offset += filenameLen;
+    }
+    
+    // Add timestamp
+    const uint8_t timestamp[] = {0x60, 0xD8, 0x30, 0x00};
+    memcpy(g_plaintextData + offset, timestamp, 4);
+    offset += 4;
+    
+    // Add the actual data
+    memcpy(g_plaintextData + offset, data, dataLen);
+    
+    printf("PASSPHRASE: %s\n",passphrase);
+    printData("Encrypting: ",g_plaintextData, plaintextSize);
+    // Encrypt the data packet
+    _gcry_cipher_cfb_encrypt(c, g_encryptedData, plaintextSize,
+                            g_plaintextData, plaintextSize);
+    // Format final output
+    formatGPGOutput(
+        g_symKeyPacket, sizeof(g_symKeyPacket),
+        NULL,
+        encryptedRandom, sizeof(encryptedRandom),
+        encryptedPacket,
+        g_encryptedData, plaintextSize,
+        g_finalOutput, &outputLen
+    );
+    
+    printf("PASSPHRASE: %s\n",passphrase);
+    return g_finalOutput;
+}
+
+void decryptGPGData(const uint8_t* encryptedData, size_t dataLen, const char* passphrase, uint8_t* output, size_t* outputLen, const char *derivedKey) {
+    printf("Passphrase pointer: %p\n", passphrase);
+    printf("Passphrase: '%s'\n", passphrase);
+    if (!passphrase) {
+        printf("Invalid passphrase\n");
+        return;
+    }
+
+    printf("Password string: '%s'\n", passphrase);
+    if(encryptedData[0] != 0x8C || dataLen < 15) {
+        printf("Invalid GPG format\n");
+        return;
+    }
+    
+    const uint8_t* salt = encryptedData + 6;
+    uint8_t key[16];
+    
+    if (derivedKey) {
+        hex_string_to_bytes(derivedKey, key, 16);
+        printf("Using provided key\n");
+    } else {
+        uint8_t last_byte = encryptedData[14];
+        uint32_t iterations = ((uint32_t)16 + (last_byte & 15)) << ((last_byte >> 4) + 6);
+        derive_key(salt, passphrase, my_strlen(passphrase), iterations, key);
+    }
+    
+
+
+    printf("Derived Key: ");
+    for (int i = 0; i < 16; i++) {
+        printf("%02X", key[i]);
+    }printf("\n");
+    
+}
+
+char* my_strncpy(char* dest, const char* src, size_t n) {
+    size_t i;
+    for (i = 0; i < n && src[i] != '\0'; i++) {
+        dest[i] = src[i];
+    }
+    for (; i < n; i++) {
+        dest[i] = '\0';
+    }
+    return dest;
+}
+
 void main()
 {
     init_printf(0, putc_uart);
     printf("Printf initialised!\n");
     testVector();
-    uint8_t symKeyPacket[2 + 13] = {0}; // Header + length + packet bytes (5) + salt (8)
-    const uint8_t symKeyPkt_ctb = 0x8C;
-    const uint8_t symKeyPkt_length = 0x0d;
-    const uint8_t symKeyPkt_version = 0x04;
-    const uint8_t symKeyPkt_algo = 0x03;
-    const uint8_t symKeyPkt_s2kMode = 0x03;
-    const uint8_t symKeyPkt_s2kAlgo = 0x02;
-    int offset = 0;
-    symKeyPacket[offset++] = symKeyPkt_ctb;
-    symKeyPacket[offset++] = symKeyPkt_length;
-    symKeyPacket[offset++] = symKeyPkt_version;
-    symKeyPacket[offset++] = symKeyPkt_algo;
-    symKeyPacket[offset++] = symKeyPkt_s2kMode;
-    symKeyPacket[offset++] = symKeyPkt_s2kAlgo;
-    int saltIndex = 0;
-    symKeyPacket[offset++] = salt[saltIndex++];
-    symKeyPacket[offset++] = salt[saltIndex++];
-    symKeyPacket[offset++] = salt[saltIndex++];
-    symKeyPacket[offset++] = salt[saltIndex++];
-    symKeyPacket[offset++] = salt[saltIndex++];
-    symKeyPacket[offset++] = salt[saltIndex++];
-    symKeyPacket[offset++] = salt[saltIndex++];
-    symKeyPacket[offset++] = salt[saltIndex++];
-    const uint8_t symKeyPkt_s2kCount = 0xFF;
-    symKeyPacket[offset++] = symKeyPkt_s2kCount;
-    uint32_t iterations = ((uint32_t)16 + (symKeyPkt_s2kCount & 15)) << ((symKeyPkt_s2kCount >> 4) + 6);
-    printData("symKeyPacket", symKeyPacket, sizeof(symKeyPacket));
-
-    uint8_t key[16];
-    derive_key(salt, password, sizeof(password) - 1, iterations, key);
-    printf("Derived Key: ");
-    for (int i = 0; i < 16; i++)
-    {
-        printf("%02X", key[i]);
-    }
-   
-    // Now we take the random and duplicate the last two bytes
-    uint8_t randomQuickCheck[10] = {0};
-    for (int i = 0; i < 8; i++)
-    {
-        randomQuickCheck[i] = random[i];
-    }
-    randomQuickCheck[8] = random[6];
-    randomQuickCheck[9] = random[7];
-    uint8_t iv[8] = {0};
-    uint8_t lastIv[8] = {0};
-    uint8_t outbuf[10];
-    uint8_t return_iv[8];
-    size_t unused = 0;
-    uint8_t packetByte[1] = {0xcb}; // Plaintext
-
-    uint8_t outbuf2[1];
-   
-    uint8_t modeByte =0x62;
-// gpg: Writing namelen: 0
-// gpg: DBG: iobuf_writebyte 62 00
-    uint8_t nameLen=0x00;
-    // gpg: Writing name: 
-    // gpg: DBG: iobuf_write: 62 00
-    // gpg: Writing timestamp: 1624780800
-    // gpg: write_32 60d83000
-    // gpg: DBG: iobuf_writebyte 62 00 60
-    // gpg: DBG: iobuf_writebyte 62 00 60 D8
-    // gpg: DBG: iobuf_writebyte 62 00 60 D8 30
-    // gpg: DBG: iobuf_writebyte 62 00 60 D8 30 00
-    // uint8_t timestamp[1] ={ 0x00 }; DEFINED ABOVE
-    // gpg: DBG: iobuf_write: 62 00 60 D8 30 00 48 65 6C 6C 6F 20 57 6F 72 6C 64 21 0A
-    // Hello World!
-    // gpg: DBG: iobuf_writebyte 13 // LENGTH
-
-    // gpg: DBG: iobuf_write: 13 62 00 60 D8 30 00 48 65 6C 6C 6F 20 57 6F 72 6C 64 21 0A
-    // gpg: cipher_filter_cfb
-    uint8_t lengthPkt = 0x13;
-    uint8_t plaintextData[20] = {
-        lengthPkt, modeByte, nameLen, 0x60, 0xd8, 0x30, 0x00, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x21, 0x0a};
-
-    uint8_t outbuf3[sizeof(plaintextData)];
+    // Test GPG encryption
+    const char *data = "Hello World!";
+    const char *filename = NULL;  // For initial test, matching original behavior
+    static const char *passphrase = "password";
     
-
-    printf("\n\nCompared with:\n");
-    // Create and initialize cipher handle
-    struct gcry_cipher_handle hd;
-    gcry_cipher_hd_t c = &hd;
-    
-    // Clear the handle structure
-    memset(c, 0, sizeof(*c));
-    
-    // Set up the key in the context
-    Key *ctx_key = (Key *)&c->context.c;
-    int j = 0;
-
-    for (int i = 0; i < 4; i++)
-    {
-        (*ctx_key)[i] = (key[j] << 24) + (key[j + 1] << 16) + (key[j + 2] << 8) + key[j + 3];
-        j += 4;
+    printf("\nEncrypting data: '%s'\n", data);
+    printf("Passphrase: '%s'\n", passphrase);
+    if (filename) {
+        printf("Filename: '%s'\n", filename);
+    } else {
+        printf("No filename specified\n");
     }
+    const char* derivedKey = "693B7847FA44CDC6E1C403F5E44E95C1";
+    char passCopy[64];
+    my_strncpy(passCopy, passphrase, sizeof(passCopy)-1);
+    passCopy[sizeof(passCopy)-1] = '\0';
+    
+    printf("Passphrase pointer: %p\n", passCopy);
+    printf("Passphrase: '%s'\n", passCopy);
+    // Call the encryption function
+    uint8_t *encrypted = encryptToGPGFormat(data, filename, passphrase, derivedKey);
+    
+    // Calculate the output size 
+    // 15 (symkey packet) + 2 (header) + 10 (random) + 1 (packet) + 20 (data packet)
+    size_t outputSize = 15 + 2 + 10 + 1 + 20;  
+    
+  
+    // Print the final output in hex format
+    printf("\nFinal GPG Output:\n");
+    printFinalOutput(encrypted, outputSize);
+    // In main():
+    uint8_t decrypted[MAX_PLAINTEXT_SIZE];
+    size_t decryptedLen;
 
-    // Clear IV
-    memset(c->u_iv.iv, 0, sizeof(c->u_iv.iv));
-    c->unused = 0;
+    printf("PASSPHRASE: %s\n",passphrase);
+    printf("PASSPHRASE: %s\n",passCopy);
+    decryptGPGData(encrypted, outputSize, passphrase==""?passCopy:passphrase, decrypted, &decryptedLen, NULL);
+    printf("Decrypted text: %s\n", decrypted);
 
-    // First encryption of random data
-    // uint8_t outbuf[10];
-    _gcry_cipher_cfb_encrypt(c, outbuf, sizeof(outbuf), 
-                            randomQuickCheck, sizeof(randomQuickCheck));
-    printData("Encrypted", outbuf, sizeof(outbuf));
-    printData("Latest IV", c->u_iv.iv, 8);
-    printf("unused %d\n", c->unused);
-
-
-    _gcry_cipher_cfb_encrypt(c, outbuf2, sizeof(outbuf2), 
-                            packetByte, sizeof(packetByte));
-    printData("Encrypted", outbuf2, sizeof(outbuf2));
-    printData("Latest IV", c->u_iv.iv, 8);
-    printf("unused %d\n", c->unused);
-
-_gcry_cipher_cfb_encrypt(c, outbuf3, sizeof(outbuf3), 
-                            plaintextData, sizeof(plaintextData));
-    printData("Encrypted", outbuf3, sizeof(outbuf3));
-    printData("Latest IV", c->u_iv.iv, 8);
-    printf("unused %d\n", c->unused);
-// In main(), after your encryption operations:
-
-uint8_t finalOutput[256]; // Make sure this is large enough
-size_t outputLen;
-
-// Format the complete GPG output
-formatGPGOutput(
-    symKeyPacket, sizeof(symKeyPacket),
-    NULL, // No separate header needed as it's part of the symKeyPacket
-    outbuf, sizeof(outbuf), // Include all 10 bytes
-    outbuf2,
-    outbuf3, sizeof(outbuf3),
-    finalOutput, &outputLen
-);
-
-// Print the final output in hex format
-printf("\nFinal GPG Output:\n");
-printFinalOutput(finalOutput, outputLen);
-
-    while (1)
-    {
-    } // Loop forever
+    
+    decryptGPGData(encrypted, outputSize, passCopy, decrypted, &decryptedLen, derivedKey);
+    printf("Decrypted text: %s\n", decrypted);
+    
+    // Halt execution
+    while (1) {
+        __asm__("wfi");  // Wait for interrupt - more power efficient than empty loop
+    }
 }
