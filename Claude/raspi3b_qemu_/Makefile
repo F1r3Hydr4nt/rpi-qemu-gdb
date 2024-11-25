@@ -51,7 +51,7 @@ run: $(TARGET)
 debug: $(TARGET)
 	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel $(TARGET) -nographic -serial mon:stdio -s -S
 gdb:
-	gdb-multiarch $(TARGET) -ex 'target remote localhost:1234' -ex 'break *_start' -ex 'break main' -ex 'continue'
+	gdb-multiarch $(TARGET) -x script.gdb
 # Useful commands
 # pkill qemu-system-arm
 # (gdb) break main.c:10    # Break at line 10
