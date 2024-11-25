@@ -9,6 +9,11 @@
 // QEMU Versatile PB UART0 address
 #define UART0_DR *((volatile uint32_t *)0x101f1000)
 
+extern char __text_start[], __text_end[];
+extern char __data_start[], __data_end[];
+extern char __rodata_start[], __rodata_end[];
+extern char __bss_start[], __bss_end[];
+
 // Function prototypes
 void uart_putc(char c);
 void print(const char *str);
@@ -84,30 +89,52 @@ size_t my_strlen(const char *str)
     return len;
 }
 void derive_key(const uint8_t *salt, const char *password, unsigned int pass_len, uint32_t iterations, uint8_t *key) {
+    printf("derive_key start - passphrase ptr: %p\n", (void*)password);
+    
+    // // Add memory range validation
+    // if ((uintptr_t)key < (uintptr_t)__data_start || 
+    //     (uintptr_t)key >= (uintptr_t)__data_end) {
+    //     printf("ERROR: Key buffer outside valid memory range\n");
+    //     return;
+    // }
+    // Add validation
+    if (!password || !salt || !key) {
+        printf("NULL pointer passed to derive_key\n");
+        return;
+    }
+    
     SHA1_CTX ctx;
     SHA1Init(&ctx);
-//-   unsigned int saltPlusPasswordLen = 8 + pass_len;
     unsigned int bytesProcessed = 0;
     unsigned int index = 0;
+
+    // Debug prints
+    printf("derive_key params:\n");
+    printf("  salt addr: %p\n", (void*)salt);
+    printf("  password addr: %p\n", (void*)password);
+    printf("  key addr: %p\n", (void*)key);
+    printf("  pass_len: %u\n", pass_len);
+    printf("  iterations: %u\n", iterations);
 
     while (bytesProcessed < iterations) {
         uint8_t byte;
         if (index < 8) {
             byte = salt[index];
         } else {
-// -           byte = password[index - 8];
-           byte = password[(index - 8) % pass_len];
+            byte = password[(index - 8) % pass_len];
         }
         SHA1Update(&ctx, &byte, 1);
         bytesProcessed++;
         index++;
         
-// -       if (index >= saltPlusPasswordLen) {
-       if (index >= 8 + pass_len) {
+        if (index >= 8 + pass_len) {
             index = 0;
         }
     }
+
     SHA1Final(key, &ctx);
+    
+    printf("derive_key end - passphrase ptr: %p\n", (void*)password);
 }
 // Add this function at the top of your file or in a separate header
 int is_printable(char c)
@@ -166,7 +193,7 @@ static void splitI(uint32_t I, uint8_t *Ia, uint8_t *Ib, uint8_t *Ic, uint8_t *I
 }
 
 // Need to take this out
-static const uint64_t MOD_2_32 = (uint64_t)2 << 31;
+// static const uint64_t MOD_2_32 = (uint64_t)2 << 31;
 static const uint32_t MOD_2_32_MINUS_1 = 0xFFFFFFFF;
 
 static void printBlock(struct Block block)
@@ -174,11 +201,11 @@ static void printBlock(struct Block block)
     printf("%08X%08X\n", block.msb, block.lsb);
 }
 
-static uint32_t sumMod2_32(uint32_t a, uint32_t b)
-{
-    // its just a remainder
-    return ((a) + b) % MOD_2_32;
-}
+// static uint32_t sumMod2_32(uint32_t a, uint32_t b)
+// {
+//     // its just a remainder
+//     return ((a) + b) % MOD_2_32;
+// }
 
 static uint32_t sumMod2_32b(uint32_t a, uint32_t b)
 {
@@ -186,17 +213,17 @@ static uint32_t sumMod2_32b(uint32_t a, uint32_t b)
     return ((a) + b); // % MOD_2_32;
 }
 
-static uint32_t subtractMod2_32(uint32_t a, uint32_t b)
-{
-    // it's not just a remainder
-    // you need to use 2 ^ 32 -1
-    if (b <= a)
-    {
-        return a - b;
-    }
+// static uint32_t subtractMod2_32(uint32_t a, uint32_t b)
+// {
+//     // it's not just a remainder
+//     // you need to use 2 ^ 32 -1
+//     if (b <= a)
+//     {
+//         return a - b;
+//     }
 
-    return (MOD_2_32 + a) - b;
-}
+//     return (MOD_2_32 + a) - b;
+// }
 
 static uint32_t subtractMod2_32b(uint32_t a, uint32_t b)
 {
@@ -288,21 +315,21 @@ static struct Block run(const Key key, struct Block data, int reverse)
         switch (rIndex % 3)
         {
         case 0:
-            I = cyclicShift(sumMod2_32(Kmi, R[i]), Kri);
+            I = cyclicShift(sumMod2_32b(Kmi, R[i]), Kri);
             splitI(I, &Ia, &Ib, &Ic, &Id);
-            f = sumMod2_32(subtractMod2_32(S1[Ia] ^ S2[Ib], S3[Ic]), S4[Id]);
+            f = sumMod2_32b(subtractMod2_32b(S1[Ia] ^ S2[Ib], S3[Ic]), S4[Id]);
             break;
 
         case 1:
             I = cyclicShift(Kmi ^ R[i], Kri);
             splitI(I, &Ia, &Ib, &Ic, &Id);
-            f = sumMod2_32(subtractMod2_32(S1[Ia], S2[Ib]), S3[Ic]) ^ S4[Id];
+            f = sumMod2_32b(subtractMod2_32b(S1[Ia], S2[Ib]), S3[Ic]) ^ S4[Id];
             break;
 
         case 2:
-            I = cyclicShift(subtractMod2_32(Kmi, R[i]), Kri);
+            I = cyclicShift(subtractMod2_32b(Kmi, R[i]), Kri);
             splitI(I, &Ia, &Ib, &Ic, &Id);
-            f = subtractMod2_32(sumMod2_32(S1[Ia], S2[Ib]) ^ S3[Ic], S4[Id]);
+            f = subtractMod2_32b(sumMod2_32b(S1[Ia], S2[Ib]) ^ S3[Ic], S4[Id]);
             break;
         }
 
@@ -416,7 +443,7 @@ void printUint32Hex(uint32_t data)
 struct gcry_cipher_handle;
 typedef struct gcry_cipher_handle *gcry_cipher_hd_t;
 
-   typedef unsigned long u64;
+   // typedef unsigned long u64;
       typedef unsigned int  u32;
 
    typedef unsigned char byte;
@@ -426,7 +453,7 @@ typedef union
   short b;
   char c[1];
   long d;
-  u64 e;
+  // u64 e;
   float f;
   double g;
 } PROPERLY_ALIGNED_TYPE;
@@ -467,15 +494,37 @@ struct gcry_cipher_handle
      aligment because it is only accessed by memcpy.  */
   cipher_context_alignment_t context;
 };
+// static inline u32 buf_get_le32(const void *_buf) {
+//     const byte *in = _buf;
+//     u32 b0 = (u32)in[0];
+//     u32 b1 = (u32)in[1];
+//     u32 b2 = (u32)in[2]; 
+//     u32 b3 = (u32)in[3];
+//     return (b3 << 24) | (b2 << 16) | (b1 << 8) | b0;
+// }
 
-
-
-static inline u32 buf_get_le32(const void *_buf)
-{
-  const byte *in = _buf;
-  return ((u32)in[3] << 24) | ((u32)in[2] << 16) | \
-         ((u32)in[1] << 8) | (u32)in[0];
+static inline u32 buf_get_le32(const void *_buf) {
+   // printf("buf_get_le32 start _buf=%p\n", _buf);
+   const byte *in = _buf;
+   // printf("Reading: ");
+   
+   u32 b0 = (u32)in[0];
+   // printf("[0]=%02x ", b0);
+   
+   u32 b1 = (u32)in[1]; 
+   // printf("[1]=%02x ", b1);
+   
+   u32 b2 = (u32)in[2];
+   // printf("[2]=%02x ", b2);
+   
+   u32 b3 = (u32)in[3];
+   // printf("[3]=%02x\n", b3);
+   
+   u32 result = (b3 << 24) | (b2 << 16) | (b1 << 8) | b0;
+   // printf("Result = %08x\n", result);
+   return result;
 }
+
 static inline void buf_put_le32(void *_buf, u32 val)
 {
   byte *out = _buf;
@@ -486,32 +535,35 @@ static inline void buf_put_le32(void *_buf, u32 val)
 }
 
 
-static inline u64 buf_get_le64(const void *_buf)
-{
-  const byte *in = _buf;
-  return ((u64)in[7] << 56) | ((u64)in[6] << 48) | \
-         ((u64)in[5] << 40) | ((u64)in[4] << 32) | \
-         ((u64)in[3] << 24) | ((u64)in[2] << 16) | \
-         ((u64)in[1] << 8) | (u64)in[0];
-}
-static inline void buf_put_le64(void *_buf, u64 val)
-{
-  byte *out = _buf;
-  out[7] = val >> 56;
-  out[6] = val >> 48;
-  out[5] = val >> 40;
-  out[4] = val >> 32;
-  out[3] = val >> 24;
-  out[2] = val >> 16;
-  out[1] = val >> 8;
-  out[0] = val;
-}
+// static inline u64 buf_get_le64(const void *_buf)
+// {
+//   printf("buf_get_le64\n");
+//   const byte *in = _buf;
+//   printf("buf_get_le64\n");
+
+//   return ((u64)in[7] << 56) | ((u64)in[6] << 48) | \
+//          ((u64)in[5] << 40) | ((u64)in[4] << 32) | \
+//          ((u64)in[3] << 24) | ((u64)in[2] << 16) | \
+//          ((u64)in[1] << 8) | (u64)in[0];
+// }
+// static inline void buf_put_le64(void *_buf, u64 val)
+// {
+//   byte *out = _buf;
+//   out[7] = val >> 56;
+//   out[6] = val >> 48;
+//   out[5] = val >> 40;
+//   out[4] = val >> 32;
+//   out[3] = val >> 24;
+//   out[2] = val >> 16;
+//   out[1] = val >> 8;
+//   out[0] = val;
+// }
 
 
 # define buf_get_he32 buf_get_le32
 # define buf_put_he32 buf_put_le32
-# define buf_get_he64 buf_get_le64
-# define buf_put_he64 buf_put_le64
+// # define buf_get_he64 buf_get_le64
+// # define buf_put_he64 buf_put_le64
 /* Optimized function for cipher block xoring with two destination cipher
    blocks.  Used mainly by CFB mode encryption.  */
 
@@ -549,159 +601,309 @@ cipher_block_xor_2dst(void *_dst1, void *_dst2, const void *_src, size_t blocksi
 static inline void
 buf_xor_2dst_v2(void *_dst1, void *_dst2, const void *_src, size_t len)
 {
+    // printf("buf_xor_2dst_v2 len=%d\n", len);
     byte *dst1 = _dst1;
     byte *dst2 = _dst2;
     const byte *src = _src;
 
+    // printf("Initial values:\n");
+    // printf("dst1: ");
+    // for (size_t i = 0; i < len; i++) {
+    //     printf("%02X ", ((byte*)_dst1)[i]);
+    // }
+    // printf("\ndst2: ");
+    // for (size_t i = 0; i < len; i++) {
+    //     printf("%02X ", ((byte*)_dst2)[i]);
+    // }
+    // printf("\nsrc:  ");
+    // for (size_t i = 0; i < len; i++) {
+    //     printf("%02X ", src[i]);
+    // }
+    // printf("\n");
+
     // Process all bytes
-    for (size_t i = 0; i < len; i++)
-    {
+    for (size_t i = 0; i < len; i++) {
         byte temp = dst2[i] ^ src[i];
+        // printf("Position %zu: dst2[i]=%02X ^ src[i]=%02X = temp=%02X\n", 
+        //        i, dst2[i], src[i], temp);
         dst2[i] = temp;
         dst1[i] = temp;
     }
+
+    // printf("Final values:\n");
+    // printf("dst1: ");
+    // for (size_t i = 0; i < len; i++) {
+    //     printf("%02X ", dst1[i]);
+    // }
+    // printf("\ndst2: ");
+    // for (size_t i = 0; i < len; i++) {
+    //     printf("%02X ", dst2[i]);
+    // }
+    // printf("\n");
 }
-/* Optimized function for buffer xoring with two destination buffers.  Used
-   mainly by CFB mode encryption.  */
-static inline void
-buf_xor_2dst(void *_dst1, void *_dst2, const void *_src, size_t len)
-{
-  byte *dst1 = _dst1;
-  byte *dst2 = _dst2;
-  const byte *src = _src;
+// /* Optimized function for buffer xoring with two destination buffers.  Used
+//    mainly by CFB mode encryption.  */
+// static inline void
+// buf_xor_2dst(void *_dst1, void *_dst2, const void *_src, size_t len)
+// {
+//   byte *dst1 = _dst1;
+//   byte *dst2 = _dst2;
+//   const byte *src = _src;
 
-  while (len >= sizeof(u64))
-    {
-      u64 temp = buf_get_he64(dst2) ^ buf_get_he64(src);
-      buf_put_he64(dst2, temp);
-      buf_put_he64(dst1, temp);
-      dst2 += sizeof(u64);
-      dst1 += sizeof(u64);
-      src += sizeof(u64);
-      len -= sizeof(u64);
+//   while (len >= sizeof(u64))
+//     {
+//       u64 temp = buf_get_he64(dst2) ^ buf_get_he64(src);
+//       buf_put_he64(dst2, temp);
+//       buf_put_he64(dst1, temp);
+//       dst2 += sizeof(u64);
+//       dst1 += sizeof(u64);
+//       src += sizeof(u64);
+//       len -= sizeof(u64);
+//     }
+
+//   if (len >= sizeof(u32))
+//     {
+//       u32 temp = buf_get_he32(dst2) ^ buf_get_he32(src);
+//       buf_put_he32(dst2, temp);
+//       buf_put_he32(dst1, temp);
+//       dst2 += sizeof(u32);
+//       dst1 += sizeof(u32);
+//       src += sizeof(u32);
+//       len -= sizeof(u32);
+//     }
+
+//   /* Handle tail.  */
+//   for (; len; len--)
+//     *dst1++ = (*dst2++ ^= *src++);
+// }
+
+// /* Optimized function for cipher block copying */
+// static inline void
+// cipher_block_cpy(void *_dst, const void *_src, size_t blocksize)
+// {
+//   byte *dst = _dst;
+//   const byte *src = _src;
+//   u64 s[2];
+
+//   if (blocksize == 8)
+//     {
+//       buf_put_he64(dst + 0, buf_get_he64(src + 0));
+//     }
+//   else /* blocksize == 16 */
+//     {
+//       s[0] = buf_get_he64(src + 0);
+//       s[1] = buf_get_he64(src + 8);
+//       buf_put_he64(dst + 0, s[0]);
+//       buf_put_he64(dst + 8, s[1]);
+//     }
+// }
+
+// static inline void
+// cipher_block_xor_n_copy_2(void *dst_xor, const void *src_xor,
+//                           void *srcdst_cpy, const void *src_cpy,
+//                           size_t blocksize)
+// {
+//     printf("cipher_block_xor_n_copy_2\n");
+//     byte *dst_xor_p = dst_xor;
+//     byte *srcdst_cpy_p = srcdst_cpy;
+//     const byte *src_xor_p = src_xor;
+//     const byte *src_cpy_p = src_cpy;
+//     u64 sc[2];
+//     u64 sx[2];
+//     u64 sdc[2];
+
+//     if (blocksize == 8)
+//     {
+//           printf("cipher_block_xor_n_copy_2\n");
+
+//         sc[0] = buf_get_he64(src_cpy_p + 0);
+//             printf("cipher_block_xor_n_copy_2\n");
+
+//         buf_put_he64(dst_xor_p + 0,
+//                      buf_get_he64(srcdst_cpy_p + 0) ^ buf_get_he64(src_xor_p + 0));
+//         buf_put_he64(srcdst_cpy_p + 0, sc[0]);
+//     }
+//     else /* blocksize == 16 */
+//     {
+//         sc[0] = buf_get_he64(src_cpy_p + 0);
+//         sc[1] = buf_get_he64(src_cpy_p + 8);
+//         sx[0] = buf_get_he64(src_xor_p + 0);
+//         sx[1] = buf_get_he64(src_xor_p + 8);
+//         sdc[0] = buf_get_he64(srcdst_cpy_p + 0);
+//         sdc[1] = buf_get_he64(srcdst_cpy_p + 8);
+//         sx[0] ^= sdc[0];
+//         sx[1] ^= sdc[1];
+//         buf_put_he64(dst_xor_p + 0, sx[0]);
+//         buf_put_he64(dst_xor_p + 8, sx[1]);
+//         buf_put_he64(srcdst_cpy_p + 0, sc[0]);
+//         buf_put_he64(srcdst_cpy_p + 8, sc[1]);
+//     }
+//         printf("cipher_block_xor_n_copy_2\n");
+
+// }
+
+
+// /* Optimized function for combined buffer xoring and copying.  Used by mainly
+//    CBC mode decryption.  */
+// static inline void
+// buf_xor_n_copy_2(void *_dst_xor, const void *_src_xor, void *_srcdst_cpy,
+// 		 const void *_src_cpy, size_t len)
+// {
+//   byte *dst_xor = _dst_xor;
+//   byte *srcdst_cpy = _srcdst_cpy;
+//   const byte *src_xor = _src_xor;
+//   const byte *src_cpy = _src_cpy;
+
+//   while (len >= sizeof(u64))
+//     {
+//       u64 temp = buf_get_he64(src_cpy);
+//       buf_put_he64(dst_xor, buf_get_he64(srcdst_cpy) ^ buf_get_he64(src_xor));
+//       buf_put_he64(srcdst_cpy, temp);
+//       dst_xor += sizeof(u64);
+//       srcdst_cpy += sizeof(u64);
+//       src_xor += sizeof(u64);
+//       src_cpy += sizeof(u64);
+//       len -= sizeof(u64);
+//     }
+
+//   if (len >= sizeof(u32))
+//     {
+//       u32 temp = buf_get_he32(src_cpy);
+//       buf_put_he32(dst_xor, buf_get_he32(srcdst_cpy) ^ buf_get_he32(src_xor));
+//       buf_put_he32(srcdst_cpy, temp);
+//       dst_xor += sizeof(u32);
+//       srcdst_cpy += sizeof(u32);
+//       src_xor += sizeof(u32);
+//       src_cpy += sizeof(u32);
+//       len -= sizeof(u32);
+//     }
+
+//   /* Handle tail.  */
+//   for (; len; len--)
+//     {
+//       byte temp = *src_cpy++;
+//       *dst_xor++ = *srcdst_cpy ^ *src_xor++;
+//       *srcdst_cpy++ = temp;
+//     }
+// }
+
+static inline void buf_xor_2dst(void *_dst1, void *_dst2, const void *_src, size_t len) {
+    byte *dst1 = _dst1;
+    byte *dst2 = _dst2;
+    const byte *src = _src;
+
+    while (len >= 2 * sizeof(u32)) {
+        u32 temp_high = buf_get_he32(dst2) ^ buf_get_he32(src);
+        u32 temp_low = buf_get_he32(dst2 + 4) ^ buf_get_he32(src + 4);
+        buf_put_he32(dst2, temp_high);
+        buf_put_he32(dst2 + 4, temp_low);
+        buf_put_he32(dst1, temp_high);
+        buf_put_he32(dst1 + 4, temp_low);
+        dst2 += 2 * sizeof(u32);
+        dst1 += 2 * sizeof(u32);
+        src += 2 * sizeof(u32);
+        len -= 2 * sizeof(u32);
     }
 
-  if (len >= sizeof(u32))
-    {
-      u32 temp = buf_get_he32(dst2) ^ buf_get_he32(src);
-      buf_put_he32(dst2, temp);
-      buf_put_he32(dst1, temp);
-      dst2 += sizeof(u32);
-      dst1 += sizeof(u32);
-      src += sizeof(u32);
-      len -= sizeof(u32);
+    if (len >= sizeof(u32)) {
+        u32 temp = buf_get_he32(dst2) ^ buf_get_he32(src);
+        buf_put_he32(dst2, temp);
+        buf_put_he32(dst1, temp);
+        dst2 += sizeof(u32);
+        dst1 += sizeof(u32);
+        src += sizeof(u32);
+        len -= sizeof(u32);
     }
 
-  /* Handle tail.  */
-  for (; len; len--)
-    *dst1++ = (*dst2++ ^= *src++);
+    for (; len; len--)
+        *dst1++ = (*dst2++ ^= *src++);
 }
 
-/* Optimized function for cipher block copying */
-static inline void
-cipher_block_cpy(void *_dst, const void *_src, size_t blocksize)
-{
-  byte *dst = _dst;
-  const byte *src = _src;
-  u64 s[2];
+static inline void cipher_block_cpy(void *_dst, const void *_src, size_t blocksize) {
+    byte *dst = _dst;
+    const byte *src = _src;
+    u32 s[4];
 
-  if (blocksize == 8)
-    {
-      buf_put_he64(dst + 0, buf_get_he64(src + 0));
+    if (blocksize == 8) {
+        s[0] = buf_get_he32(src);
+        s[1] = buf_get_he32(src + 4);
+        buf_put_he32(dst, s[0]);
+        buf_put_he32(dst + 4, s[1]);
     }
-  else /* blocksize == 16 */
-    {
-      s[0] = buf_get_he64(src + 0);
-      s[1] = buf_get_he64(src + 8);
-      buf_put_he64(dst + 0, s[0]);
-      buf_put_he64(dst + 8, s[1]);
-    }
-}
-
-
-/* Optimized function for combined cipher block xoring and copying.
-   Used by mainly CBC mode decryption.  */
-static inline void
-cipher_block_xor_n_copy_2(void *_dst_xor, const void *_src_xor,
-                          void *_srcdst_cpy, const void *_src_cpy,
-                          size_t blocksize)
-{
-  byte *dst_xor = _dst_xor;
-  byte *srcdst_cpy = _srcdst_cpy;
-  const byte *src_xor = _src_xor;
-  const byte *src_cpy = _src_cpy;
-  u64 sc[2];
-  u64 sx[2];
-  u64 sdc[2];
-
-  if (blocksize == 8)
-    {
-      sc[0] = buf_get_he64(src_cpy + 0);
-      buf_put_he64(dst_xor + 0,
-                   buf_get_he64(srcdst_cpy + 0) ^ buf_get_he64(src_xor + 0));
-      buf_put_he64(srcdst_cpy + 0, sc[0]);
-    }
-  else /* blocksize == 16 */
-    {
-      sc[0] = buf_get_he64(src_cpy + 0);
-      sc[1] = buf_get_he64(src_cpy + 8);
-      sx[0] = buf_get_he64(src_xor + 0);
-      sx[1] = buf_get_he64(src_xor + 8);
-      sdc[0] = buf_get_he64(srcdst_cpy + 0);
-      sdc[1] = buf_get_he64(srcdst_cpy + 8);
-      sx[0] ^= sdc[0];
-      sx[1] ^= sdc[1];
-      buf_put_he64(dst_xor + 0, sx[0]);
-      buf_put_he64(dst_xor + 8, sx[1]);
-      buf_put_he64(srcdst_cpy + 0, sc[0]);
-      buf_put_he64(srcdst_cpy + 8, sc[1]);
+    else /* blocksize == 16 */ {
+        s[0] = buf_get_he32(src);
+        s[1] = buf_get_he32(src + 4);
+        s[2] = buf_get_he32(src + 8);
+        s[3] = buf_get_he32(src + 12);
+        buf_put_he32(dst, s[0]);
+        buf_put_he32(dst + 4, s[1]);
+        buf_put_he32(dst + 8, s[2]);
+        buf_put_he32(dst + 12, s[3]);
     }
 }
 
-/* Optimized function for combined buffer xoring and copying.  Used by mainly
-   CBC mode decryption.  */
-static inline void
-buf_xor_n_copy_2(void *_dst_xor, const void *_src_xor, void *_srcdst_cpy,
-		 const void *_src_cpy, size_t len)
-{
-  byte *dst_xor = _dst_xor;
-  byte *srcdst_cpy = _srcdst_cpy;
-  const byte *src_xor = _src_xor;
-  const byte *src_cpy = _src_cpy;
+static inline void cipher_block_xor_n_copy_2(void *dst_xor, const void *src_xor,
+                                           void *srcdst_cpy, const void *src_cpy,
+                                           size_t blocksize) {
+      // printf("cipher_block_xor_n_copy_2\n");
+    byte *dst_xor_p = dst_xor;
+    byte *srcdst_cpy_p = srcdst_cpy;
+    const byte *src_xor_p = src_xor;
+    const byte *src_cpy_p = src_cpy;
+    u32 sc[4], sx[4], sdc[4];
 
-  while (len >= sizeof(u64))
-    {
-      u64 temp = buf_get_he64(src_cpy);
-      buf_put_he64(dst_xor, buf_get_he64(srcdst_cpy) ^ buf_get_he64(src_xor));
-      buf_put_he64(srcdst_cpy, temp);
-      dst_xor += sizeof(u64);
-      srcdst_cpy += sizeof(u64);
-      src_xor += sizeof(u64);
-      src_cpy += sizeof(u64);
-      len -= sizeof(u64);
+    if (blocksize == 8) {
+      // printf("Before buf_get_he32\n");
+      sc[0] = buf_get_he32(src_cpy_p + 0);
+      // printf("After buf_get_he32\n");
+
+        sc[1] = buf_get_he32(src_cpy_p + 4);
+        sdc[0] = buf_get_he32(srcdst_cpy_p);
+        sdc[1] = buf_get_he32(srcdst_cpy_p + 4);
+        sx[0] = buf_get_he32(src_xor_p) ^ sdc[0];
+        sx[1] = buf_get_he32(src_xor_p + 4) ^ sdc[1];
+        
+        buf_put_he32(dst_xor_p, sx[0]);
+        buf_put_he32(dst_xor_p + 4, sx[1]);
+        buf_put_he32(srcdst_cpy_p, sc[0]);
+        buf_put_he32(srcdst_cpy_p + 4, sc[1]);
     }
-
-  if (len >= sizeof(u32))
-    {
-      u32 temp = buf_get_he32(src_cpy);
-      buf_put_he32(dst_xor, buf_get_he32(srcdst_cpy) ^ buf_get_he32(src_xor));
-      buf_put_he32(srcdst_cpy, temp);
-      dst_xor += sizeof(u32);
-      srcdst_cpy += sizeof(u32);
-      src_xor += sizeof(u32);
-      src_cpy += sizeof(u32);
-      len -= sizeof(u32);
-    }
-
-  /* Handle tail.  */
-  for (; len; len--)
-    {
-      byte temp = *src_cpy++;
-      *dst_xor++ = *srcdst_cpy ^ *src_xor++;
-      *srcdst_cpy++ = temp;
+    else /* blocksize == 16 */ {
+        for(int i = 0; i < 4; i++) {
+            sc[i] = buf_get_he32(src_cpy_p + i*4);
+            sdc[i] = buf_get_he32(srcdst_cpy_p + i*4);
+            sx[i] = buf_get_he32(src_xor_p + i*4) ^ sdc[i];
+            
+            buf_put_he32(dst_xor_p + i*4, sx[i]);
+            buf_put_he32(srcdst_cpy_p + i*4, sc[i]);
+        }
     }
 }
 
+static inline void buf_xor_n_copy_2(void *_dst_xor, const void *_src_xor, 
+                                  void *_srcdst_cpy, const void *_src_cpy, size_t len) {
+    byte *dst_xor = _dst_xor;
+    byte *srcdst_cpy = _srcdst_cpy;
+    const byte *src_xor = _src_xor;
+    const byte *src_cpy = _src_cpy;
+
+    while (len >= sizeof(u32)) {
+        u32 temp = buf_get_he32(src_cpy);
+        buf_put_he32(dst_xor, buf_get_he32(srcdst_cpy) ^ buf_get_he32(src_xor));
+        buf_put_he32(srcdst_cpy, temp);
+        dst_xor += sizeof(u32);
+        srcdst_cpy += sizeof(u32);
+        src_xor += sizeof(u32);
+        src_cpy += sizeof(u32);
+        len -= sizeof(u32);
+    }
+
+    for (; len; len--) {
+        byte temp = *src_cpy++;
+        *dst_xor++ = *srcdst_cpy ^ *src_xor++;
+        *srcdst_cpy++ = temp;
+    }
+}
 
 /* Optimized function for combined buffer xoring and copying.  Used by mainly
    CFB mode decryption.  */
@@ -717,6 +919,7 @@ static inline void
 cipher_block_xor_n_copy(void *_dst_xor, void *_srcdst_cpy, const void *_src,
                         size_t blocksize)
 {
+  // printf("cipher_block_xor_n_copy\n");
   cipher_block_xor_n_copy_2(_dst_xor, _src, _srcdst_cpy, _src, blocksize);
 }
 
@@ -774,7 +977,7 @@ if (inbuflen >= blocksize_x_2 && 0){} //c->bulk.cfb_enc)
         //   nburn = enc_fn ( &c->context.c, c->u_iv.iv, c->u_iv.iv );
         //   burn = nburn > burn ? nburn : burn;
         struct Block ivBlock = blockFromBytes(c->u_iv.iv);
-        printBlock(ivBlock);
+        //printBlock(ivBlock);
 
         // Encrypt the IV using our encrypt function
         ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
@@ -803,52 +1006,50 @@ if (inbuflen >= blocksize_x_2 && 0){} //c->bulk.cfb_enc)
 
       // Convert IV to block structure and encrypt
       struct Block ivBlock = blockFromBytes(c->u_iv.iv);
-                    printBlock(ivBlock);
+      // printBlock(ivBlock);
 
       ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
       bytesFromBlock(ivBlock, c->u_iv.iv);
-        printBlock(ivBlock);
+      printBlock(ivBlock);
 
       /* XOR the input with the IV and store input into IV */
       cipher_block_xor_2dst(outbuf, c->u_iv.iv, inbuf, blocksize);
-                              printBlock(blockFromBytes(c->u_iv.iv));
+      printBlock(blockFromBytes(c->u_iv.iv));
 
       outbuf += blocksize;
       inbuf += blocksize;
       inbuflen -= blocksize;
+
       // log_printhex("IV", c->u_iv.iv, blocksize);
     }
    if (inbuflen)
-    {
-        printf("cfb_encrypt 6 %d %d %d\n", inbuflen, outbuflen, c->unused);
+{
+    printf("cfb_encrypt 6 %d %d %d\n", inbuflen, outbuflen, c->unused);
+    /* Save the current IV and then encrypt the IV. */
+    cipher_block_cpy(c->lastiv, c->u_iv.iv, blocksize);
+    
+    struct Block ivBlock = blockFromBytes(c->u_iv.iv);
+    //printBlock(ivBlock);
 
-        /* Save the current IV before encryption */
-        unsigned char saved_iv[blocksize];
-        memcpy(saved_iv, c->u_iv.iv, blocksize);
-        
-        struct Block ivBlock = blockFromBytes(c->u_iv.iv);
-        printBlock(ivBlock);
-
-        ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
-        bytesFromBlock(ivBlock, c->u_iv.iv);
-        printBlock(ivBlock);
-
-        /* XOR with input to get output */
-        buf_xor_2dst_v2(outbuf, c->u_iv.iv, inbuf, inbuflen);
-        if(shouldShift){
-            /* Copy entire shifted value: 1829ACA2C86DC2EA */
-            memcpy(c->u_iv.iv, saved_iv + inbuflen, blocksize - inbuflen);  // Copy 1829ACA2C86D
-            memcpy(c->u_iv.iv + blocksize - inbuflen, outbuf, inbuflen);         // Copy C2EA
-        }else{
-            // replace first byte of ivBlock with first byte of outbuf
-            memcpy(c->u_iv.iv, outbuf, inbuflen);  // Copy 1829ACA2C86D
-            c->unused = blocksize - inbuflen;
-        }
-
-        outbuf += inbuflen;
-        inbuf += inbuflen;
-        inbuflen = 0;
-    }
+    ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
+    bytesFromBlock(ivBlock, c->u_iv.iv);
+    printBlock(ivBlock);
+    
+    c->unused = blocksize;
+    /* Apply the XOR. */
+    c->unused -= inbuflen;
+    
+    // Perform XOR operation
+    buf_xor_2dst_v2(outbuf, c->u_iv.iv, inbuf, inbuflen);
+    
+    // Create updated block from modified IV for display
+    ivBlock = blockFromBytes(c->u_iv.iv);
+    printBlock(ivBlock);
+    
+    outbuf += inbuflen;
+    inbuf += inbuflen;
+    inbuflen = 0;
+}
 
   if (burn > 0){
     printf("SHOULD BE BURNING?");//// _gcry_burn_stack (burn + 4 * sizeof(void *));
@@ -865,8 +1066,8 @@ _gcry_cipher_cfb_decrypt (gcry_cipher_hd_t c,
   printf("gcry_cipher_cfb_decrypt inbuflen %d outbuflen %d\n",inbuflen,outbuflen);
   unsigned char *ivp;
   // gcry_cipher_encrypt_t enc_fn = c->spec->encrypt;
-  size_t blocksize_shift = 8; //gcry_blocksize_shift(c);
-  size_t blocksize = 1 << blocksize_shift;
+  // size_t blocksize_shift = gcry_blocksize_shift(c);
+  size_t blocksize = 8; //1 << blocksize_shift;
   size_t blocksize_x_2 = blocksize + blocksize;
   unsigned int burn, nburn;
   int shouldShift = inbuflen > blocksize;
@@ -876,6 +1077,8 @@ _gcry_cipher_cfb_decrypt (gcry_cipher_hd_t c,
 
   if (inbuflen <= c->unused)
     {
+      printf("cfb_decrypt 1 %d %d %d\n",inbuflen,outbuflen,c->unused);
+
       /* Short enough to be encoded by the remaining XOR mask. */
       /* XOR the input with the IV and store input into IV. */
       ivp = c->u_iv.iv + blocksize - c->unused;
@@ -888,6 +1091,7 @@ _gcry_cipher_cfb_decrypt (gcry_cipher_hd_t c,
 
   if (c->unused)
     {
+      printf("cfb_decrypt 2 %d %d %d\n",inbuflen,outbuflen,c->unused);
       /* XOR the input with the IV and store input into IV. */
       inbuflen -= c->unused;
       ivp = c->u_iv.iv + blocksize - c->unused;
@@ -901,13 +1105,13 @@ _gcry_cipher_cfb_decrypt (gcry_cipher_hd_t c,
      have at least 2 blocks and use conditions for the rest.  This
      also allows to use a bulk encryption function if available.  */
   if (inbuflen >= blocksize_x_2 && 0)//c->bulk.cfb_dec)
-    {
-    
-    }
+    {}
   else
     {
+      printf("cfb_decrypt 4 %d %d %d\n",inbuflen,outbuflen,c->unused);
       while (inbuflen >= blocksize_x_2 )
         {
+          
           /* Encrypt the IV. */
          struct Block ivBlock = blockFromBytes(c->u_iv.iv);
           printBlock(ivBlock);
@@ -925,6 +1129,7 @@ _gcry_cipher_cfb_decrypt (gcry_cipher_hd_t c,
 
   if (inbuflen >= blocksize )
     {
+      printf("cfb_decrypt 5 %d %d %d\n",inbuflen,outbuflen,c->unused);
       /* Save the current IV and then encrypt the IV. */
       cipher_block_cpy ( c->lastiv, c->u_iv.iv, blocksize);
  struct Block ivBlock = blockFromBytes(c->u_iv.iv);
@@ -942,6 +1147,7 @@ _gcry_cipher_cfb_decrypt (gcry_cipher_hd_t c,
 
   if (inbuflen)
     {
+      printf("cfb_decrypt 6 %d %d %d\n",inbuflen,outbuflen,c->unused);
       /* Save the current IV and then encrypt the IV. */
       cipher_block_cpy ( c->lastiv, c->u_iv.iv, blocksize );
    struct Block ivBlock = blockFromBytes(c->u_iv.iv);
@@ -1041,9 +1247,59 @@ void hex_string_to_bytes(const char *hex, uint8_t *bytes, size_t len) {
         bytes[i] = (hex_char_to_int(hex[i*2]) << 4) | hex_char_to_int(hex[i*2 + 1]);
     }
 }
+#define MAX_BYTES 256
+
+uint8_t* hex_string_to_bytes2(const char *hex, size_t len) {
+    static uint8_t bytes[MAX_BYTES];
+    if (len > MAX_BYTES) return NULL;
+    
+    for (size_t i = 0; i < len; i++) {
+        bytes[i] = (hex_char_to_int(hex[i*2]) << 4) | hex_char_to_int(hex[i*2 + 1]);
+    }
+    return bytes;
+}
+
+
+/****************
+ * Used for PGP's somewhat strange CFB mode. Only works if
+ * the corresponding flag is set.
+ */
+static void
+cipher_sync (gcry_cipher_hd_t c)
+{
+  printf("cipher_sync\n");
+  if (// (c->flags & GCRY_CIPHER_ENABLE_SYNC) &&)
+   c->unused)
+    {
+      memmove (c->u_iv.iv + c->unused,
+               c->u_iv.iv, //c->spec->blocksize
+               8 - c->unused);
+      memcpy (c->u_iv.iv,
+              c->lastiv + //c->spec->blocksize -
+              8 - c->unused, c->unused);
+      c->unused = 0;
+    }
+}
+
+char* my_strncpy(char* dest, const char* src, size_t n) {
+    size_t i;
+    for (i = 0; i < n && src[i] != '\0'; i++) {
+        dest[i] = src[i];
+    }
+    for (; i < n; i++) {
+        dest[i] = '\0';
+    }
+    return dest;
+}
 
 uint8_t *encryptToGPGFormat(const char *data, const char *filename, const char *passphrase, const char *derivedKey) {
     printf("Function start\n");
+     printf("Start encrypt - passphrase ptr: %p\n", (void*)passphrase);
+    
+    // Copy passphrase to local buffer to protect original
+    char local_pass[64];
+    my_strncpy(local_pass, passphrase, sizeof(local_pass)-1);
+    local_pass[sizeof(local_pass)-1] = '\0';
     
     size_t outputLen = 0;
     const uint8_t salt[] = {0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11};
@@ -1073,14 +1329,15 @@ uint8_t *encryptToGPGFormat(const char *data, const char *filename, const char *
         printf("Lower 4 bits: %d\n", last_byte & 15);
         printf("Upper 4 bits shifted: %d\n", last_byte >> 4);
         printf("Iterations: %u\n", iterations);
-        printf("Password length: %d\n", my_strlen(passphrase));
-        derive_key(salt, passphrase, my_strlen(passphrase), iterations, key);
+        printf("Password length: %d\n", my_strlen(local_pass));
+        derive_key(salt, local_pass, my_strlen(local_pass), iterations, key);
     }
+    
     printf("Derived Key: ");
     for (int i = 0; i < 16; i++) {
         printf("%02X", key[i]);
     }printf("\n");
-    printf("PASSPHRASE: %s\n",passphrase);
+    // printf("PASSPHRASE: %s\n",passphrase);
     // Prepare random data with quick check bytes
     uint8_t randomQuickCheck[10] = {0};
     memcpy(randomQuickCheck, random, 8);
@@ -1107,6 +1364,8 @@ uint8_t *encryptToGPGFormat(const char *data, const char *filename, const char *
     uint8_t encryptedRandom[10];
     _gcry_cipher_cfb_encrypt(c, encryptedRandom, sizeof(encryptedRandom),
                             randomQuickCheck, sizeof(randomQuickCheck));
+    
+    cipher_sync(c);
     
     // Encrypt packet byte
     uint8_t packetByte[1] = {0xcb};
@@ -1147,7 +1406,7 @@ uint8_t *encryptToGPGFormat(const char *data, const char *filename, const char *
     // Add the actual data
     memcpy(g_plaintextData + offset, data, dataLen);
     
-    printf("PASSPHRASE: %s\n",passphrase);
+    // printf("PASSPHRASE: %s\n",passphrase);
     printData("Encrypting: ",g_plaintextData, plaintextSize);
     // Encrypt the data packet
     _gcry_cipher_cfb_encrypt(c, g_encryptedData, plaintextSize,
@@ -1162,19 +1421,24 @@ uint8_t *encryptToGPGFormat(const char *data, const char *filename, const char *
         g_finalOutput, &outputLen
     );
     
-    printf("PASSPHRASE: %s\n",passphrase);
+    // printf("PASSPHRASE: %s\n",passphrase);
     return g_finalOutput;
 }
 
 void decryptGPGData(const uint8_t* encryptedData, size_t dataLen, const char* passphrase, uint8_t* output, size_t* outputLen, const char *derivedKey) {
-    printf("Passphrase pointer: %p\n", passphrase);
-    printf("Passphrase: '%s'\n", passphrase);
-    if (!passphrase) {
-        printf("Invalid passphrase\n");
+     printf("Memory validation:\n");
+    printf("  Valid data section: 0x%x - 0x%x\n", __data_start, __data_end);
+    printf("  Passphrase ptr: %p\n", (void*)passphrase);
+    
+    // Validate pointer is in data section
+    if ((uintptr_t)passphrase < (uintptr_t)__data_start || 
+        (uintptr_t)passphrase >= (uintptr_t)__data_end) {
+        printf("ERROR: Passphrase pointer not in data section\n");
         return;
     }
+    
+    printf("  Passphrase content: '%s'\n", passphrase);
 
-    printf("Password string: '%s'\n", passphrase);
     if(encryptedData[0] != 0x8C || dataLen < 15) {
         printf("Invalid GPG format\n");
         return;
@@ -1198,67 +1462,138 @@ void decryptGPGData(const uint8_t* encryptedData, size_t dataLen, const char* pa
     for (int i = 0; i < 16; i++) {
         printf("%02X", key[i]);
     }printf("\n");
+    printData("Decrypting: ",encryptedData, dataLen);
+    // Read and output each header byte
+    // Then perform the decryption of the 10 random bytes
+    // Then decrypt the rest, output the packet byte and the decrypted data including the filename if present
+
+    // Initialize cipher handle
+    struct gcry_cipher_handle hd;
+    gcry_cipher_hd_t c = &hd;
+    memset(c, 0, sizeof(*c));
+
+    // Set up key in context
+    Key *ctx_key = (Key *)&c->context.c;
+    for (int i = 0, j = 0; i < 4; i++, j += 4) {
+        (*ctx_key)[i] = (key[j] << 24) | (key[j + 1] << 16) | 
+                        (key[j + 2] << 8) | key[j + 3];
+    }
+
+    // Clear IV
+    memset(c->u_iv.iv, 0, sizeof(c->u_iv.iv));
+    c->unused = 0;
+
+    // Skip symmetric key packet (15 bytes) and header (2 bytes)
+    const uint8_t* encryptedContent = encryptedData + 17;
+    size_t contentLen = dataLen - 18; // -18 for header and final byte
+
+    // First decrypt the random data (10 bytes) to validate key
+    uint8_t decryptedRandom[10];
+    _gcry_cipher_cfb_decrypt(c, decryptedRandom, sizeof(decryptedRandom),
+                             encryptedContent, sizeof(decryptedRandom));
     
+    // // Validate quick check bytes
+    // if (decryptedRandom[8] != decryptedRandom[6] || 
+    //     decryptedRandom[9] != decryptedRandom[7]) {
+    //     printf("Invalid passphrase (quick check failed)\n");
+    //     return;
+    // }
+
+    // // Proceed with main data decryption
+    // encryptedContent += 10; // Skip random data
+    // contentLen -= 10;
+    
+    // // Decrypt packet type byte
+    // uint8_t packetType;
+    // _gcry_cipher_cfb_decrypt(c, &packetType, 1, encryptedContent, 1);
+    // if (packetType != 0xcb) {
+    //     printf("Invalid packet type: %02x\n", packetType);
+    //     return;
+    // }
+
+    // // Decrypt main data
+    // encryptedContent += 1;
+    // contentLen -= 1;
+    
+    // _gcry_cipher_cfb_decrypt(c, output, contentLen, encryptedContent, contentLen);
+    // *outputLen = contentLen;
+
+    // // Parse decrypted data
+    // size_t offset = 0;
+    // uint8_t totalLen = output[offset++];
+    // uint8_t mode = output[offset++];
+    // uint8_t filenameLen = output[offset++];
+    
+    // // Skip filename if present
+    // offset += filenameLen;
+    
+    // // Skip timestamp (4 bytes)
+    // offset += 4;
+
+    // // Move actual data to start of buffer
+    // size_t dataLen2 = totalLen - (offset - 1);
+    // memmove(output, output + offset, dataLen2);
+    // output[dataLen2] = '\0';
+    // *outputLen = dataLen2;
 }
 
-char* my_strncpy(char* dest, const char* src, size_t n) {
-    size_t i;
-    for (i = 0; i < n && src[i] != '\0'; i++) {
-        dest[i] = src[i];
-    }
-    for (; i < n; i++) {
-        dest[i] = '\0';
-    }
-    return dest;
+void print_memory_map() {
+    printf("Memory Map:\n");
+    printf("  text:   %p - %p\n", __text_start, __text_end);
+    printf("  rodata: %p - %p\n", __rodata_start, __rodata_end);
+    printf("  data:   %p - %p\n", __data_start, __data_end);
+    printf("  bss:    %p - %p\n", __bss_start, __bss_end);
 }
-
 void main()
 {
     init_printf(0, putc_uart);
     printf("Printf initialised!\n");
+    print_memory_map();
     testVector();
     // Test GPG encryption
     const char *data = "Hello World!";
     const char *filename = NULL;  // For initial test, matching original behavior
-    static const char *passphrase = "password";
-    
+        
+    // Place this in .data section
+    static char passphrase_buffer[64] __attribute__((section(".data"), aligned(4))) = "password";
+    static const char *passphrase = passphrase_buffer;
+
     printf("\nEncrypting data: '%s'\n", data);
+    printf("Passphrase ptr: %p\n", (void*)passphrase);
+
     printf("Passphrase: '%s'\n", passphrase);
+    printf("Passphrase ptr: %p\n", (void*)passphrase);
+
     if (filename) {
         printf("Filename: '%s'\n", filename);
     } else {
         printf("No filename specified\n");
     }
     const char* derivedKey = "693B7847FA44CDC6E1C403F5E44E95C1";
-    char passCopy[64];
-    my_strncpy(passCopy, passphrase, sizeof(passCopy)-1);
-    passCopy[sizeof(passCopy)-1] = '\0';
-    
-    printf("Passphrase pointer: %p\n", passCopy);
-    printf("Passphrase: '%s'\n", passCopy);
     // Call the encryption function
+  
+    printf("Initial passphrase ptr: %p\n", (void*)passphrase);
     uint8_t *encrypted = encryptToGPGFormat(data, filename, passphrase, derivedKey);
+    printf("After encrypt - passphrase ptr: %p\n", (void*)passphrase);
     
     // Calculate the output size 
     // 15 (symkey packet) + 2 (header) + 10 (random) + 1 (packet) + 20 (data packet)
     size_t outputSize = 15 + 2 + 10 + 1 + 20;  
     
-  
     // Print the final output in hex format
     printf("\nFinal GPG Output:\n");
     printFinalOutput(encrypted, outputSize);
-    // In main():
+
     uint8_t decrypted[MAX_PLAINTEXT_SIZE];
     size_t decryptedLen;
 
-    printf("PASSPHRASE: %s\n",passphrase);
-    printf("PASSPHRASE: %s\n",passCopy);
-    decryptGPGData(encrypted, outputSize, passphrase==""?passCopy:passphrase, decrypted, &decryptedLen, NULL);
-    printf("Decrypted text: %s\n", decrypted);
-
-    
-    decryptGPGData(encrypted, outputSize, passCopy, decrypted, &decryptedLen, derivedKey);
-    printf("Decrypted text: %s\n", decrypted);
+    const char* encryptedHex = "8c0d040303020a0b0c0d0e0f1011ffc91fb2c61829aca2c86dc2ea88ef6899bee106f5fd7fa0bcb202ef09247d9820b4";
+    size_t bytesLen = my_strlen(encryptedHex) / 2;  // Each byte is 2 hex chars
+printf("Before decrypt - passphrase ptr: %p content: '%s'\n", 
+       (void*)passphrase, passphrase ? passphrase : "NULL");
+    decryptGPGData(encrypted, outputSize, passphrase, decrypted, &decryptedLen, NULL);
+    printf("After decrypt - passphrase ptr: %p\n", (void*)passphrase);
+  
     
     // Halt execution
     while (1) {
