@@ -5,7 +5,7 @@ AS = $(CROSS_COMPILE)as
 LD = $(CROSS_COMPILE)ld
 OBJCOPY = $(CROSS_COMPILE)objcopy
 QEMU = qemu-system-arm
-
+GDB = gdb-multiarch 
 # Directories
 SRC_DIR = src
 BUILD_DIR = build
@@ -19,7 +19,7 @@ OBJS = $(SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 ASM_OBJS = $(ASM_SRCS:$(SRC_DIR)/%.s=$(BUILD_DIR)/%.o)
 
 # Flags
-CFLAGS = -mcpu=cortex-a7 -fpic -ffreestanding -O2 -Wall -Wextra
+CFLAGS = -mcpu=cortex-a7 -fpic -ffreestanding -O2 -Wall -Wextra -g
 ASFLAGS = -mcpu=cortex-a7
 LDFLAGS = -T $(SRC_DIR)/linker.ld -ffreestanding -O2 -nostdlib
 
@@ -47,3 +47,11 @@ clean:
 
 run: $(TARGET)
 	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel $(TARGET) -nographic -serial mon:stdio
+
+debug: $(TARGET)
+	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel $(TARGET) -nographic -serial mon:stdio -s -S
+gdb:
+	gdb-multiarch $(TARGET) -ex 'target remote localhost:1234' -ex 'break *_start' -ex 'break main' -ex 'continue'
+# Useful commands
+# pkill qemu-system-arm
+# (gdb) break main.c:10    # Break at line 10
