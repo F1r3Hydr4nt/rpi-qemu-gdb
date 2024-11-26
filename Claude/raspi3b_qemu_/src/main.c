@@ -504,12 +504,12 @@ struct gcry_cipher_handle
 // }
 
 static inline u32 buf_get_le32(const void *_buf) {
-   // printf("buf_get_le32 start _buf=%p\n", _buf);
+   printf("buf_get_le32 start _buf=%p\n", _buf);
    const byte *in = _buf;
-   // printf("Reading: ");
+   printf("Reading: ");
    
    u32 b0 = (u32)in[0];
-   // printf("[0]=%02x ", b0);
+   printf("[0]=%02x ", b0);
    
    u32 b1 = (u32)in[1]; 
    // printf("[1]=%02x ", b1);
@@ -521,7 +521,7 @@ static inline u32 buf_get_le32(const void *_buf) {
    // printf("[3]=%02x\n", b3);
    
    u32 result = (b3 << 24) | (b2 << 16) | (b1 << 8) | b0;
-   // printf("Result = %08x\n", result);
+   printf("Result = %08x\n", result);
    return result;
 }
 
@@ -606,21 +606,6 @@ buf_xor_2dst_v2(void *_dst1, void *_dst2, const void *_src, size_t len)
     byte *dst2 = _dst2;
     const byte *src = _src;
 
-    // printf("Initial values:\n");
-    // printf("dst1: ");
-    // for (size_t i = 0; i < len; i++) {
-    //     printf("%02X ", ((byte*)_dst1)[i]);
-    // }
-    // printf("\ndst2: ");
-    // for (size_t i = 0; i < len; i++) {
-    //     printf("%02X ", ((byte*)_dst2)[i]);
-    // }
-    // printf("\nsrc:  ");
-    // for (size_t i = 0; i < len; i++) {
-    //     printf("%02X ", src[i]);
-    // }
-    // printf("\n");
-
     // Process all bytes
     for (size_t i = 0; i < len; i++) {
         byte temp = dst2[i] ^ src[i];
@@ -630,163 +615,7 @@ buf_xor_2dst_v2(void *_dst1, void *_dst2, const void *_src, size_t len)
         dst1[i] = temp;
     }
 
-    // printf("Final values:\n");
-    // printf("dst1: ");
-    // for (size_t i = 0; i < len; i++) {
-    //     printf("%02X ", dst1[i]);
-    // }
-    // printf("\ndst2: ");
-    // for (size_t i = 0; i < len; i++) {
-    //     printf("%02X ", dst2[i]);
-    // }
-    // printf("\n");
 }
-// /* Optimized function for buffer xoring with two destination buffers.  Used
-//    mainly by CFB mode encryption.  */
-// static inline void
-// buf_xor_2dst(void *_dst1, void *_dst2, const void *_src, size_t len)
-// {
-//   byte *dst1 = _dst1;
-//   byte *dst2 = _dst2;
-//   const byte *src = _src;
-
-//   while (len >= sizeof(u64))
-//     {
-//       u64 temp = buf_get_he64(dst2) ^ buf_get_he64(src);
-//       buf_put_he64(dst2, temp);
-//       buf_put_he64(dst1, temp);
-//       dst2 += sizeof(u64);
-//       dst1 += sizeof(u64);
-//       src += sizeof(u64);
-//       len -= sizeof(u64);
-//     }
-
-//   if (len >= sizeof(u32))
-//     {
-//       u32 temp = buf_get_he32(dst2) ^ buf_get_he32(src);
-//       buf_put_he32(dst2, temp);
-//       buf_put_he32(dst1, temp);
-//       dst2 += sizeof(u32);
-//       dst1 += sizeof(u32);
-//       src += sizeof(u32);
-//       len -= sizeof(u32);
-//     }
-
-//   /* Handle tail.  */
-//   for (; len; len--)
-//     *dst1++ = (*dst2++ ^= *src++);
-// }
-
-// /* Optimized function for cipher block copying */
-// static inline void
-// cipher_block_cpy(void *_dst, const void *_src, size_t blocksize)
-// {
-//   byte *dst = _dst;
-//   const byte *src = _src;
-//   u64 s[2];
-
-//   if (blocksize == 8)
-//     {
-//       buf_put_he64(dst + 0, buf_get_he64(src + 0));
-//     }
-//   else /* blocksize == 16 */
-//     {
-//       s[0] = buf_get_he64(src + 0);
-//       s[1] = buf_get_he64(src + 8);
-//       buf_put_he64(dst + 0, s[0]);
-//       buf_put_he64(dst + 8, s[1]);
-//     }
-// }
-
-// static inline void
-// cipher_block_xor_n_copy_2(void *dst_xor, const void *src_xor,
-//                           void *srcdst_cpy, const void *src_cpy,
-//                           size_t blocksize)
-// {
-//     printf("cipher_block_xor_n_copy_2\n");
-//     byte *dst_xor_p = dst_xor;
-//     byte *srcdst_cpy_p = srcdst_cpy;
-//     const byte *src_xor_p = src_xor;
-//     const byte *src_cpy_p = src_cpy;
-//     u64 sc[2];
-//     u64 sx[2];
-//     u64 sdc[2];
-
-//     if (blocksize == 8)
-//     {
-//           printf("cipher_block_xor_n_copy_2\n");
-
-//         sc[0] = buf_get_he64(src_cpy_p + 0);
-//             printf("cipher_block_xor_n_copy_2\n");
-
-//         buf_put_he64(dst_xor_p + 0,
-//                      buf_get_he64(srcdst_cpy_p + 0) ^ buf_get_he64(src_xor_p + 0));
-//         buf_put_he64(srcdst_cpy_p + 0, sc[0]);
-//     }
-//     else /* blocksize == 16 */
-//     {
-//         sc[0] = buf_get_he64(src_cpy_p + 0);
-//         sc[1] = buf_get_he64(src_cpy_p + 8);
-//         sx[0] = buf_get_he64(src_xor_p + 0);
-//         sx[1] = buf_get_he64(src_xor_p + 8);
-//         sdc[0] = buf_get_he64(srcdst_cpy_p + 0);
-//         sdc[1] = buf_get_he64(srcdst_cpy_p + 8);
-//         sx[0] ^= sdc[0];
-//         sx[1] ^= sdc[1];
-//         buf_put_he64(dst_xor_p + 0, sx[0]);
-//         buf_put_he64(dst_xor_p + 8, sx[1]);
-//         buf_put_he64(srcdst_cpy_p + 0, sc[0]);
-//         buf_put_he64(srcdst_cpy_p + 8, sc[1]);
-//     }
-//         printf("cipher_block_xor_n_copy_2\n");
-
-// }
-
-
-// /* Optimized function for combined buffer xoring and copying.  Used by mainly
-//    CBC mode decryption.  */
-// static inline void
-// buf_xor_n_copy_2(void *_dst_xor, const void *_src_xor, void *_srcdst_cpy,
-// 		 const void *_src_cpy, size_t len)
-// {
-//   byte *dst_xor = _dst_xor;
-//   byte *srcdst_cpy = _srcdst_cpy;
-//   const byte *src_xor = _src_xor;
-//   const byte *src_cpy = _src_cpy;
-
-//   while (len >= sizeof(u64))
-//     {
-//       u64 temp = buf_get_he64(src_cpy);
-//       buf_put_he64(dst_xor, buf_get_he64(srcdst_cpy) ^ buf_get_he64(src_xor));
-//       buf_put_he64(srcdst_cpy, temp);
-//       dst_xor += sizeof(u64);
-//       srcdst_cpy += sizeof(u64);
-//       src_xor += sizeof(u64);
-//       src_cpy += sizeof(u64);
-//       len -= sizeof(u64);
-//     }
-
-//   if (len >= sizeof(u32))
-//     {
-//       u32 temp = buf_get_he32(src_cpy);
-//       buf_put_he32(dst_xor, buf_get_he32(srcdst_cpy) ^ buf_get_he32(src_xor));
-//       buf_put_he32(srcdst_cpy, temp);
-//       dst_xor += sizeof(u32);
-//       srcdst_cpy += sizeof(u32);
-//       src_xor += sizeof(u32);
-//       src_cpy += sizeof(u32);
-//       len -= sizeof(u32);
-//     }
-
-//   /* Handle tail.  */
-//   for (; len; len--)
-//     {
-//       byte temp = *src_cpy++;
-//       *dst_xor++ = *srcdst_cpy ^ *src_xor++;
-//       *srcdst_cpy++ = temp;
-//     }
-// }
-
 static inline void buf_xor_2dst(void *_dst1, void *_dst2, const void *_src, size_t len) {
     byte *dst1 = _dst1;
     byte *dst2 = _dst2;
@@ -845,7 +674,7 @@ static inline void cipher_block_cpy(void *_dst, const void *_src, size_t blocksi
 static inline void cipher_block_xor_n_copy_2(void *dst_xor, const void *src_xor,
                                            void *srcdst_cpy, const void *src_cpy,
                                            size_t blocksize) {
-      // printf("cipher_block_xor_n_copy_2\n");
+    printf("cipher_block_xor_n_copy_2\n");
     byte *dst_xor_p = dst_xor;
     byte *srcdst_cpy_p = srcdst_cpy;
     const byte *src_xor_p = src_xor;
@@ -853,9 +682,9 @@ static inline void cipher_block_xor_n_copy_2(void *dst_xor, const void *src_xor,
     u32 sc[4], sx[4], sdc[4];
 
     if (blocksize == 8) {
-      // printf("Before buf_get_he32\n");
+      printf("Before buf_get_he32\n");
       sc[0] = buf_get_he32(src_cpy_p + 0);
-      // printf("After buf_get_he32\n");
+      printf("After buf_get_he32\n");
 
         sc[1] = buf_get_he32(src_cpy_p + 4);
         sdc[0] = buf_get_he32(srcdst_cpy_p);
@@ -882,12 +711,14 @@ static inline void cipher_block_xor_n_copy_2(void *dst_xor, const void *src_xor,
 
 static inline void buf_xor_n_copy_2(void *_dst_xor, const void *_src_xor, 
                                   void *_srcdst_cpy, const void *_src_cpy, size_t len) {
+    printf("buf_xor_n_copy_2\n");
     byte *dst_xor = _dst_xor;
     byte *srcdst_cpy = _srcdst_cpy;
     const byte *src_xor = _src_xor;
     const byte *src_cpy = _src_cpy;
 
     while (len >= sizeof(u32)) {
+        printf("len >= sizeof(u32)\n");
         u32 temp = buf_get_he32(src_cpy);
         buf_put_he32(dst_xor, buf_get_he32(srcdst_cpy) ^ buf_get_he32(src_xor));
         buf_put_he32(srcdst_cpy, temp);
@@ -899,10 +730,12 @@ static inline void buf_xor_n_copy_2(void *_dst_xor, const void *_src_xor,
     }
 
     for (; len; len--) {
+        printf("len < sizeof(u32)\n");
         byte temp = *src_cpy++;
         *dst_xor++ = *srcdst_cpy ^ *src_xor++;
         *srcdst_cpy++ = temp;
     }
+    printf("buf_xor_n_copy_2 end\n");
 }
 
 /* Optimized function for combined buffer xoring and copying.  Used by mainly
@@ -1159,20 +992,12 @@ _gcry_cipher_cfb_decrypt (gcry_cipher_hd_t c,
       c->unused = blocksize;
       /* Apply the XOR. */
       c->unused -= inbuflen;
-      /*   if(shouldShift) {
-        unsigned char saved_iv[blocksize];
-        memcpy(saved_iv, c->u_iv.iv, blocksize);
-        buf_xor_n_copy(outbuf, c->u_iv.iv, inbuf, inbuflen);
-        memcpy(c->u_iv.iv, saved_iv + inbuflen, blocksize - inbuflen);
-        memcpy(c->u_iv.iv + blocksize - inbuflen, outbuf, inbuflen);
-      } else {
-        buf_xor_n_copy(outbuf, c->u_iv.iv, inbuf, inbuflen);
-        memcpy(c->u_iv.iv, outbuf, inbuflen);
-      }*/
+      
       buf_xor_n_copy(outbuf, c->u_iv.iv, inbuf, inbuflen);
       outbuf += inbuflen;
       inbuf += inbuflen;
       inbuflen = 0;
+      printf("cfb_decrypt 7 %d %d %d\n",inbuflen,outbuflen,c->unused);
     }
 
   if (burn > 0)
@@ -1220,6 +1045,14 @@ void formatGPGOutput(const uint8_t* symKeyPacket, size_t symKeyPacketLen,
 void printFinalOutput(const uint8_t* data, size_t len) {
     for(size_t i = 0; i < len; i++) {
         printf("%02x", data[i]);
+        if((i + 1) % 32 == 0) printf("\n");
+    }
+    printf("\n");
+}
+
+void printFinalOutput2(const uint8_t* data, size_t len) {
+    for(size_t i = 0; i < len; i++) {
+        printf("%c", data[i]);
         if((i + 1) % 32 == 0) printf("\n");
     }
     printf("\n");
@@ -1294,9 +1127,10 @@ char* my_strncpy(char* dest, const char* src, size_t n) {
 
 uint8_t *encryptToGPGFormat(const char *data, const char *filename, const char *passphrase, const char *derivedKey) {
     printf("Function start\n");
-     printf("Start encrypt - passphrase ptr: %p\n", (void*)passphrase);
+    printf("Start encrypt - passphrase ptr: %p\n", (void*)passphrase);
     
     // Copy passphrase to local buffer to protect original
+    /*This is a common security practice - making a local copy of data you need to work with rather than operating directly on static data helps prevent memory corruption issues.*/
     char local_pass[64];
     my_strncpy(local_pass, passphrase, sizeof(local_pass)-1);
     local_pass[sizeof(local_pass)-1] = '\0';
@@ -1463,10 +1297,6 @@ void decryptGPGData(const uint8_t* encryptedData, size_t dataLen, const char* pa
         printf("%02X", key[i]);
     }printf("\n");
     printData("Decrypting: ",encryptedData, dataLen);
-    // Read and output each header byte
-    // Then perform the decryption of the 10 random bytes
-    // Then decrypt the rest, output the packet byte and the decrypted data including the filename if present
-
     // Initialize cipher handle
     struct gcry_cipher_handle hd;
     gcry_cipher_hd_t c = &hd;
@@ -1492,49 +1322,49 @@ void decryptGPGData(const uint8_t* encryptedData, size_t dataLen, const char* pa
     _gcry_cipher_cfb_decrypt(c, decryptedRandom, sizeof(decryptedRandom),
                              encryptedContent, sizeof(decryptedRandom));
     
-    // // Validate quick check bytes
-    // if (decryptedRandom[8] != decryptedRandom[6] || 
-    //     decryptedRandom[9] != decryptedRandom[7]) {
-    //     printf("Invalid passphrase (quick check failed)\n");
-    //     return;
-    // }
+    // Validate quick check bytes
+    if (decryptedRandom[8] != decryptedRandom[6] || 
+        decryptedRandom[9] != decryptedRandom[7]) {
+        printf("Invalid passphrase (quick check failed)\n");
+        return;
+    }
 
-    // // Proceed with main data decryption
-    // encryptedContent += 10; // Skip random data
-    // contentLen -= 10;
-    
+    // Proceed with main data decryption
+    encryptedContent += 10; // Skip random data
+    contentLen -= 10;
+    cipher_sync(c);    
     // // Decrypt packet type byte
-    // uint8_t packetType;
-    // _gcry_cipher_cfb_decrypt(c, &packetType, 1, encryptedContent, 1);
-    // if (packetType != 0xcb) {
-    //     printf("Invalid packet type: %02x\n", packetType);
-    //     return;
-    // }
+    uint8_t packetType;
+    _gcry_cipher_cfb_decrypt(c, &packetType, 1, encryptedContent, 1);
+    if (packetType != 0xcb) {
+        printf("Invalid packet type: %02x\n", packetType);
+        return;
+    }
 
-    // // Decrypt main data
-    // encryptedContent += 1;
-    // contentLen -= 1;
+    // Decrypt main data
+    encryptedContent += 1;
+    contentLen -= 1;
     
-    // _gcry_cipher_cfb_decrypt(c, output, contentLen, encryptedContent, contentLen);
-    // *outputLen = contentLen;
+    _gcry_cipher_cfb_decrypt(c, output, contentLen, encryptedContent, contentLen);
+    *outputLen = contentLen;
 
-    // // Parse decrypted data
-    // size_t offset = 0;
-    // uint8_t totalLen = output[offset++];
-    // uint8_t mode = output[offset++];
-    // uint8_t filenameLen = output[offset++];
+    // Parse decrypted data
+    size_t offset = 0;
+    uint8_t totalLen = output[offset++];
+    uint8_t mode = output[offset++];
+    uint8_t filenameLen = output[offset++];
     
-    // // Skip filename if present
-    // offset += filenameLen;
+    // Skip filename if present
+    offset += filenameLen;
     
-    // // Skip timestamp (4 bytes)
-    // offset += 4;
+    // Skip timestamp (4 bytes)
+    offset += 4;
 
-    // // Move actual data to start of buffer
-    // size_t dataLen2 = totalLen - (offset - 1);
-    // memmove(output, output + offset, dataLen2);
-    // output[dataLen2] = '\0';
-    // *outputLen = dataLen2;
+    // Move actual data to start of buffer
+    size_t dataLen2 = totalLen - (offset - 1);
+    memmove(output, output + offset, dataLen2);
+    output[dataLen2] = '\0';
+    *outputLen = dataLen2;
 }
 
 void print_memory_map() {
@@ -1557,6 +1387,8 @@ void main()
     // Place this in .data section
     static char passphrase_buffer[64] __attribute__((section(".data"), aligned(4))) = "password";
     static const char *passphrase = passphrase_buffer;
+    static char derivedKeybuffer[64] __attribute__((section(".data"), aligned(4))) = "693B7847FA44CDC6E1C403F5E44E95C1";
+    static const char* derivedKey = derivedKeybuffer;
 
     printf("\nEncrypting data: '%s'\n", data);
     printf("Passphrase ptr: %p\n", (void*)passphrase);
@@ -1569,7 +1401,6 @@ void main()
     } else {
         printf("No filename specified\n");
     }
-    const char* derivedKey = "693B7847FA44CDC6E1C403F5E44E95C1";
     // Call the encryption function
   
     printf("Initial passphrase ptr: %p\n", (void*)passphrase);
@@ -1589,11 +1420,13 @@ void main()
 
     const char* encryptedHex = "8c0d040303020a0b0c0d0e0f1011ffc91fb2c61829aca2c86dc2ea88ef6899bee106f5fd7fa0bcb202ef09247d9820b4";
     size_t bytesLen = my_strlen(encryptedHex) / 2;  // Each byte is 2 hex chars
-printf("Before decrypt - passphrase ptr: %p content: '%s'\n", 
-       (void*)passphrase, passphrase ? passphrase : "NULL");
-    decryptGPGData(encrypted, outputSize, passphrase, decrypted, &decryptedLen, NULL);
-    printf("After decrypt - passphrase ptr: %p\n", (void*)passphrase);
+    //printf("Before decrypt - passphrase ptr: %p content: '%s'\n", 
+    //   (void*)passphrase, passphrase ? passphrase : "NULL");
+    decryptGPGData(encrypted, outputSize, passphrase, decrypted, &decryptedLen, derivedKey);
+    // printf("After decrypt - passphrase ptr: %p\n", (void*)passphrase);
   
+    printf("\nFinal GPG Output:\n");
+    printFinalOutput2(decrypted, decryptedLen);
     
     // Halt execution
     while (1) {
