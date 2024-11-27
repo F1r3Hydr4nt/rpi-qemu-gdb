@@ -3,8 +3,15 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// Standard memory functions
 void* malloc(size_t size);
 void free(void* ptr);
+
+// x* memory functions
+void* xmalloc(size_t n);
+void* xcalloc(size_t n, size_t m);
+void xfree(void* p);
+void* xrealloc(void* p, size_t n);
 
 inline void* memset(void* dest, int c, size_t n) {
     unsigned char* p = dest;
