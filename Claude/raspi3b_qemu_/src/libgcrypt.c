@@ -2,22 +2,21 @@
 #include <string.h>
 #include "printf.h"
 #include "sboxes.h"
-
 u32 buf_get_le32(const void *_buf) {
-    // printf("buf_get_le32 start _buf=%p\n", _buf);
+    if (!_buf) {
+        return 0; // Handle NULL pointer case
+    }
+    
     const byte *in = _buf;
-    // printf("Reading: ");
-   
-    u32 b0 = (u32)in[0];
-    // printf("[0]=%02x ", b0);
-   
-    u32 b1 = (u32)in[1]; 
-    u32 b2 = (u32)in[2];
-    u32 b3 = (u32)in[3];
-   
-    u32 result = (b3 << 24) | (b2 << 16) | (b1 << 8) | b0;
-    // printf("Result = %08x\n", result);
-    return result;
+    // Force memory read using volatile to prevent optimization
+    volatile const byte *vin = in;
+    
+    u32 b0 = (u32)vin[0];
+    u32 b1 = (u32)vin[1]; 
+    u32 b2 = (u32)vin[2];
+    u32 b3 = (u32)vin[3];
+    
+    return (b3 << 24) | (b2 << 16) | (b1 << 8) | b0;
 }
 
 void buf_put_le32(void *_buf, u32 val) {
@@ -130,10 +129,7 @@ void cipher_block_xor_n_copy_2(void *dst_xor, const void *src_xor,
     u32 sc[4], sx[4], sdc[4];
 
     if (blocksize == 8) {
-        printf("Before buf_get_he32\n");
         sc[0] = buf_get_he32(src_cpy_p + 0);
-        printf("After buf_get_he32\n");
-
         sc[1] = buf_get_he32(src_cpy_p + 4);
         sdc[0] = buf_get_he32(srcdst_cpy_p);
         sdc[1] = buf_get_he32(srcdst_cpy_p + 4);
@@ -159,14 +155,14 @@ void cipher_block_xor_n_copy_2(void *dst_xor, const void *src_xor,
 
 void buf_xor_n_copy_2(void *_dst_xor, const void *_src_xor,
                       void *_srcdst_cpy, const void *_src_cpy, size_t len) {
-    printf("buf_xor_n_copy_2\n");
+    // printf("buf_xor_n_copy_2\n");
     byte *dst_xor = _dst_xor;
     byte *srcdst_cpy = _srcdst_cpy;
     const byte *src_xor = _src_xor;
     const byte *src_cpy = _src_cpy;
 
     while (len >= sizeof(u32)) {
-        printf("len >= sizeof(u32)\n");
+        // printf("len >= sizeof(u32)\n");
         u32 temp = buf_get_he32(src_cpy);
         buf_put_he32(dst_xor, buf_get_he32(srcdst_cpy) ^ buf_get_he32(src_xor));
         buf_put_he32(srcdst_cpy, temp);
@@ -178,12 +174,12 @@ void buf_xor_n_copy_2(void *_dst_xor, const void *_src_xor,
     }
 
     for (; len; len--) {
-        printf("len < sizeof(u32)\n");
+        //printf("len < sizeof(u32)\n");
         byte temp = *src_cpy++;
         *dst_xor++ = *srcdst_cpy ^ *src_xor++;
         *srcdst_cpy++ = temp;
     }
-    printf("buf_xor_n_copy_2 end\n");
+    //printf("buf_xor_n_copy_2 end\n");
 }
 
 void buf_xor_n_copy(void *_dst_xor, void *_srcdst_cpy,
@@ -396,6 +392,18 @@ size_t _gcry_cipher_cfb_decrypt(gcry_cipher_hd_t c,
     }
 
     return 0;
+}
+
+void bytesFromBlock(struct Block block, uint8_t *bytes)
+{
+    bytes[7] = (block.lsb & 0x000000FF) >> 0;
+    bytes[6] = (block.lsb & 0x0000FF00) >> 8;
+    bytes[5] = (block.lsb & 0x00FF0000) >> 16;
+    bytes[4] = (block.lsb & 0xFF000000) >> 24;
+    bytes[3] = (block.msb & 0x000000FF) >> 0;
+    bytes[2] = (block.msb & 0x0000FF00) >> 8;
+    bytes[1] = (block.msb & 0x00FF0000) >> 16;
+    bytes[0] = (block.msb & 0xFF000000) >> 24;
 }
 
 #define ROUND_COUNT 16
