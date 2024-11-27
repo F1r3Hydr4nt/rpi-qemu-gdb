@@ -87,3 +87,72 @@ void free(void* ptr) {
         curr = curr->next;
     }
 }
+
+// x* memory functions implementation
+void* xmalloc(size_t n) {
+    void* ptr = malloc(n);
+    if (!ptr && n != 0) {
+        // Handle allocation failure - in bare metal we just return NULL
+        // In a full system we might want to panic/reset
+    }
+    return ptr;
+}
+
+void* xcalloc(size_t n, size_t m) {
+    size_t total;
+    void* ptr;
+    
+    // Check for multiplication overflow
+    if (n && m > SIZE_MAX / n) {
+        return NULL;
+    }
+    
+    total = n * m;
+    ptr = malloc(total);
+    
+    if (ptr) {
+        memset(ptr, 0, total);
+    }
+    
+    return ptr;
+}
+
+void xfree(void* p) {
+    if (p) {
+        free(p);
+    }
+}
+
+void* xrealloc(void* p, size_t n) {
+    void* new_ptr;
+    
+    if (!p) {
+        return malloc(n);
+    }
+    
+    if (n == 0) {
+        free(p);
+        return NULL;
+    }
+    
+    // Get original block header
+    block_header_t* header = (block_header_t*)((uint8_t*)p - sizeof(block_header_t));
+    size_t old_size = header->size - sizeof(block_header_t);
+    
+    // If new size fits in existing block, just return original pointer
+    if (n <= old_size) {
+        return p;
+    }
+    
+    // Allocate new block
+    new_ptr = malloc(n);
+    if (!new_ptr) {
+        return NULL;
+    }
+    
+    // Copy old data
+    memcpy(new_ptr, p, old_size);
+    free(p);
+    
+    return new_ptr;
+}

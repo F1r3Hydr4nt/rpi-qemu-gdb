@@ -66,24 +66,24 @@ struct iobuf_struct {
     int subno;           /* Sub-number */
 };
 
-static void *xmalloc(size_t n) {
-    /* Add your memory allocator here */
-    return NULL; 
-}
+// static void *xmalloc(size_t n) {
+//     /* Add your memory allocator here */
+//     return NULL; 
+// }
 
-static void *xcalloc(size_t n, size_t m) {
-    /* Add your calloc implementation */
-    return NULL;
-}
+// static void *xcalloc(size_t n, size_t m) {
+//     /* Add your calloc implementation */
+//     return NULL;
+// }
 
-static void xfree(void *p) {
-    /* Add your free implementation */
-}
+// static void xfree(void *p) {
+//     /* Add your free implementation */
+// }
 
-static void *xrealloc(void *p, size_t n) { 
-    /* Add your realloc implementation */
-    return NULL;
-}
+// static void *xrealloc(void *p, size_t n) { 
+//     /* Add your realloc implementation */
+//     return NULL;
+// }
 
 /* Block filter context for length processing */
 typedef struct {
