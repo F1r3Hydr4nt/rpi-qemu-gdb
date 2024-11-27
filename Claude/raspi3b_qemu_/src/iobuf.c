@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "memory.h"
-
+#include "printf.h"
 /* Configuration */
 #define IOBUF_BUFFER_SIZE   8192
 #define MAX_NESTING_FILTER  64 
@@ -621,6 +621,22 @@ static int filter_flush(iobuf_t a) {
     a->d.len = 0;
     return rc;
 }
+
+
+int iobuf_flush(iobuf_t a) {
+    while (1) {
+        int rc = filter_flush(a);
+        if (rc) {
+            printf("Flushing iobuf failed\n");
+            return rc;
+        }
+        if (!a->chain)
+            break;
+        a = a->chain;
+    }
+    return 0;
+}
+
 
 size_t iobuf_temp_to_buffer(iobuf_t a, byte *buffer, size_t buflen) {
     size_t n;
