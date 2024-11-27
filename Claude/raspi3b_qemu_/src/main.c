@@ -327,7 +327,7 @@ void main() {
     printf("Passphrase: '%s'\n", passphrase);
 
     // Encrypt using IOBUFs
-    iobuf_t encrypted = encryptToGPGFormat(data, filename, passphrase, NULL);//derivedKey);
+    iobuf_t encrypted = encryptToGPGFormat(data, filename, passphrase, derivedKey);
     if (!encrypted) {
         printf("Encryption failed!\n");
         return;
