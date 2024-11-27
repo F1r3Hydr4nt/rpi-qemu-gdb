@@ -83,6 +83,7 @@ size_t iobuf_temp_to_buffer(iobuf_t a, byte *buffer, size_t buflen);
 void iobuf_set_limit(iobuf_t a, unsigned long nlimit);
 unsigned long iobuf_tell(iobuf_t a);
 void iobuf_set_partial_block_mode(iobuf_t a, size_t len);
+int iobuf_flush(iobuf_t a);
 static int filter_flush(iobuf_t a);
 /* Convenience macros */
 #define iobuf_get(a)  \
