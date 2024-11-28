@@ -326,29 +326,29 @@ void main() {
     printf("\nEncrypting data: '%s'\n", data);
     printf("Passphrase: '%s'\n", passphrase);
 
-    // Encrypt using IOBUFs
-    iobuf_t encrypted = encryptToGPGFormat(data, filename, passphrase, derivedKey);
-    if (!encrypted) {
-        printf("Encryption failed!\n");
-        return;
-    }
+    // // Encrypt using IOBUFs
+    // iobuf_t encrypted = encryptToGPGFormat(data, filename, passphrase, derivedKey);
+    // if (!encrypted) {
+    //     printf("Encryption failed!\n");
+    //     return;
+    // }
 
-    // Create a new IOBUF with the encrypted content
-    uint8_t *encbuf = malloc(encrypted->d.len);
-    size_t enclen = iobuf_temp_to_buffer(encrypted, encbuf, encrypted->d.len);
-    iobuf_close(encrypted);
+    // // Create a new IOBUF with the encrypted content
+    // uint8_t *encbuf = malloc(encrypted->d.len);
+    // size_t enclen = iobuf_temp_to_buffer(encrypted, encbuf, encrypted->d.len);
+    // iobuf_close(encrypted);
 
-    // Print encrypted hex bytes
-    printf("\nEncrypted data (hex):\n");
-    for (size_t i = 0; i < enclen; i++) {
-        printf("%02x", encbuf[i]);
-        if ((i + 1) % 16 == 0) {
-            printf("\n");
-        } else {
-            // printf(" ");
-        }
-    }
-    printf("\nTotal encrypted length: %d bytes\n\n", enclen);
+    // // Print encrypted hex bytes
+    // printf("\nEncrypted data (hex):\n");
+    // for (size_t i = 0; i < enclen; i++) {
+    //     printf("%02x", encbuf[i]);
+    //     if ((i + 1) % 16 == 0) {
+    //         printf("\n");
+    //     } else {
+    //         // printf(" ");
+    //     }
+    // }
+    // printf("\nTotal encrypted length: %d bytes\n\n", enclen);
 
     // // Create new input IOBUF with the encrypted data
     // iobuf_t enc_input = iobuf_temp_with_content((char*)encbuf, enclen);
