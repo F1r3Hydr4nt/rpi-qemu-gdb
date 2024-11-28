@@ -122,8 +122,8 @@ build_packet (IOBUF out, PACKET *pkt)
     case PKT_ENCRYPTED:
     // case PKT_ENCRYPTED_MDC:
     // case PKT_ENCRYPTED_AEAD:
-    //   new_ctb = pkt->pkt.encrypted->new_ctb;
-    //   break;
+      new_ctb = pkt->pkt.encrypted->new_ctb;
+      break;
     // case PKT_COMPRESSED:
     //   new_ctb = pkt->pkt.compressed->new_ctb;
     //   break;
@@ -139,7 +139,7 @@ build_packet (IOBUF out, PACKET *pkt)
     ctb = (0xc0 | (pkttype & 0x3f));
   else
     ctb = (0x80 | ((pkttype & 15)<<2));
-  printf("CTB: pkttype %02x %d", ctb, pkttype);
+  printf("CTB: pkttype %02x %d\n", ctb, pkttype);
   switch (pkttype)
     {
     // case PKT_ATTRIBUTE:
@@ -238,53 +238,42 @@ calc_packet_length( PACKET *pkt )
 }
 
 #define HEX_DUMP_BUFFER_SIZE 256
-
-static void
-bin2hex(const uint8_t *data, size_t len, char *hex) {
-    static const char hex_chars[] = "0123456789abcdef";
-    for (size_t i = 0; i < len; i++) {
-        hex[i * 2] = hex_chars[data[i] >> 4];
-        hex[i * 2 + 1] = hex_chars[data[i] & 0x0F];
-    }
-    hex[len * 2] = '\0';
-}
-
-static void
-log_hexdump(const uint8_t *buffer, int length) {
-    char formatted[HEX_DUMP_BUFFER_SIZE];
+void log_hexdump(const uint8_t *buffer, int length) {
     char text[17];
     int written = 0;
-
+    
     printf("%d bytes:\n", length);
     while (length > 0) {
-        int have = // length > 16 ? 16 : 
-        length;
-        int i;
-
-        bin2hex(buffer, have, formatted);
-        text[have] = '\0';
-        for (i = 0; i < have; i++) {
-            text[i] = (buffer[i] >= 32 && buffer[i] <= 126) ? buffer[i] : '.';
-        }
-
+        int have = (length > 16) ? 16 : length;
+        
         printf("%-8d ", written);
-        for (i = 0; i < 16; i++) {
+        
+        for (int i = 0; i < 16; i++) {
             if (i % 2 == 0) printf(" ");
             if (i % 8 == 0) printf(" ");
-            if (i < have) printf("%2s", &formatted[i * 2]);
-            else printf("   ");
+            
+            if (i < have) {
+                printf("%02x", buffer[i]);
+            } else {
+                printf("  ");
+            }
         }
-        printf(" %s\n", text);
-
+        
+        printf("  ");
+        for (int i = 0; i < have; i++) {
+            text[i] = (buffer[i] >= 32 && buffer[i] <= 126) ? buffer[i] : '.';
+        }
+        text[have] = '\0';
+        printf("%s\n", text);
+        
         buffer += have;
         length -= have;
         written += have;
     }
 }
 
-
 void print_iobuf_info2(const struct iobuf_struct *iobuf) {
-        // printf("print_iobuf_info2\n");
+    printf("print_iobuf_info2\n");
     if (!iobuf) {
         printf("iobuf is NULL\n");
         return;
@@ -380,7 +369,6 @@ do_symkey_enc( IOBUF out, int ctb, PKT_symkey_enc *enc )
     write_header(out, ctb, iobuf_get_temp_length(a) );
     rc = iobuf_write_temp( out, a );
     iobuf_close(a);
-    print_iobuf_info2(a);
     return rc;
 }
 
@@ -521,7 +509,7 @@ static int
 write_32(IOBUF out, u32 a)
 {
 
-  printf("write_32 %08x",a);
+  printf("write_32 %08x\n",a);
     iobuf_put(out, a>> 24);
     iobuf_put(out, a>> 16);
     iobuf_put(out, a>> 8);
@@ -669,7 +657,7 @@ write_header2( IOBUF out, int ctb, u32 len, int hdrlen )
 static int
 write_new_header( IOBUF out, int ctb, u32 len, int hdrlen )
 {
-  printf("write_new_header %02X %08X %d",ctb,len,hdrlen);
+  printf("write_new_header %02X %08X %d\n",ctb,len,hdrlen);
     if( hdrlen )
 	printf("can't cope with hdrlen yet\n");
 

@@ -443,8 +443,8 @@ int encrypt_simple(const uint8_t *data, size_t data_len,const char* passphrase,
       //            cfx.dek->use_aead? openpgp_aead_algo_name (cfx.dek->use_aead)
       //            /**/             : "CFB");
     }
-     printf("armor2 %d",rc);
-  if ( rc || (rc = open_outfile (-1, "", 0, 0, &out )))
+     // printf("armor2 %d",rc);
+  if ( rc || (rc = open_outfile (-1, NULL, 0, 0, &out )))
     {
       // iobuf_cancel (inp);
       // xfree (cfx.dek);
@@ -505,7 +505,7 @@ if ( s2k )
   // printf("filesize %d", filesize);
   if (1)//!opt.no_literal)
   {
-    printf("no_literal");
+    printf("no_literal\n");
     /* Note that PT has been initialized above in !no_literal mode.  */
     // pt->timestamp = 
     pt->timestamp = 1624780800;// make_timestamp();
@@ -518,7 +518,7 @@ if ( s2k )
     pkt.pkttype = PKT_PLAINTEXT;
     pkt.pkt.plaintext = pt;
     cfx.datalen = filesize && !FALSE ? calc_packet_length(&pkt) : 0;
-    printf("cfx.datalen %d", cfx.datalen);
+    printf("cfx.datalen %d\n", cfx.datalen);
   }
   // else
   // {
@@ -531,7 +531,7 @@ if ( s2k )
   //     // printf("cfx.datalen %d",cfx.datalen);
   //   /* Register the cipher filter. */
     if (mode){
-      printf("mode %d,cfx.dek->use_aead %d",mode,cfx.dek->use_aead);
+      printf("mode %d, cfx.dek->use_aead %d\n",mode,cfx.dek->use_aead);
       iobuf_push_filter (out,
                          //cfx.dek->use_aead? cipher_filter_ocb
                          ///**/             : 
@@ -546,8 +546,11 @@ if ( s2k )
         if ( (rc = build_packet( out, &pkt )) )
           printf("build_packet failed: %s\n");//, gpg_strerror (rc) );
 
-          //print_iobuf_info(out);
+//          print_iobuf_info(out);
+
       }
+
+      printf("DONE\n");
   //   else
   //     {
   //       printf("no_literal copying plain data");
@@ -563,7 +566,7 @@ if ( s2k )
   //         }else printf("copied %d bytes",bytes_copied);
   //       wipememory (copy_buffer, 4096); /* burn buffer */
   //     }
-    printf("rc %d",rc);
+    printf("rc %d\n",rc);
     /* Finish the stuff.  */
     iobuf_close (inp);
     if (rc){
@@ -573,7 +576,9 @@ if ( s2k )
     }
     else
       {
-        iobuf_close (out); /* fixme: check returncode */
+        rc = iobuf_close (out); /* fixme: check returncode */
+        printf("rc %d\n",rc);
+
         // if (mode)
         //   write_status ( STATUS_END_ENCRYPTION );
       }
