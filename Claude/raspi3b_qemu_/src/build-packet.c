@@ -96,7 +96,7 @@ const char* get_pkttype_name(pkttype_t pkttype) {
 int
 build_packet (IOBUF out, PACKET *pkt)
 {
-    printf("        BUILD PACKET: %s",get_pkttype_name(pkt->pkttype));
+    printf("        BUILD PACKET: %s out->use %d\n",get_pkttype_name(pkt->pkttype), out->use);
 
   int rc = 0;
   int new_ctb = 0;
@@ -257,7 +257,8 @@ log_hexdump(const uint8_t *buffer, int length) {
 
     printf("%d bytes:\n", length);
     while (length > 0) {
-        int have = length > 16 ? 16 : length;
+        int have = // length > 16 ? 16 : 
+        length;
         int i;
 
         bin2hex(buffer, have, formatted);
@@ -280,6 +281,42 @@ log_hexdump(const uint8_t *buffer, int length) {
         written += have;
     }
 }
+
+
+void print_iobuf_info2(const struct iobuf_struct *iobuf) {
+        // printf("print_iobuf_info2\n");
+    if (!iobuf) {
+        printf("iobuf is NULL\n");
+        return;
+    }
+;
+    printf("  Use: %d\n", iobuf->use);
+    printf("  nlimit: %ld\n", (long)iobuf->nlimit);
+    printf("  nbytes: %ld\n", (long)iobuf->nbytes);
+    printf("  ntotal: %ld\n", (long)iobuf->ntotal);
+    printf("  nofast: %d\n", iobuf->nofast);
+    printf("  Buffer size: %zu\n", iobuf->d.size);
+    printf("  Buffer start: %zu\n", iobuf->d.start);
+    printf("  Buffer length: %zu\n", iobuf->d.len);
+    printf("  Filter EOF: %d\n", iobuf->filter_eof);
+    printf("  Error: %d\n", iobuf->error);
+    printf("  Filter owner: %d\n", iobuf->filter_ov_owner);
+    // if (iobuf->real_fname) {
+    //     printf("  Real filename: %s\n", iobuf->real_fname);
+    // } else {
+    //     printf("  Real filename: (null)\n");
+    // }
+    printf("  Filter number: %d\n", iobuf->no);
+    printf("  Sub filters count: %d\n", iobuf->subno);
+
+    // Assuming the chain is a pointer to another iobuf_struct, you can recursively print info about the chain if needed
+    if (iobuf->chain) {
+        printf("  Chain:\n");
+        print_iobuf_info2(iobuf->chain);
+    }
+}
+
+
 /* Serialize the symmetric-key encrypted session key packet (RFC 4880,
  * 5.3) described by ENC and write it to OUT.
  *
@@ -288,7 +325,7 @@ log_hexdump(const uint8_t *buffer, int length) {
 static int
 do_symkey_enc( IOBUF out, int ctb, PKT_symkey_enc *enc )
 {
- printf("do_symkey_enc");
+ printf("do_symkey_enc out->use %d\n", out->use);
    printf("PKT_symkey_enc:\n");
     printf("  version: %u\n", enc->version);
     printf("  cipher_algo: %u\n", enc->cipher_algo);
@@ -297,7 +334,7 @@ do_symkey_enc( IOBUF out, int ctb, PKT_symkey_enc *enc )
     printf("    mode: %d\n", enc->s2k.mode);
     printf("    hash_algo: %u\n", enc->s2k.hash_algo);
     printf("    salt: ");
-    log_hexdump(enc->s2k.salt, sizeof(enc->s2k.salt));
+    log_hexdump(enc->s2k.salt, 8);
     printf("    count: %08x\n", enc->s2k.count);
     printf("  seskeylen: %u\n", enc->seskeylen);
     // printf("  seskey: ");
@@ -343,7 +380,7 @@ do_symkey_enc( IOBUF out, int ctb, PKT_symkey_enc *enc )
     write_header(out, ctb, iobuf_get_temp_length(a) );
     rc = iobuf_write_temp( out, a );
     iobuf_close(a);
-    // print_iobuf_info2(a);
+    print_iobuf_info2(a);
     return rc;
 }
 
@@ -469,65 +506,6 @@ do_encrypted( IOBUF out, int ctb, PKT_encrypted *ed )
     return rc;
 }
 
-/* Serialize the symmetrically encrypted integrity protected data
-   packet (RFC 4880, Section 5.13) described by ED and write it to
-   OUT.
-
-   Note: this only writes the packet's header!  The caller must then
-   follow up and write the initial random data, the body and the MDC
-   packet to OUT.  (If you use the encryption iobuf filter
-   (cipher_filter), then this is done automatically.)  */
-static int
-do_encrypted_mdc( IOBUF out, int ctb, PKT_encrypted *ed )
-{
-  printf("do_encrypted_mdc\n");
-    int rc = 0;
-    u32 n;
-
-    // log_assert (ed->mdc_method);
-    // log_assert (ctb_pkttype (ctb) == PKT_ENCRYPTED_MDC);
-
-    /* Take version number and the following MDC packet in account. */
-    n = ed->len ? (ed->len + ed->extralen + 1 + 22) : 0;
-    write_header(out, ctb, n );
-    iobuf_put(out, 1 );  /* version */
-
-    /* This is all. The caller has to write the real data */
-
-    return rc;
-}
-
-
-/* Serialize the symmetrically AEAD encrypted data packet
- * (rfc4880bis-03, Section 5.16) described by ED and write it to OUT.
- *
- * Note: this only writes only packet's header.  The caller must then
- * follow up and write the actual encrypted data.  This should be done
- * by pushing the the cipher_filter_aead.  */
-static int
-do_encrypted_aead (iobuf_t out, int ctb, PKT_encrypted *ed)
-{
-  printf("do_encrypted_aead");
-  printf("do_encrypted_aead");
-  printf("do_encrypted_aead");
-  printf("do_encrypted_aead");
-  printf("do_encrypted_aead");
-  u32 n;
-
-  // log_assert (ctb_pkttype (ctb) == PKT_ENCRYPTED_AEAD);
-
-  n = ed->len ? (ed->len + ed->extralen + 4) : 0;
-  write_header (out, ctb, n );
-  iobuf_writebyte (out, 1); /* Version.  */
-  iobuf_writebyte (out, ed->cipher_algo);
-  iobuf_writebyte (out, ed->aead_algo);
-  iobuf_writebyte (out, ed->chunkbyte);
-
-  /* This is all. The caller has to write the encrypted data */
-
-  return 0;
-}
-
 /* Write a 16-bit quantity to OUT in big endian order.  */
 static int
 write_16(IOBUF out, u16 a)
@@ -593,7 +571,7 @@ static int
 write_header2( IOBUF out, int ctb, u32 len, int hdrlen )
 {
 
-  printf("write_header2  %08X %d %02X",len,hdrlen,ctb);
+  printf("write_header2  %08X %d %02X %d",len,hdrlen,ctb, out->use);
   if (ctb_new_format_p (ctb)){
     printf("writing_new_header\n");
     return write_new_header( out, ctb, len, hdrlen );
@@ -629,7 +607,7 @@ write_header2( IOBUF out, int ctb, u32 len, int hdrlen )
     }
   else
     {
-
+      printf("len=%d\n",len);
       if( !len )
         /* 11 => Indeterminate length.  */
 	ctb |= 3;
@@ -644,8 +622,10 @@ write_header2( IOBUF out, int ctb, u32 len, int hdrlen )
 	ctb |= 2;
     }
 
-  if( iobuf_put(out, ctb ) )
+  if( iobuf_put(out, ctb ) ){
+    printf("Failing here\n");
     return -1;
+  }
 
   if( len || hdrlen )
     {
@@ -666,7 +646,7 @@ write_header2( IOBUF out, int ctb, u32 len, int hdrlen )
       if( iobuf_put(out, len ) )
 	return -1;
     }
-    printf("WRITE HEADER:     ctb=%02x, len=%d", ctb, len);
+    printf("WRITE HEADER:     ctb=%02x, len=%d\n", ctb, len);
     log_hexdump(out->d.buf, out->d.len);
   return 0;
 }

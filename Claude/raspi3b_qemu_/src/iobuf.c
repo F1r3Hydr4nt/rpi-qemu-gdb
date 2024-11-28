@@ -174,13 +174,18 @@ int iobuf_readbyte(iobuf_t a) {
 
 /* Write byte to IOBUF */ 
 int iobuf_writebyte(iobuf_t a, unsigned int c) {
-    if (a->use != IOBUF_OUTPUT && a->use != IOBUF_OUTPUT_TEMP)
+    printf("iobuf_writebyte %02X a->use %d\n", c, a->use);
+    if (a->use != IOBUF_OUTPUT && a->use != IOBUF_OUTPUT_TEMP){
+        printf("Adn here\n");
         return -1;
+    }
         
     if (a->d.len == a->d.size) {
         size_t len = a->d.len;
         int rc = a->filter(a->filter_ov, IOBUFCTRL_FLUSH,
                           a->chain, a->d.buf, &len);
+                                  printf("Adn here %d\n", rc);
+
         if (rc)
             return rc;
         a->d.len = 0;
@@ -295,6 +300,79 @@ int iobuf_pop_filter(iobuf_t a,
     }
     
     return rc;
+}
+
+
+#define MAX_IOBUF_DESC 32
+
+static iobuf_t
+do_open (const char *fname, int special_filenames,
+	 int use, const char *opentype, int mode700)
+{
+  iobuf_t a;
+//   gnupg_fd_t fp;
+//   file_filter_ctx_t *fcx;
+  size_t len = 0;
+  int print_only = 0;
+  int fd;
+  byte desc[MAX_IOBUF_DESC];
+// log_assert (use == IOBUF_INPUT || use == IOBUF_OUTPUT);
+
+  if (special_filenames
+      /* NULL or '-'.  */
+      && (!fname || (*fname == '-' && !fname[1])))
+    {
+      if (use == IOBUF_INPUT)
+	{
+	//   fp = FD_FOR_STDIN;
+	  fname = "[stdin]";
+	}
+      else
+	{
+	//   fp = FD_FOR_STDOUT;
+	  fname = "[stdout]";
+	}
+      print_only = 1;
+    }
+  else if (!fname)
+    return NULL;
+//   else if (special_filenames
+//            && (fd = check_special_filename (fname, 0, 1)) != -1)
+//     return iobuf_fdopen (translate_file_handle (fd, use == IOBUF_INPUT ? 0 : 1),
+// 			 opentype);
+  else
+    {
+    //   if (use == IOBUF_INPUT)
+	// // fp = fd_cache_open (fname, opentype);
+    //   else
+	// fp = direct_open (fname, opentype, mode700);
+    //   if (fp == GNUPG_INVALID_FD)
+	// return NULL;
+    }
+
+  a = iobuf_alloc (use, IOBUF_BUFFER_SIZE);
+//   fcx = xmalloc (sizeof *fcx + strlen (fname));
+//   fcx->fp = fp;
+//   fcx->print_only_name = print_only;
+//   strcpy (fcx->fname, fname);
+//   if (!print_only)
+//     a->real_fname = xstrdup (fname);
+//   a->filter = file_filter;
+  // a->filter_ov = fcx;
+  // file_filter (fcx, IOBUFCTRL_INIT, NULL, NULL, &len);
+//   if (DBG_IOBUF)
+//     log_debug ("iobuf-%d.%d: open '%s' desc=%s fd=%d\n",
+// 	       a->no, a->subno, fname, iobuf_desc (a, desc), FD2INT (fcx->fp));
+
+  return a;
+}
+
+
+
+iobuf_t
+iobuf_create (const char *fname, int mode700)
+{
+  return do_open (fname, 1, IOBUF_OUTPUT, "wb", mode700);
 }
 
 /* Block filter implementation */

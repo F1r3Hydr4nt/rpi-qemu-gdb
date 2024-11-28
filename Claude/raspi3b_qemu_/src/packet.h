@@ -6,6 +6,8 @@
 #include "libgcrypt.h"
 #include "iobuf.h"
 
+typedef struct parse_packet_ctx_s *parse_packet_ctx_t;
+
 /* Basic types */
 typedef uint8_t byte;
 
@@ -123,10 +125,20 @@ struct packet_struct {
     } pkt;
 };
 
+
+/* A context used with parse_packet.  */
+struct parse_packet_ctx_s
+{
+  iobuf_t inp;       /* The input stream with the packets.  */
+  struct packet_struct last_pkt; /* The last parsed packet.  */
+  int free_last_pkt; /* Indicates that LAST_PKT must be freed.  */
+  int skip_meta;     /* Skip ring trust packets.  */
+  unsigned int n_parsed_packets;	/* Number of parsed packets.  */
+};
 /* Function prototypes */
 void init_packet(PACKET *pkt);
 int build_packet(iobuf_t out, PACKET *pkt);
-void free_packet(PACKET *pkt, void *ctx);
+void free_packet(PACKET *pkt, parse_packet_ctx_t parsectx);
 
 #define init_packet(a) do { (a)->pkttype = 0;		\
 			    (a)->pkt.generic = NULL;	\

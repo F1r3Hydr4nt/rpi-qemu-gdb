@@ -9,6 +9,7 @@
 #define IOBUF_OUTPUT        2
 #define IOBUF_INPUT_TEMP    3 
 #define IOBUF_OUTPUT_TEMP   4
+#define IOBUF_FILELENGTH_LIMIT 0xffffffff
 
 /* Control commands */
 #define IOBUFCTRL_INIT      1
@@ -94,6 +95,8 @@ static int block_filter(void *opaque, int control,
                        iobuf_t chain, byte *buffer, size_t *ret_len);
 static  
 iobuf_set_partial_body_length_mode (iobuf_t a, size_t len);
+static iobuf_t
+iobuf_create (const char *fname, int mode700);
 /* Convenience macros */
 #define iobuf_get(a)  \
     (((a)->nofast || (a)->d.start >= (a)->d.len) ? \

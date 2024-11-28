@@ -1,3 +1,4 @@
+
 #include "memory.h"
 
 // Memory allocator definitions
@@ -98,6 +99,16 @@ void* xmalloc(size_t n) {
     return ptr;
 }
 
+void* xmalloc_clear(size_t n) {
+    void* ptr = malloc(n);
+    if (ptr) {
+        memset(ptr, 0, n);
+    } else if (n != 0) {
+        // Handle allocation failure similar to xmalloc
+    }
+    return ptr;
+}
+
 void* xcalloc(size_t n, size_t m) {
     size_t total;
     void* ptr;
@@ -157,7 +168,6 @@ void* xrealloc(void* p, size_t n) {
     return new_ptr;
 }
 
-
 void* memset(void* dest, int c, size_t n) {
     unsigned char* p = dest;
     while (n--) {
@@ -194,7 +204,6 @@ void* memmove(void* dest, const void* src, size_t n) {
     return dest;
 }
 
-/* Secure memory wiping */
 void wipememory(void *ptr, size_t len) {
     volatile char *p = (volatile char *)ptr;
     while (len--)
