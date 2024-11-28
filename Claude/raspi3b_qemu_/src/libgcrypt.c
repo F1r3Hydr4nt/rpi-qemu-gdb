@@ -1,7 +1,8 @@
 #include "libgcrypt.h"
-#include <string.h>
+#include "memory.h"
 #include "printf.h"
 #include "sboxes.h"
+
 u32 buf_get_le32(const void *_buf) {
     if (!_buf) {
         return 0; // Handle NULL pointer case

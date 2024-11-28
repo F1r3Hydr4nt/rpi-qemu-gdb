@@ -156,3 +156,47 @@ void* xrealloc(void* p, size_t n) {
     
     return new_ptr;
 }
+
+
+void* memset(void* dest, int c, size_t n) {
+    unsigned char* p = dest;
+    while (n--) {
+        *p++ = (unsigned char)c;
+    }
+    return dest;
+}
+
+void* memcpy(void* dest, const void* src, size_t n) {
+    unsigned char* d = dest;
+    const unsigned char* s = src;
+    while (n--) {
+        *d++ = *s++;
+    }
+    return dest;
+}
+
+void* memmove(void* dest, const void* src, size_t n) {
+    unsigned char* d = (unsigned char*)dest;
+    const unsigned char* s = (const unsigned char*)src;
+    // If dest is after src, copy from end to start to avoid overwriting source
+    if (d > s && d < s + n) {
+        d += n;
+        s += n;
+        while (n--) {
+            *--d = *--s;
+        }
+    } else {
+        // Otherwise copy from start to end
+        while (n--) {
+            *d++ = *s++;
+        }
+    }
+    return dest;
+}
+
+/* Secure memory wiping */
+void wipememory(void *ptr, size_t len) {
+    volatile char *p = (volatile char *)ptr;
+    while (len--)
+        *p++ = 0;
+}

@@ -8,6 +8,7 @@
 #define MAX_BLOCKSIZE 16
 
 /* Types */
+typedef unsigned short int u16;
 typedef unsigned int u32;
 typedef unsigned char byte;
 
