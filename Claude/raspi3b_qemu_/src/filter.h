@@ -43,16 +43,27 @@ typedef struct {
 
 } cipher_filter_context_t;
 
-/* Control values for filter operations */
-#define IOBUFCTRL_UNDERFLOW  1
-#define IOBUFCTRL_FLUSH      2
-#define IOBUFCTRL_FREE       3
-#define IOBUFCTRL_DESC       4
+typedef struct {
+    byte *buffer;	    /* malloced buffer */
+    unsigned buffer_size;   /* and size of this buffer */
+    unsigned buffer_len;    /* used length of the buffer */
+    unsigned buffer_pos;    /* read position */
+    int truncated;	    /* number of truncated lines */
+    int not_dash_escaped;
+    int escape_from;
+    // gcry_md_hd_t md;
+    int pending_lf;
+    int pending_esc;
+} text_filter_context_t;
+
 
 /* Function declarations */
 int cipher_filter_cfb(void *opaque, int control, 
-                     iobuf_t chain, byte *buf, size_t *ret_len);
+                     iobuf_t chain, byte *buf, size_t *len);
 
+/*-- textfilter.c --*/
+int text_filter( void *opaque, int control,
+		 iobuf_t chain, byte *buf, size_t *ret_len);
 /* Basic iobuf operations needed */
 int iobuf_write(iobuf_t a, const void *buffer, size_t length);
 int iobuf_read(iobuf_t a, void *buffer, size_t length);

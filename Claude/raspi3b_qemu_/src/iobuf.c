@@ -6,6 +6,9 @@
 #include <stddef.h>
 #include "memory.h"
 #include "printf.h"
+
+#include "filter.h"
+#include "packet.h"
 /* Configuration */
 #define IOBUF_BUFFER_SIZE   8192
 #define MAX_NESTING_FILTER  64 
@@ -37,34 +40,6 @@ typedef struct iobuf_struct *iobuf_t;
 #else
 #define DBG_IOBUF 0
 #endif
-
-struct iobuf_struct {
-    int use;               /* Type of buffer */
-    struct {
-        byte *buf;         /* Data buffer */
-        size_t start;      /* Start offset */
-        size_t len;        /* Length of data */ 
-        size_t size;       /* Total size of buffer */
-    } d;
-    
-    int filter_eof;        /* EOF flag */
-    int error;            /* Last error code */
-    unsigned long nlimit;  /* Read limit */
-    unsigned long nbytes;  /* Bytes processed */
-    unsigned long ntotal;  /* Total bytes processed */
-    int nofast;           /* Flag for slow path */
-    
-    /* Filter info */
-    int (*filter)(void *opaque, int control,
-                  iobuf_t chain, byte *buffer, size_t *len);
-    void *filter_ov;      /* Filter private data */
-    int filter_ov_owner;  /* True if we own filter data */
-    
-    iobuf_t chain;        /* Next filter in chain */
-    
-    int no;               /* Debug number */
-    int subno;           /* Sub-number */
-};
 
 // static void *xmalloc(size_t n) {
 //     /* Add your memory allocator here */
@@ -110,11 +85,16 @@ iobuf_t iobuf_alloc(int use, size_t bufsize) {
     a->d.buf = xmalloc(bufsize); 
     a->d.size = bufsize;
     a->no = ++number;
+    printf("iobuf_alloc %d\n",a->use);
     return a;
 }
 
 /* Free IOBUF chain */
 int iobuf_close(iobuf_t a) {
+    log_hexdump(a->d.buf, a->d.len);
+    printf("iobuf_close\n");
+   // print_iobuf_info2(a);
+    // printf("iobuf_close %d\n",a->no);
     iobuf_t a_chain;
     size_t dummy_len = 0;
     int rc = 0;
@@ -123,6 +103,7 @@ int iobuf_close(iobuf_t a) {
         a_chain = a->chain;
         
         if (a->filter) {
+            printf("a->filter\n");
             rc = a->filter(a->filter_ov, IOBUFCTRL_FREE, 
                           a->chain, NULL, &dummy_len);
         }
@@ -134,7 +115,8 @@ int iobuf_close(iobuf_t a) {
             xfree(a->d.buf);
             
         xfree(a);
-    }
+    }    
+
     return rc;
 }
 
@@ -176,7 +158,7 @@ int iobuf_readbyte(iobuf_t a) {
 int iobuf_writebyte(iobuf_t a, unsigned int c) {
     printf("iobuf_writebyte %02X a->use %d\n", c, a->use);
     if (a->use != IOBUF_OUTPUT && a->use != IOBUF_OUTPUT_TEMP){
-        printf("Adn here\n");
+        printf("BIG ERROR\n");
         return -1;
     }
         
@@ -184,7 +166,7 @@ int iobuf_writebyte(iobuf_t a, unsigned int c) {
         size_t len = a->d.len;
         int rc = a->filter(a->filter_ov, IOBUFCTRL_FLUSH,
                           a->chain, a->d.buf, &len);
-                                  printf("Adn here %d\n", rc);
+                                  //printf("Adn here %d\n", rc);
 
         if (rc)
             return rc;
@@ -197,6 +179,8 @@ int iobuf_writebyte(iobuf_t a, unsigned int c) {
 
 /* Write data to IOBUF */
 int iobuf_write(iobuf_t a, const void *buffer, unsigned int buflen) {
+      printf("iobuf_write %d\n",buflen);
+
     const byte *buf = buffer;
     int rc;
     
@@ -228,38 +212,165 @@ int iobuf_write(iobuf_t a, const void *buffer, unsigned int buflen) {
     return 0;
 }
 
-/* Push a filter onto IOBUF */
-int iobuf_push_filter(iobuf_t a,
-                     int (*f)(void *opaque, int control,
-                             iobuf_t chain, byte *buf, size_t *len),
-                     void *ov) {
-                         
-    iobuf_t b;
-    size_t dummy_len = 0;
-    int rc = 0;
-    
-    if (a->subno >= MAX_NESTING_FILTER)
-        return GPG_ERR_BAD_DATA;
-        
-    /* Create new filter and copy state */
-    b = xmalloc(sizeof *b);
-    *b = *a;
-    
-    /* Setup filter chain */
-    a->filter = f;
-    a->filter_ov = ov;
-    a->filter_eof = 0;
-    a->chain = b;
-    a->d.buf = xmalloc(a->d.size);
-    a->d.len = 0;
-    a->d.start = 0;
-    a->subno++;
-    
-    /* Initialize filter */
-    if (f && (rc = f(ov, IOBUFCTRL_INIT, b, NULL, &dummy_len)))
-        return rc;
-        
-    return 0;
+/****************
+ * Register an i/o filter.
+ */
+int
+iobuf_push_filter (iobuf_t a,
+		   int (*f) (void *opaque, int control,
+			     iobuf_t chain, byte * buf, size_t * len),
+                   void *ov)
+{
+//cipher_filter_cfb (void *opaque, int control,
+                   // iobuf_t chain, byte *buf, size_t *len)
+
+   printf("iobuf_push_filter %d\n",a->use);
+  return iobuf_push_filter2 (a, f, ov, 0);
+}
+
+int
+iobuf_push_filter2 (iobuf_t a,
+		    int (*f) (void *opaque, int control,
+			      iobuf_t chain, byte * buf, size_t * len),
+		    void *ov, int rel_ov)
+{
+  //printf("iobuf_push_filter2 %d\n",a->use);
+  iobuf_t b;
+  size_t dummy_len = 0;
+  int rc = 0;
+    // printf("filter_flush failed %d\n",a->filter);
+
+  if (a->use == IOBUF_OUTPUT && (rc = filter_flush (a))){
+    printf("filter_flush failed\n");
+    return rc;
+  }
+  if (a->subno >= MAX_NESTING_FILTER)
+    {
+      printf ("i/o filter too deeply nested - corrupted data?\n");
+      return -1;//GPG_ERR_BAD_DATA;
+    }
+
+  /* We want to create a new filter and put it in front of A.  A
+     simple implementation would do:
+
+       b = iobuf_alloc (...);
+       b->chain = a;
+       return a;
+
+     This is a bit problematic: A is the head of the pipeline and
+     there are potentially many pointers to it.  Requiring the caller
+     to update all of these pointers is a burden.
+
+     An alternative implementation would add a level of indirection.
+     For instance, we could use a pipeline object, which contains a
+     pointer to the first filter in the pipeline.  This is not what we
+     do either.
+
+     Instead, we allocate a new buffer (B) and copy the first filter's
+     state into that and use the initial buffer (A) for the new
+     filter.  One limitation of this approach is that it is not
+     practical to maintain a pointer to a specific filter's state.
+
+     Before:
+
+           A
+           |
+           v 0x100               0x200
+           +----------+          +----------+
+           | filter x |--------->| filter y |---->....
+           +----------+          +----------+
+
+     After:           B
+                      |
+                      v 0x300
+                      +----------+
+           A          | filter x |
+           |          +----------+
+           v 0x100    ^          v 0x200
+           +----------+          +----------+
+           | filter w |          | filter y |---->....
+           +----------+          +----------+
+
+     Note: filter x's address changed from 0x100 to 0x300, but A still
+     points to the head of the pipeline.
+  */
+
+  b = xmalloc (sizeof *b);
+  memcpy (b, a, sizeof *b);
+  /* fixme: it is stupid to keep a copy of the name at every level
+   * but we need the name somewhere because the name known by file_filter
+   * may have been released when we need the name of the file */
+  //b->real_fname = a->real_fname ? xstrdup (a->real_fname) : NULL;
+  /* remove the filter stuff from the new stream */
+  a->filter = NULL;
+  a->filter_ov = NULL;
+  a->filter_ov_owner = 0;
+  a->filter_eof = 0;
+  if (a->use == IOBUF_OUTPUT_TEMP)
+    /* A TEMP filter buffers any data sent to it; it does not forward
+       any data down the pipeline.  If we add a new filter to the
+       pipeline, it shouldn't also buffer data.  It should send it
+       downstream to be buffered.  Thus, the correct type for a filter
+       added in front of an IOBUF_OUTPUT_TEMP filter is IOBUF_OUPUT, not
+       IOBUF_OUTPUT_TEMP.  */
+    {
+      a->use = IOBUF_OUTPUT;
+
+      /* When pipeline is written to, the temp buffer's size is
+	 increased accordingly.  We don't need to allocate a 10 MB
+	 buffer for a non-terminal filter.  Just use the default
+	 size.  */
+      a->d.size = IOBUF_BUFFER_SIZE;
+    }
+  else if (a->use == IOBUF_INPUT_TEMP)
+    /* Same idea as above.  */
+    {
+      a->use = IOBUF_INPUT;
+      a->d.size = IOBUF_BUFFER_SIZE;
+    }
+
+  /* The new filter (A) gets a new buffer.
+
+     If the pipeline is an output or temp pipeline, then giving the
+     buffer to the new filter means that data that was written before
+     the filter was pushed gets sent to the filter.  That's clearly
+     wrong.
+
+     If the pipeline is an input pipeline, then giving the buffer to
+     the new filter (A) means that data that has read from (B), but
+     not yet read from the pipeline won't be processed by the new
+     filter (A)!  That's certainly not what we want.  */
+  a->d.buf = xmalloc (a->d.size);
+  a->d.len = 0;
+  a->d.start = 0;
+
+  /* disable nlimit for the new stream */
+  a->ntotal = b->ntotal + b->nbytes;
+  a->nlimit = a->nbytes = 0;
+  a->nofast = 0;
+  /* make a link from the new stream to the original stream */
+  a->chain = b;
+
+  /* setup the function on the new stream */
+  a->filter = f;
+  a->filter_ov = ov;
+  a->filter_ov_owner = rel_ov;
+
+  a->subno = b->subno + 1;
+
+//   if (DBG_IOBUF)
+//     {
+//       byte desc[MAX_IOBUF_DESC];
+//       log_debug ("iobuf-%d.%d: push '%s'\n",
+// 		 a->no, a->subno, iobuf_desc (a, desc));
+//       print_chain (a);
+//     }
+
+  /* now we can initialize the new function if we have one */
+  if (a->filter && (rc = a->filter (a->filter_ov, IOBUFCTRL_INIT, a->chain,
+				    NULL, &dummy_len)))
+    printf ("IOBUFCTRL_INIT failed: %d\n", rc);//, gpg_strerror (rc));
+  return rc;
 }
 
 /* Remove filter from IOBUF */
@@ -267,7 +378,7 @@ int iobuf_pop_filter(iobuf_t a,
                     int (*f)(void *opaque, int control,
                             iobuf_t chain, byte *buf, size_t *len),
                     void *ov) {
-                        
+       printf("iobuf_pop_filter\n");                 
     iobuf_t b;
     size_t dummy_len = 0;
     int rc = 0;
@@ -310,54 +421,55 @@ do_open (const char *fname, int special_filenames,
 	 int use, const char *opentype, int mode700)
 {
   iobuf_t a;
-//   gnupg_fd_t fp;
-//   file_filter_ctx_t *fcx;
+  // gnupg_fd_t fp;
+  // file_filter_ctx_t *fcx;
   size_t len = 0;
   int print_only = 0;
   int fd;
   byte desc[MAX_IOBUF_DESC];
-// log_assert (use == IOBUF_INPUT || use == IOBUF_OUTPUT);
 
-  if (special_filenames
-      /* NULL or '-'.  */
-      && (!fname || (*fname == '-' && !fname[1])))
-    {
-      if (use == IOBUF_INPUT)
-	{
-	//   fp = FD_FOR_STDIN;
-	  fname = "[stdin]";
-	}
-      else
-	{
-	//   fp = FD_FOR_STDOUT;
-	  fname = "[stdout]";
-	}
-      print_only = 1;
-    }
-  else if (!fname)
-    return NULL;
+  // log_assert (use == IOBUF_INPUT || use == IOBUF_OUTPUT);
+
+//   if (special_filenames
+//       /* NULL or '-'.  */
+//       && (!fname || (*fname == '-' && !fname[1])))
+//     {
+//       if (use == IOBUF_INPUT)
+// 	{
+// 	  // fp = FD_FOR_STDIN;
+// 	  fname = "[stdin]";
+// 	}
+//       else
+// 	{
+// 	  // fp = FD_FOR_STDOUT;
+// 	  fname = "[stdout]";
+// 	}
+//       print_only = 1;
+//     }
+//   else if (!fname)
+//     return NULL;
 //   else if (special_filenames
 //            && (fd = check_special_filename (fname, 0, 1)) != -1)
 //     return iobuf_fdopen (translate_file_handle (fd, use == IOBUF_INPUT ? 0 : 1),
 // 			 opentype);
-  else
-    {
+  // else
+    // {
     //   if (use == IOBUF_INPUT)
-	// // fp = fd_cache_open (fname, opentype);
+	// fp = fd_cache_open (fname, opentype);
     //   else
 	// fp = direct_open (fname, opentype, mode700);
-    //   if (fp == GNUPG_INVALID_FD)
-	// return NULL;
-    }
+    // //   if (fp == GNUPG_INVALID_FD)
+	// // return NULL;
+    // }
 
   a = iobuf_alloc (use, IOBUF_BUFFER_SIZE);
-//   fcx = xmalloc (sizeof *fcx + strlen (fname));
-//   fcx->fp = fp;
-//   fcx->print_only_name = print_only;
-//   strcpy (fcx->fname, fname);
+  // fcx = xmalloc (sizeof *fcx + strlen (fname));
+  // fcx->fp = fp;
+  // fcx->print_only_name = print_only;
+  // strcpy (fcx->fname, fname);
 //   if (!print_only)
 //     a->real_fname = xstrdup (fname);
-//   a->filter = file_filter;
+  a->filter = text_filter;
   // a->filter_ov = fcx;
   // file_filter (fcx, IOBUFCTRL_INIT, NULL, NULL, &len);
 //   if (DBG_IOBUF)
@@ -367,21 +479,40 @@ do_open (const char *fname, int special_filenames,
   return a;
 }
 
-
-
 iobuf_t
 iobuf_create (const char *fname, int mode700)
 {
-  return do_open (fname, 1, IOBUF_OUTPUT, "wb", mode700);
+  return do_open (fname, 0, IOBUF_OUTPUT, "wb", mode700);
 }
 
+const char* control_mode_str[] = {
+    "UNKNOWN",
+    "IOBUFCTRL_INIT",
+    "IOBUFCTRL_FREE",
+    "IOBUFCTRL_UNDERFLOW",
+    "IOBUFCTRL_FLUSH",
+    "IOBUFCTRL_DESC",
+    "IOBUFCTRL_CANCEL",
+    "IOBUFCTRL_PEEK",
+    "UNKNOWN",
+    "UNKNOWN",
+    "UNKNOWN",
+    "UNKNOWN",
+    "UNKNOWN",
+    "UNKNOWN",
+    "UNKNOWN",
+    "UNKNOWN",
+    "IOBUFCTRL_USER"
+};
 /* Block filter implementation */
 int block_filter(void *opaque, int control,
-                       iobuf_t chain, byte *buffer, size_t *ret_len) {
-                           
+                       iobuf_t chain, byte *buf, size_t *len) {
+                
+printf("block_filter %s\n", control_mode_str[control]);
+           
     block_filter_ctx_t *a = opaque;
-    size_t size = *ret_len;
-    char *buf = (char*)buffer;
+    size_t size = *len;
+    char *buffer = (char*)buf;
     int rc = 0;
     
     if (control == IOBUFCTRL_UNDERFLOW) {
@@ -455,14 +586,14 @@ int block_filter(void *opaque, int control,
                     break;
                 }
                 
-                *buf++ = c;
+                *buffer++ = c;
                 size--;
                 a->size--;
                 n++;
             }
         }
         
-        *ret_len = n;
+        *len = n;
     }
     else if (control == IOBUFCTRL_FLUSH) {
         if (a->partial) {
@@ -715,15 +846,15 @@ static int filter_flush(iobuf_t a) {
         a->d.size = newsize;
         return 0;
     }
-    // else if (a->use != IOBUF_OUTPUT)
-    //     printf("flush on non-output iobuf\n");  // log_bug
-    // else if (!a->filter)
-    //     printf("filter_flush: no filter\n");    // log_bug
+    else if (a->use != IOBUF_OUTPUT)
+        printf("flush on non-output iobuf\n");  // log_bug
+    else if (!a->filter)
+        printf("filter_flush: no filter\n");    // log_bug
 
     len = a->d.len;
     rc = a->filter(a->filter_ov, IOBUFCTRL_FLUSH, a->chain, a->d.buf, &len);
     if (!rc && len != a->d.len) {
-        // printf("filter_flush did not write all!\n");
+        printf("filter_flush did not write all!\n");
         rc = -1;  // GPG_ERR_INTERNAL
     }
     else if (rc)

@@ -124,8 +124,8 @@ struct packet_struct {
         // PKT_gpg_control *gpg_control;   /* PKT_GPG_CONTROL */
     } pkt;
 };
-
-
+void log_hexdump(const uint8_t *buffer, int length);
+// void print_iobuf_info2(const struct iobuf_struct *iobuf);
 /* A context used with parse_packet.  */
 struct parse_packet_ctx_s
 {

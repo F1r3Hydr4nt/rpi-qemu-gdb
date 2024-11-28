@@ -210,8 +210,64 @@ void buf_xor(void *_dst, const void *_src1, const void *_src2, size_t len) {
         *dst++ = *src1++ ^ *src2++;
 }
 
+int
+_gcry_cipher_setkey (gcry_cipher_hd_t hd, const void *key, size_t keylen)
+{
+    printf("_gcry_cipher_setkey\n");
+  // rc = c->spec->setkey (&c->context.c, key, keylen, &c->bulk);
+  *hd->context.c = key;
+  return 0;//cipher_setkey (hd, (void*)key, keylen);
+}
+
+void
+_gcry_cipher_close (gcry_cipher_hd_t h)
+{
+  size_t off;
+
+  if (!h)
+    return;
+
+//   if ((h->magic != CTX_MAGIC_SECURE)
+//       && (h->magic != CTX_MAGIC_NORMAL))
+//     _gcry_fatal_error(GPG_ERR_INTERNAL,
+// 		      "gcry_cipher_close: already closed/invalid handle");
+//   else
+//     h->magic = 0;
+
+  /* We always want to wipe out the memory even when the context has
+     been allocated in secure memory.  The user might have disabled
+     secure memory or is using his own implementation which does not
+     do the wiping.  To accomplish this we need to keep track of the
+     actual size of this structure because we have no way to known
+     how large the allocated area was when using a standard malloc. */
+//   off = h->handle_offset;
+//   wipememory (h, h->actual_handle_size);
+
+  xfree ((char*)h - off);
+}
+
+int
+_gcry_cipher_setiv (gcry_cipher_hd_t c, const void *iv, size_t ivlen)
+{
+        printf("_gcry_cipher_setiv\n");
+
+//   if (c->mode == GCRY_CIPHER_MODE_GCM)
+//     {
+//       c->u_mode.gcm.disallow_encryption_because_of_setiv_in_fips_mode = 0;
+
+//       if (fips_mode ())
+//         {
+//           /* Direct invocation of GCM setiv in FIPS mode disables encryption. */
+//           c->u_mode.gcm.disallow_encryption_because_of_setiv_in_fips_mode = 1;
+//         }
+//     }
+c->unused = 0;
+memcpy (c->u_iv.iv, iv, ivlen);
+  return 0;// c->mode_ops.setiv (c, iv, ivlen);
+}
+
 void cipher_sync(gcry_cipher_hd_t c) {
-    printf("cipher_sync\n");
+    printf("cipher_sync %d\n", c->unused);
     if (c->unused) {
         memmove(c->u_iv.iv + c->unused,
                 c->u_iv.iv,
@@ -226,12 +282,15 @@ void cipher_sync(gcry_cipher_hd_t c) {
 int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
                           unsigned char *outbuf, size_t outbuflen,
                           const unsigned char *inbuf, size_t inbuflen) {
-    printf("gcry_cipher_cfb_encrypt inbuflen %d outbuflen %d\n", inbuflen, outbuflen);
+    printf("_gcry_cipher_cfb_encrypt inbuflen %d outbuflen %d\n", inbuflen, outbuflen);
     unsigned char *ivp;
     size_t blocksize = 8;
     size_t blocksize_x_2 = blocksize + blocksize;
     unsigned int burn = 0;
     (void)burn; // Suppress unused variable warning
+            struct Block ivBlock1 = blockFromBytes(c->u_iv.iv);
+
+        printBlock(ivBlock1);
 
     if (outbuflen < inbuflen)
         return -1; /* Buffer too short */
@@ -265,7 +324,7 @@ int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
         struct Block ivBlock = blockFromBytes(c->u_iv.iv);
         ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
         bytesFromBlock(ivBlock, c->u_iv.iv);
-        
+        printBlock(ivBlock);
         /* XOR the input with the IV and store input into IV. */
         cipher_block_xor_2dst(outbuf, c->u_iv.iv, inbuf, blocksize);
 
@@ -280,8 +339,11 @@ int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
         cipher_block_cpy(c->lastiv, c->u_iv.iv, blocksize);
 
         struct Block ivBlock = blockFromBytes(c->u_iv.iv);
+                printBlock(ivBlock);
+
         ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
         bytesFromBlock(ivBlock, c->u_iv.iv);
+        printBlock(ivBlock);
 
         /* XOR the input with the IV and store input into IV */
         cipher_block_xor_2dst(outbuf, c->u_iv.iv, inbuf, blocksize);
@@ -297,8 +359,11 @@ int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
         cipher_block_cpy(c->lastiv, c->u_iv.iv, blocksize);
 
         struct Block ivBlock = blockFromBytes(c->u_iv.iv);
+                printBlock(ivBlock);
+
         ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
         bytesFromBlock(ivBlock, c->u_iv.iv);
+        printBlock(ivBlock);
 
         c->unused = blocksize;
         /* Apply the XOR. */

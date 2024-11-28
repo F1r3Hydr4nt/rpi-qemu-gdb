@@ -5,19 +5,39 @@
 #include <stddef.h>
 
 /* Buffer types */
-#define IOBUF_INPUT         1
-#define IOBUF_OUTPUT        2
-#define IOBUF_INPUT_TEMP    3 
-#define IOBUF_OUTPUT_TEMP   4
+
+enum iobuf_use
+  {
+    /* Pipeline is in input mode.  The data flows from the end to the
+       beginning.  That is, when reading from the pipeline, the first
+       filter gets its input from the second filter, etc.  */
+    IOBUF_INPUT,
+    /* Pipeline is in input mode.  The last filter in the pipeline is
+       a temporary buffer from which the data is "read".  */
+    IOBUF_INPUT_TEMP,
+    /* Pipeline is in output mode.  The data flows from the beginning
+       to the end.  That is, when writing to the pipeline, the user
+       writes to the first filter, which transforms the data and sends
+       it to the second filter, etc.  */
+    IOBUF_OUTPUT,
+    /* Pipeline is in output mode.  The last filter in the pipeline is
+       a temporary buffer that grows as necessary.  */
+    IOBUF_OUTPUT_TEMP
+  };
 #define IOBUF_FILELENGTH_LIMIT 0xffffffff
 
 /* Control commands */
-#define IOBUFCTRL_INIT      1
-#define IOBUFCTRL_FREE      2
-#define IOBUFCTRL_UNDERFLOW 3
-#define IOBUFCTRL_FLUSH     4
-#define IOBUFCTRL_DESC      5
-#define IOBUFCTRL_CANCEL    6
+enum
+  {
+    IOBUFCTRL_INIT	= 1,
+    IOBUFCTRL_FREE	= 2,
+    IOBUFCTRL_UNDERFLOW = 3,
+    IOBUFCTRL_FLUSH     = 4,
+    IOBUFCTRL_DESC	= 5,
+    IOBUFCTRL_CANCEL    = 6,
+    IOBUFCTRL_PEEK      = 7,
+    IOBUFCTRL_USER	= 16
+  };
 
 /* Return any pending error on filter A.  */
 #define iobuf_error(a)	      ((a)->error)
@@ -92,11 +112,10 @@ void iobuf_set_partial_block_mode(iobuf_t a, size_t len);
 int iobuf_flush(iobuf_t a);
 static int filter_flush(iobuf_t a);
 static int block_filter(void *opaque, int control,
-                       iobuf_t chain, byte *buffer, size_t *ret_len);
-static  
+                       iobuf_t chain, byte *buf, size_t *len);
+void
 iobuf_set_partial_body_length_mode (iobuf_t a, size_t len);
-static iobuf_t
-iobuf_create (const char *fname, int mode700);
+iobuf_t iobuf_create (const char *fname, int mode700);
 /* Convenience macros */
 #define iobuf_get(a)  \
     (((a)->nofast || (a)->d.start >= (a)->d.len) ? \

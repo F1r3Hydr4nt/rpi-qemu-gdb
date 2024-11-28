@@ -60,7 +60,10 @@ typedef struct gcry_cipher_handle *gcry_cipher_hd_t;
 void bytesFromBlock(struct Block block, uint8_t *bytes);
 struct Block blockFromBytes(uint8_t *bytes);
 struct Block encrypt(const Key key, struct Block data);
-
+int
+_gcry_cipher_setiv (gcry_cipher_hd_t c, const void *iv, size_t ivlen);
+int
+_gcry_cipher_setkey (gcry_cipher_hd_t hd, const void *key, size_t keylen);
 /* Function prototypes */
 int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
                             unsigned char *outbuf, size_t outbuflen,
@@ -71,7 +74,8 @@ size_t _gcry_cipher_cfb_decrypt(gcry_cipher_hd_t c,
                                const unsigned char *inbuf, size_t inbuflen);
 
 void cipher_sync(gcry_cipher_hd_t c);
-
+void
+_gcry_cipher_close (gcry_cipher_hd_t h);
 /* Buffer handling functions */
 u32 buf_get_le32(const void *_buf);
 void buf_put_le32(void *_buf, u32 val);
