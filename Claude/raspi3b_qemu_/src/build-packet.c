@@ -237,7 +237,49 @@ calc_packet_length( PACKET *pkt )
   return n;
 }
 
+#define HEX_DUMP_BUFFER_SIZE 256
 
+static void
+bin2hex(const uint8_t *data, size_t len, char *hex) {
+    static const char hex_chars[] = "0123456789abcdef";
+    for (size_t i = 0; i < len; i++) {
+        hex[i * 2] = hex_chars[data[i] >> 4];
+        hex[i * 2 + 1] = hex_chars[data[i] & 0x0F];
+    }
+    hex[len * 2] = '\0';
+}
+
+static void
+log_hexdump(const uint8_t *buffer, int length) {
+    char formatted[HEX_DUMP_BUFFER_SIZE];
+    char text[17];
+    int written = 0;
+
+    printf("%d bytes:\n", length);
+    while (length > 0) {
+        int have = length > 16 ? 16 : length;
+        int i;
+
+        bin2hex(buffer, have, formatted);
+        text[have] = '\0';
+        for (i = 0; i < have; i++) {
+            text[i] = (buffer[i] >= 32 && buffer[i] <= 126) ? buffer[i] : '.';
+        }
+
+        printf("%-8d ", written);
+        for (i = 0; i < 16; i++) {
+            if (i % 2 == 0) printf(" ");
+            if (i % 8 == 0) printf(" ");
+            if (i < have) printf("%2s", &formatted[i * 2]);
+            else printf("   ");
+        }
+        printf(" %s\n", text);
+
+        buffer += have;
+        length -= have;
+        written += have;
+    }
+}
 /* Serialize the symmetric-key encrypted session key packet (RFC 4880,
  * 5.3) described by ENC and write it to OUT.
  *
@@ -255,7 +297,7 @@ do_symkey_enc( IOBUF out, int ctb, PKT_symkey_enc *enc )
     printf("    mode: %d\n", enc->s2k.mode);
     printf("    hash_algo: %u\n", enc->s2k.hash_algo);
     printf("    salt: ");
-//     log_hexdump(enc->s2k.salt, sizeof(enc->s2k.salt));
+    log_hexdump(enc->s2k.salt, sizeof(enc->s2k.salt));
     printf("    count: %08x\n", enc->s2k.count);
     printf("  seskeylen: %u\n", enc->seskeylen);
     // printf("  seskey: ");
@@ -625,7 +667,7 @@ write_header2( IOBUF out, int ctb, u32 len, int hdrlen )
 	return -1;
     }
     printf("WRITE HEADER:     ctb=%02x, len=%d", ctb, len);
-//    log_hexdump(out->d.buf, out->d.len);
+    log_hexdump(out->d.buf, out->d.len);
   return 0;
 }
 
