@@ -298,7 +298,7 @@ int iobuf_pop_filter(iobuf_t a,
 }
 
 /* Block filter implementation */
-static int block_filter(void *opaque, int control,
+int block_filter(void *opaque, int control,
                        iobuf_t chain, byte *buffer, size_t *ret_len) {
                            
     block_filter_ctx_t *a = opaque;
@@ -425,6 +425,46 @@ static int block_filter(void *opaque, int control,
     return rc;
 }
 
+/****************
+ * Enable or disable partial body length mode (RFC 4880 4.2.2.4).
+ *
+ * If LEN is 0, this disables partial block mode by popping the
+ * partial body length filter, which must be the most recently
+ * added filter.
+ *
+ * If LEN is non-zero, it pushes a partial body length filter.  If
+ * this is a read filter, LEN must be the length byte from the first
+ * chunk and A should be position just after this first partial body
+ * length header.
+ */
+void
+iobuf_set_partial_body_length_mode (iobuf_t a, size_t len)
+{
+  printf ("iobuf_set_partial_body_length_mode %d\n", len);
+  if (!len)
+    /* Disable partial body length mode.  */
+    {
+      if (a->use == IOBUF_INPUT)
+	printf ("iobuf_pop_filter called in set_partial_block_mode"
+		   " - please report\n");
+      
+      printf ("iobuf_pop_filter called in set_partial_block_mode");
+      // log_assert (a->filter == block_filter);
+      iobuf_pop_filter (a, block_filter, NULL);
+    }
+  else
+    /* Enabled partial body length mode.  */
+    {
+      block_filter_ctx_t *ctx = xcalloc (1, sizeof *ctx);
+      ctx->use = a->use;
+      ctx->partial = 1;
+      ctx->size = 0;
+      ctx->first_c = len;
+      
+      printf ("pushing partial block filter %d\n", ctx->use);
+      iobuf_push_filter (a, block_filter, ctx);
+    }
+}
 /* Enable/disable partial block mode */
 void iobuf_set_partial_block_mode(iobuf_t a, size_t len) {
     if (!len) {
@@ -532,13 +572,6 @@ int iobuf_write_temp(iobuf_t dest, iobuf_t source) {
         return iobuf_write(dest, source->d.buf, source->d.len);
     
     return 0;
-}
-
-/* Wipe memory contents */
-static void wipememory(void *ptr, size_t len) {
-    volatile char *p = (volatile char *)ptr;
-    while (len--)
-        *p++ = 0;
 }
 
 size_t iobuf_copy(iobuf_t dest, iobuf_t source) {

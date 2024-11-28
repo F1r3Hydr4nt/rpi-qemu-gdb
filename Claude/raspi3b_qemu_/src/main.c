@@ -6,6 +6,7 @@
 #include "memory.h"
 #include "libgcrypt.h"
 #include "iobuf.h"
+#include "encrypt.h" 
 
 // QEMU Versatile PB UART0 address
 #define UART0_DR *((volatile uint32_t *)0x101f1000)
@@ -25,7 +26,6 @@ void putc_uart(void *p, char c);
 void derive_key(const uint8_t *salt, const char *password, unsigned int pass_len, uint32_t iterations, uint8_t *key);
 void hex_string_to_bytes(const char *hex, uint8_t *bytes, size_t len);
 void print_memory_map(void);
-
 // Add strlen implementation
 size_t strlen(const char *str) {
     const char *s;
@@ -350,55 +350,75 @@ void main() {
     }
     printf("\nTotal encrypted length: %d bytes\n\n", enclen);
 
-    // Create new input IOBUF with the encrypted data
-    iobuf_t enc_input = iobuf_temp_with_content((char*)encbuf, enclen);
-    free(encbuf);
+    // // Create new input IOBUF with the encrypted data
+    // iobuf_t enc_input = iobuf_temp_with_content((char*)encbuf, enclen);
+    // free(encbuf);
 
-    if (!enc_input) {
-        printf("Failed to create input buffer!\n");
-        return;
-    }
+    // if (!enc_input) {
+    //     printf("Failed to create input buffer!\n");
+    //     return;
+    // }
 
-    // Create temporary IOBUF for decrypted output
-    iobuf_t decrypted = iobuf_temp();
-    if (!decrypted) {
-        iobuf_close(enc_input);
-        printf("Failed to create output buffer!\n");
-        return;
-    }
+    // // Create temporary IOBUF for decrypted output
+    // iobuf_t decrypted = iobuf_temp();
+    // if (!decrypted) {
+    //     iobuf_close(enc_input);
+    //     printf("Failed to create output buffer!\n");
+    //     return;
+    // }
 
-    // Decrypt using IOBUFs
-    if (decryptGPGData(enc_input, passphrase, decrypted, NULL) != 0) {
-        printf("Decryption failed!\n");
-        iobuf_close(enc_input);
-        iobuf_close(decrypted);
-        return;
-    }
+    // // Decrypt using IOBUFs
+    // if (decryptGPGData(enc_input, passphrase, decrypted, NULL) != 0) {
+    //     printf("Decryption failed!\n");
+    //     iobuf_close(enc_input);
+    //     iobuf_close(decrypted);
+    //     return;
+    // }
 
-    // Get decrypted content
-    uint8_t outbuf[256];
-    size_t outlen = iobuf_temp_to_buffer(decrypted, outbuf, sizeof(outbuf));
-    outbuf[outlen] = '\0';
+    // // Get decrypted content
+    // uint8_t outbuf[256];
+    // size_t outlen = iobuf_temp_to_buffer(decrypted, outbuf, sizeof(outbuf));
+    // outbuf[outlen] = '\0';
 
-    printf("\nDecrypted data (ASCII): %s\n", outbuf);
-    printf("Decrypted length: %d bytes\n", outlen);
+    // printf("\nDecrypted data (ASCII): %s\n", outbuf);
+    // printf("Decrypted length: %d bytes\n", outlen);
 
-    // Also show decrypted bytes
-    printf("\nDecrypted data (hex):\n");
-    for (size_t i = 0; i < outlen; i++) {
-        printf("%02x", outbuf[i]);
-        if ((i + 1) % 16 == 0) {
-            printf("\n");
-        } else {
-            // printf(" ");
+    // // Also show decrypted bytes
+    // printf("\nDecrypted data (hex):\n");
+    // for (size_t i = 0; i < outlen; i++) {
+    //     printf("%02x", outbuf[i]);
+    //     if ((i + 1) % 16 == 0) {
+    //         printf("\n");
+    //     } else {
+    //         // printf(" ");
+    //     }
+    // }
+    // printf("\n");
+
+    // // Cleanup
+    // iobuf_close(enc_input);
+    // iobuf_close(decrypted);
+ // Test encrypt_simple
+    const char *test_data = "Hello World!";
+    size_t test_data_len = strlen(test_data);
+    uint8_t output[1024];
+    size_t output_len = sizeof(output);
+    
+    // Use the same key as in your example
+    uint8_t key[16];
+    hex_string_to_bytes("693B7847FA44CDC6E1C403F5E44E95C1", key, 16);
+    
+    int rc = encrypt_simple((uint8_t*)test_data, test_data_len,
+                          key, sizeof(key),
+                          output, &output_len);
+                          
+    if (rc == 0) {
+printf("Encrypted with encrypt_simple (%zu bytes):", output_len);
+        for (size_t i = 0; i < output_len; i++) {
+            printf("%02x", output[i]);
         }
+        printf("\n");
     }
-    printf("\n");
-
-    // Cleanup
-    iobuf_close(enc_input);
-    iobuf_close(decrypted);
-
     while (1) {
         __asm__("wfi");
     }

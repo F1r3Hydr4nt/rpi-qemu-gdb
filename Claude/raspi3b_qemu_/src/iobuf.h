@@ -18,9 +18,14 @@
 #define IOBUFCTRL_DESC      5
 #define IOBUFCTRL_CANCEL    6
 
+/* Return any pending error on filter A.  */
+#define iobuf_error(a)	      ((a)->error)
+#define iobuf_get_temp_length(a) ( (a)->d.len )
+
 /* Basic types */
 typedef uint8_t byte;
 typedef struct iobuf_struct *iobuf_t;
+typedef struct iobuf_struct *IOBUF;  /* Compatibility with gpg 1.4. */
 
 /* Main iobuf structure */
 struct iobuf_struct {
@@ -85,6 +90,10 @@ unsigned long iobuf_tell(iobuf_t a);
 void iobuf_set_partial_block_mode(iobuf_t a, size_t len);
 int iobuf_flush(iobuf_t a);
 static int filter_flush(iobuf_t a);
+static int block_filter(void *opaque, int control,
+                       iobuf_t chain, byte *buffer, size_t *ret_len);
+static  
+iobuf_set_partial_body_length_mode (iobuf_t a, size_t len);
 /* Convenience macros */
 #define iobuf_get(a)  \
     (((a)->nofast || (a)->d.start >= (a)->d.len) ? \

@@ -15,10 +15,34 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #include "printf.h"
-
+#include <stddef.h>
 typedef void (*putcf)(void *, char);
 static putcf stdout_putf;
 static void *stdout_putp;
+// Add this new conversion function
+static void size2a(size_t num, char *bf)
+{
+    int n = 0;
+    size_t d = 1;
+
+    // Find largest divisor
+    while (num / d >= 10)
+        d *= 10;
+
+    // Extract each digit
+    while (d != 0)
+    {
+        int dgt = num / d;
+        num %= d;
+        d /= 10;
+        if (n || dgt > 0 || d == 0)
+        {
+            *bf++ = dgt + '0';
+            ++n;
+        }
+    }
+    *bf = 0;
+}
 
 #ifdef PRINTF_LONG_SUPPORT
 
@@ -113,10 +137,10 @@ static char a2i(char ch, char **src, int base, int *nump)
     return ch;
 }
 
-static void ptr2a(void* ptr, char* bf)
+static void ptr2a(void *ptr, char *bf)
 {
     unsigned int num = (unsigned int)ptr;
-    ui2a(num, 16, 1, bf);  // Convert to hex with uppercase
+    ui2a(num, 16, 1, bf); // Convert to hex with uppercase
 }
 
 static void putchw(void *putp, putcf putf, int n, char z, char *bf)
@@ -132,12 +156,32 @@ static void putchw(void *putp, putcf putf, int n, char z, char *bf)
         putf(putp, ch);
 }
 
+/* Add after the other format handling functions */
+static void size_t2a(size_t num, unsigned int base, int uc, char *bf)
+{
+    int n = 0;
+    size_t d = 1;
+    while (num / d >= base)
+        d *= base;
+    while (d != 0)
+    {
+        int dgt = num / d;
+        num %= d;
+        d /= base;
+        if (n || dgt > 0 || d == 0)
+        {
+            *bf++ = dgt + (dgt < 10 ? '0' : (uc ? 'A' : 'a') - 10);
+            ++n;
+        }
+    }
+    *bf = 0;
+}
+
 void tfp_format(void *putp, putcf putf, char *fmt, va_list va)
 {
     char bf[12];
 
     char ch;
-
     while ((ch = *(fmt++)))
     {
         if (ch != '%')
@@ -148,6 +192,7 @@ void tfp_format(void *putp, putcf putf, char *fmt, va_list va)
 #ifdef PRINTF_LONG_SUPPORT
             char lng = 0;
 #endif
+            char size_mod = 0; // Add this for size_t modifier
             int w = 0;
             ch = *(fmt++);
             if (ch == '0')
@@ -170,6 +215,14 @@ void tfp_format(void *putp, putcf putf, char *fmt, va_list va)
             {
             case 0:
                 goto abort;
+            case 'z':
+                ch = *(fmt++);
+                if (ch == 'u')
+                {
+                    size2a(va_arg(va, size_t), bf);
+                    putchw(putp, putf, w, lz, bf);
+                }
+                break;
             case 'p': // New case for pointer type
                 putf(putp, '0');
                 putf(putp, 'x');
@@ -177,16 +230,30 @@ void tfp_format(void *putp, putcf putf, char *fmt, va_list va)
                 putchw(putp, putf, w, lz, bf);
                 break;
             case 'u':
-            {
+                if (size_mod)
+                    size_t2a(va_arg(va, size_t), 10, 0, bf);
+                else
 #ifdef PRINTF_LONG_SUPPORT
-                if (lng)
+                    if (lng)
                     uli2a(va_arg(va, unsigned long int), 10, 0, bf);
                 else
 #endif
                     ui2a(va_arg(va, unsigned int), 10, 0, bf);
                 putchw(putp, putf, w, lz, bf);
                 break;
-            }
+            case 'x':
+            case 'X':
+                if (size_mod)
+                    size_t2a(va_arg(va, size_t), 16, (ch == 'X'), bf);
+                else
+#ifdef PRINTF_LONG_SUPPORT
+                    if (lng)
+                    uli2a(va_arg(va, unsigned long int), 16, (ch == 'X'), bf);
+                else
+#endif
+                    ui2a(va_arg(va, unsigned int), 16, (ch == 'X'), bf);
+                putchw(putp, putf, w, lz, bf);
+                break;
             case 'd':
             case 'i':
             {
@@ -199,16 +266,6 @@ void tfp_format(void *putp, putcf putf, char *fmt, va_list va)
                 putchw(putp, putf, w, lz, bf);
                 break;
             }
-            case 'x':
-            case 'X':
-#ifdef PRINTF_LONG_SUPPORT
-                if (lng)
-                    uli2a(va_arg(va, unsigned long int), 16, (ch == 'X'), bf);
-                else
-#endif
-                    ui2a(va_arg(va, unsigned int), 16, (ch == 'X'), bf);
-                putchw(putp, putf, w, lz, bf);
-                break;
             case 'c':
                 putf(putp, (char)(va_arg(va, int)));
                 break;
@@ -243,7 +300,6 @@ static void putcp(void *p, char c)
 {
     *(*((char **)p))++ = c;
 }
-
 
 void tfp_sprintf(char *s, char *fmt, ...)
 {
