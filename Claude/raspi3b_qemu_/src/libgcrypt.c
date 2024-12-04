@@ -65,35 +65,21 @@ static void buf_xor_2dst_v2(void *_dst1, void *_dst2, const void *_src, size_t l
 }
 
 void buf_xor_2dst(void *_dst1, void *_dst2, const void *_src, size_t len) {
-    byte *dst1 = _dst1;
-    byte *dst2 = _dst2;
-    const byte *src = _src;
+    unsigned char *dst1 = _dst1;
+    unsigned char *iv = _dst2;
+    const unsigned char *src = _src;
 
-    while (len >= 2 * sizeof(u32)) {
-        u32 temp_high = buf_get_he32(dst2) ^ buf_get_he32(src);
-        u32 temp_low = buf_get_he32(dst2 + 4) ^ buf_get_he32(src + 4);
-        buf_put_he32(dst2, temp_high);
-        buf_put_he32(dst2 + 4, temp_low);
-        buf_put_he32(dst1, temp_high);
-        buf_put_he32(dst1 + 4, temp_low);
-        dst2 += 2 * sizeof(u32);
-        dst1 += 2 * sizeof(u32);
-        src += 2 * sizeof(u32);
-        len -= 2 * sizeof(u32);
+    // printf("Initial bytes - src: %02x %02x, iv: %02x %02x\n", src[0], src[1], iv[0], iv[1]);
+    // printf("Addresses - dst1: %p, iv: %p, src: %p\n", (void*)dst1, (void*)iv, (void*)src);
+    
+    for (size_t i = 0; i < len; i++) {
+        iv[i] ^= src[i];
+        dst1[i] = iv[i];
     }
 
-    if (len >= sizeof(u32)) {
-        u32 temp = buf_get_he32(dst2) ^ buf_get_he32(src);
-        buf_put_he32(dst2, temp);
-        buf_put_he32(dst1, temp);
-        dst2 += sizeof(u32);
-        dst1 += sizeof(u32);
-        src += sizeof(u32);
-        len -= sizeof(u32);
-    }
-
-    for (; len; len--)
-        *dst1++ = (*dst2++ ^= *src++);
+    // printf("IV after XOR: ");
+    // for (size_t i = 0; i < 8; i++) printf("%02x", iv[i]);
+    // printf("\n");
 }
 
 void cipher_block_cpy(void *_dst, const void *_src, size_t blocksize) {
@@ -259,16 +245,15 @@ _gcry_cipher_close (gcry_cipher_hd_t h)
   xfree ((char*)h - off);
 }
 
-int
-_gcry_cipher_setiv (gcry_cipher_hd_t c, const void *iv, size_t ivlen)
-{
+int _gcry_cipher_setiv(gcry_cipher_hd_t c, const void *iv, size_t ivlen) {
     printf("_gcry_cipher_setiv %d\n", ivlen);
-
     c->unused = 0;
-    // memcpy (c->u_iv.iv, iv, ivlen);
-
-  memset (c->u_iv.iv, 0, ivlen);
-  return 0;// c->mode_ops.setiv (c, iv, ivlen);
+    if (iv) {
+        memcpy(c->u_iv.iv, iv, ivlen);
+    } else {
+        memset(c->u_iv.iv, 0, ivlen);
+    }
+    return 0;
 }
 
 void cipher_sync(gcry_cipher_hd_t c) {
@@ -294,6 +279,10 @@ int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
         if ((i + 1) % 16 == 0) printf("\n");
         else if ((i + 1) % 4 == 0) printf(" ");
     }
+    printf("\n");
+    printf("Initial iv address: %p\n", (void*)c->u_iv.iv);
+    printf("Initial iv contents: ");
+    for (int i = 0; i < 8; i++) printf("%02x", c->u_iv.iv[i]);
     printf("\n");
     unsigned char *ivp;
     size_t blocksize = 8;
@@ -378,9 +367,28 @@ int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
         printBlock(ivBlock);
 
         c->unused = blocksize;
+//  printf("Before buf_xor_2dst - iv address: %p\n", (void*)c->u_iv.iv);
+//         printf("iv contents: ");
+//         for (int i = 0; i < 8; i++) printf("%02x", c->u_iv.iv[i]);
+//         printf("\n");
+        
         /* Apply the XOR. */
         c->unused -= inbuflen;
-        buf_xor_2dst_v2(outbuf, c->u_iv.iv, inbuf, inbuflen);
+        buf_xor_2dst(outbuf, c->u_iv.iv, inbuf, inbuflen);
+        outbuf += inbuflen;
+        inbuf += inbuflen;
+        inbuflen = 0;
+        // printf("Before bytesFromBlock IV: ");
+        // for (int i = 0; i < 8; i++) printf("%02x", c->u_iv.iv[i]);
+        // printf("\n");
+
+        // bytesFromBlock(ivBlock, c->u_iv.iv);
+
+        // printf("After bytesFromBlock IV: ");
+        // for (int i = 0; i < 8; i++) printf("%02x", c->u_iv.iv[i]);
+        // printf("\n");
+        ivBlock = blockFromBytes(c->u_iv.iv);
+        printBlock(ivBlock);
     }
 
     return 0;

@@ -5,31 +5,48 @@ AS = $(CROSS_COMPILE)as
 LD = $(CROSS_COMPILE)ld
 OBJCOPY = $(CROSS_COMPILE)objcopy
 QEMU = qemu-system-arm
-GDB = gdb-multiarch 
+GDB = gdb-multiarch
+
 # Directories
 SRC_DIR = src
+COMMON_DIR = $(SRC_DIR)/common
 BUILD_DIR = build
+BUILD_COMMON_DIR = $(BUILD_DIR)/common
 
-# Source files
+# Source files (common first)
+COMMON_SRCS = $(wildcard $(COMMON_DIR)/*.c)
 SRCS = $(wildcard $(SRC_DIR)/*.c)
 ASM_SRCS = $(SRC_DIR)/start.s
 
-# Object files
+# Object files (common first)
+COMMON_OBJS = $(COMMON_SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 OBJS = $(SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 ASM_OBJS = $(ASM_SRCS:$(SRC_DIR)/%.s=$(BUILD_DIR)/%.o)
 
+# Include paths
+INCLUDES = -I$(SRC_DIR) -I$(COMMON_DIR)
+
 # Flags
-CFLAGS = -mcpu=cortex-a7 -fpic -ffreestanding -O2 -Wall -Wextra -g
+CFLAGS = -mcpu=cortex-a7 -fpic -ffreestanding -O2 -Wall -Wextra -g $(INCLUDES)
 ASFLAGS = -mcpu=cortex-a7
 LDFLAGS = -T $(SRC_DIR)/linker.ld -ffreestanding -O2 -nostdlib
 
 # Output
 TARGET = $(BUILD_DIR)/kernel.img
 
-.PHONY: all clean run
+.PHONY: all clean run debug gdb
 
 all: $(TARGET)
 
+# Build common objects first
+common: $(COMMON_OBJS)
+
+# Build rules for common objects
+$(BUILD_DIR)/common/%.o: $(SRC_DIR)/common/%.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Build rules for main source files
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -38,7 +55,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
 	@mkdir -p $(@D)
 	$(AS) $(ASFLAGS) $< -o $@
 
-$(TARGET): $(OBJS) $(ASM_OBJS)
+$(TARGET): $(COMMON_OBJS) $(OBJS) $(ASM_OBJS)
 	@mkdir -p $(@D)
 	$(CC) $(LDFLAGS) $^ -o $@
 
@@ -50,8 +67,10 @@ run: $(TARGET)
 
 debug: $(TARGET)
 	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel $(TARGET) -nographic -serial mon:stdio -s -S
+
 gdb:
 	gdb-multiarch $(TARGET) -x script.gdb
+
 # Useful commands
 # pkill qemu-system-arm
-# (gdb) break main.c:10    # Break at line 10
+# (gdb) break main.c:10 # Break at line 10
