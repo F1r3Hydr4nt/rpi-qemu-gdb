@@ -102,6 +102,7 @@ memcpy(temp, fixed_random, nprefix);
 
   cfx->wrote_header = 1;
 }
+
 int
 _gcry_cipher_encrypt (gcry_cipher_hd_t h, void *out, size_t outsize,
                       const void *in, size_t inlen)
@@ -139,6 +140,12 @@ cipher_filter_cfb (void *opaque, int control,
                    iobuf_t chain, byte *buf, size_t *len)
 {
   cipher_filter_context_t *cfx = opaque;
+  printf("cipher_hd address: %p\n", (void*)cfx->cipher_hd);
+  if (cfx->cipher_hd) {
+      printf("cipher_hd is allocated\n");
+  } else {
+      printf("cipher_hd is NULL\n");
+  }
   size_t size = *len;
   int rc = 0;
   printf("cipher_filter_cfb %d %d\n",control, cfx->wrote_header);

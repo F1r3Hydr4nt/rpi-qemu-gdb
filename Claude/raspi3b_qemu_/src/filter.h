@@ -1,23 +1,23 @@
 /* simplified_filter.h - Filter definitions for bare metal encryption */
-#ifndef SIMPLIFIED_FILTER_H
-#define SIMPLIFIED_FILTER_H
+#ifndef FILTER_H
+#define FILTER_H
 
 #include <stdint.h>
 #include <stddef.h>
-#include "iobuf.h"
+#include "common/iobuf.h"
+#include "dek.h"
 /* Basic type definitions */
-typedef uint8_t byte;
 typedef struct gcry_cipher_handle *gcry_cipher_hd_t;
 typedef struct gcry_md_handle *gcry_md_hd_t;
 
-/* DEK (Data Encryption Key) structure */
-typedef struct {
-    byte *key;
-    size_t keylen;
-    int algo;           /* cipher algorithm */
-    int use_mdc;       /* flag for MDC */
-    int use_aead;      /* flag for AEAD (not used in CFB) */
-} DEK;
+// /* DEK (Data Encryption Key) structure */
+// typedef struct {
+//     byte *key;
+//     size_t keylen;
+//     int algo;           /* cipher algorithm */
+//     int use_mdc;       /* flag for MDC */
+//     int use_aead;      /* flag for AEAD (not used in CFB) */
+// } DEK;
 
 /* Cipher filter context */
 typedef struct {
@@ -68,4 +68,4 @@ int text_filter( void *opaque, int control,
 int iobuf_write(iobuf_t a, const void *buffer, size_t length);
 int iobuf_read(iobuf_t a, void *buffer, size_t length);
 
-#endif /* SIMPLIFIED_FILTER_H */
+#endif /* FILTER_H */

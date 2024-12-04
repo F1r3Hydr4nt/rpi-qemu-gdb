@@ -67,39 +67,30 @@ void main()
     init_printf(0, putc_uart);
     printf("Printf initialised!\n");
     print_memory_map();
-    const uint8_t salt[] = {0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11};
-    const uint8_t random[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF};
-    const char *data = "Hello World!";
-    const char *passphrase = "password";
-    const char *derivedKey = "693B7847FA44CDC6E1C403F5E44E95C1";
-    printf("\nEncrypting data: '%s'\n", data);
-    printf("Passphrase: '%s'\n", passphrase);
-    uint8_t key[16];
-    uint32_t iterations = ((uint32_t)16 + (0xFF & 15)) << ((0xFF >> 4) + 6);
-    //         derive_key(salt, passphrase, strlen(passphrase), iterations, key);
-    // printf("Key: ");
-    // for (int i = 0; i < 16; i++) {
-    //    printf("%02x", key[i]);
-    // }
-    // printf("\n");
-    size_t test_data_len = strlen(data);
-    uint8_t output[1024];
-    size_t output_len = sizeof(output);
-    hex_string_to_bytes(derivedKey, key, 16);
+    // const uint8_t salt[] = {0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11};
+    // const uint8_t random[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF};
+    // const char *data = "Hello World!";
+    // const char *passphrase = "password";
+    // const char *derivedKey = "693B7847FA44CDC6E1C403F5E44E95C1";
+    // printf("\nEncrypting data: '%s'\n", data);
+    // printf("Passphrase: '%s'\n", passphrase);
+    // uint8_t key[16];
+    // uint32_t iterations = ((uint32_t)16 + (0xFF & 15)) << ((0xFF >> 4) + 6);
+    // //         derive_key(salt, passphrase, strlen(passphrase), iterations, key);
+    // // printf("Key: ");
+    // // for (int i = 0; i < 16; i++) {
+    // //    printf("%02x", key[i]);
+    // // }
+    // // printf("\n");
+    // size_t test_data_len = strlen(data);
+    // uint8_t output[1024];
+    // size_t output_len = sizeof(output);
+    // hex_string_to_bytes(derivedKey, key, 16);
 
-    int rc = encrypt_simple((uint8_t *)data, test_data_len,
-                            passphrase,
-                            output, &output_len, derivedKey);
-    // if (rc == 0)
-    // {
-    //     printf("Encrypted with encrypt_simple (%zu bytes):", output_len);
-    //     for (size_t i = 0; i < output_len; i++)
-    //     {
-    //         printf("%02x", output[i]);
-    //     }
-    //     printf("\n");
-    // }
-
+    // int rc = encrypt_simple((uint8_t *)data, test_data_len,
+    //                         passphrase,
+    //                         output, &output_len, derivedKey);
+    decrypt_message(NULL, "message.txt");
     while (1)
     {
         __asm__("wfi");

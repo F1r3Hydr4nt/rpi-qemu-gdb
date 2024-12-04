@@ -17,7 +17,7 @@
  * along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
-// #include <config.h>
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

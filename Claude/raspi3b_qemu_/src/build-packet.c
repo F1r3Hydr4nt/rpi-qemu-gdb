@@ -25,7 +25,7 @@
 // #include "gpg.h"
 #include "printf.h"
 #include "packet.h"
-#include "iobuf.h"
+#include "common/iobuf.h"
 
 static int do_symkey_enc( IOBUF out, int ctb, PKT_symkey_enc *enc );
 static u32 calc_plaintext( PKT_plaintext *pt );
@@ -406,7 +406,7 @@ calc_plaintext( PKT_plaintext *pt )
 static int
 do_plaintext( IOBUF out, int ctb, PKT_plaintext *pt )
 {
-  printf("do_plaintext\n");
+  printf("do_plaintext pt->buf: %d\n", pt->buf);
     int rc = 0;
     size_t nbytes;
 
@@ -435,6 +435,9 @@ printf("Checking packet type\n");
     pt->timestamp = 1624780800;
     printf("Writing timestamp: %u\n", pt->timestamp);
     rc = write_32(out, pt->timestamp);
+    printf("rc: %d\n", rc);
+    printf("pt->buf: %d\n", pt->buf->nbytes);
+
     if (rc)
       return rc;
 
