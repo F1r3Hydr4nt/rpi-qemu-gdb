@@ -57,7 +57,7 @@ write_cfb_header (cipher_filter_context_t *cfx, iobuf_t a)
 memcpy(temp, fixed_random, nprefix);
   temp[nprefix] = temp[nprefix-2];
   temp[nprefix+1] = temp[nprefix-1];
-    //log_printhex (temp, nprefix+2, "RANDOM:");
+  // log_printhex (temp, nprefix+2, "RANDOM:");
   // print_cipher_algo_note (cfx->dek->algo);
   // err = openpgp_cipher_open (&cfx->cipher_hd,
   //                            cfx->dek->algo,
@@ -73,9 +73,9 @@ memcpy(temp, fixed_random, nprefix);
   //   }
     //log_printhex (cfx->dek->key, cfx->dek->keylen, "KEY:");
   _gcry_cipher_setkey (cfx->cipher_hd, cfx->dek->key, cfx->dek->keylen);
-    log_hexdump(&cfx->cipher_hd->context.c, 16);
+  log_hexdump(&cfx->cipher_hd->key, 16);
 
-  _gcry_cipher_setiv (cfx->cipher_hd, NULL, 0);
+  _gcry_cipher_setiv (cfx->cipher_hd, NULL, 8);
 
   log_hexdump(&cfx->cipher_hd->u_iv, 8);
   // if (cfx->mdc_hash) /* Hash the "IV". */{
