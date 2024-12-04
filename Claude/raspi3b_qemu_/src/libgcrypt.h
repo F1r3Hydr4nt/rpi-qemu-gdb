@@ -52,6 +52,7 @@ struct gcry_cipher_handle {
 
     /* Cipher context */
     cipher_context_alignment_t context;
+    Key key;
 };
 
 typedef struct gcry_cipher_handle *gcry_cipher_hd_t;
@@ -63,7 +64,7 @@ struct Block encrypt(const Key key, struct Block data);
 int
 _gcry_cipher_setiv (gcry_cipher_hd_t c, const void *iv, size_t ivlen);
 int
-_gcry_cipher_setkey (gcry_cipher_hd_t hd, const void *key, size_t keylen);
+_gcry_cipher_setkey (gcry_cipher_hd_t hd, const byte *key, size_t keylen);
 /* Function prototypes */
 int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
                             unsigned char *outbuf, size_t outbuflen,

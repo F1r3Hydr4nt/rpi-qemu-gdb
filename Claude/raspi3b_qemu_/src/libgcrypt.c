@@ -210,13 +210,26 @@ void buf_xor(void *_dst, const void *_src1, const void *_src2, size_t len) {
         *dst++ = *src1++ ^ *src2++;
 }
 
-int
-_gcry_cipher_setkey (gcry_cipher_hd_t hd, const void *key, size_t keylen)
+void printUint32Hex(uint32_t data)
 {
-    printf("_gcry_cipher_setkey\n");
-  // rc = c->spec->setkey (&c->context.c, key, keylen, &c->bulk);
-  *hd->context.c = key;
-  return 0;//cipher_setkey (hd, (void*)key, keylen);
+  printf("%08X\n", data);
+}
+
+int _gcry_cipher_setkey(gcry_cipher_hd_t hd, const byte *key, size_t keylen)
+{
+    uint32_t *keywords;
+    int i;
+        
+    Key key2 = {0, 0, 0, 0};
+    int j = 0;
+    for (int i = 0; i < 4; i++)
+    {
+        hd->key[i] = (key[j] << 24) + (key[j + 1] << 16) + (key[j + 2] << 8) + key[j + 3];
+        printf("key[%d] = 0x%08x\n", i, hd->key[i]);
+        j += 4;
+    }
+    
+    return 0;//GPG_ERR_NO_ERROR;
 }
 
 void
@@ -249,20 +262,12 @@ _gcry_cipher_close (gcry_cipher_hd_t h)
 int
 _gcry_cipher_setiv (gcry_cipher_hd_t c, const void *iv, size_t ivlen)
 {
-        printf("_gcry_cipher_setiv\n");
+    printf("_gcry_cipher_setiv %d\n", ivlen);
 
-//   if (c->mode == GCRY_CIPHER_MODE_GCM)
-//     {
-//       c->u_mode.gcm.disallow_encryption_because_of_setiv_in_fips_mode = 0;
+    c->unused = 0;
+    // memcpy (c->u_iv.iv, iv, ivlen);
 
-//       if (fips_mode ())
-//         {
-//           /* Direct invocation of GCM setiv in FIPS mode disables encryption. */
-//           c->u_mode.gcm.disallow_encryption_because_of_setiv_in_fips_mode = 1;
-//         }
-//     }
-c->unused = 0;
-memcpy (c->u_iv.iv, iv, ivlen);
+  memset (c->u_iv.iv, 0, ivlen);
   return 0;// c->mode_ops.setiv (c, iv, ivlen);
 }
 
@@ -283,6 +288,13 @@ int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
                           unsigned char *outbuf, size_t outbuflen,
                           const unsigned char *inbuf, size_t inbuflen) {
     printf("_gcry_cipher_cfb_encrypt inbuflen %d outbuflen %d\n", inbuflen, outbuflen);
+    printf("inbuf: ");
+    for (size_t i = 0; i < inbuflen; i++) {
+        printf("%02x", inbuf[i]);
+        if ((i + 1) % 16 == 0) printf("\n");
+        else if ((i + 1) % 4 == 0) printf(" ");
+    }
+    printf("\n");
     unsigned char *ivp;
     size_t blocksize = 8;
     size_t blocksize_x_2 = blocksize + blocksize;
@@ -322,7 +334,7 @@ int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
     while (inbuflen >= blocksize_x_2) {
         /* Encrypt the IV. */
         struct Block ivBlock = blockFromBytes(c->u_iv.iv);
-        ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
+        ivBlock = encrypt(c->key, ivBlock);
         bytesFromBlock(ivBlock, c->u_iv.iv);
         printBlock(ivBlock);
         /* XOR the input with the IV and store input into IV. */
@@ -341,7 +353,7 @@ int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
         struct Block ivBlock = blockFromBytes(c->u_iv.iv);
                 printBlock(ivBlock);
 
-        ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
+        ivBlock = encrypt(c->key, ivBlock);
         bytesFromBlock(ivBlock, c->u_iv.iv);
         printBlock(ivBlock);
 
@@ -361,7 +373,7 @@ int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
         struct Block ivBlock = blockFromBytes(c->u_iv.iv);
                 printBlock(ivBlock);
 
-        ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
+        ivBlock = encrypt(c->key, ivBlock);
         bytesFromBlock(ivBlock, c->u_iv.iv);
         printBlock(ivBlock);
 
