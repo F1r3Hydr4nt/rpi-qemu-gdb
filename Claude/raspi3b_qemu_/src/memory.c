@@ -209,3 +209,19 @@ void wipememory(void *ptr, size_t len) {
     while (len--)
         *p++ = 0;
 }
+
+void *xtrycalloc(size_t nmemb, size_t size) {
+    // Check for multiplication overflow
+    if (nmemb && size && (nmemb * size) / nmemb != size) {
+        return NULL;
+    }
+    
+    size_t total = nmemb * size;
+    void *ptr = malloc(total);
+    
+    if (ptr) {
+        memset(ptr, 0, total);
+    }
+    
+    return ptr;
+}

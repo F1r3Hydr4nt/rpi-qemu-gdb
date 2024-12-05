@@ -837,7 +837,7 @@ gcry_mpi_t _gcry_mpi_get_const (int no);
 #define mpi_release(a)      \
   do \
     { \
-      gcry_mpi_release ((a)); \
+      xfree ((a)); \
       (a) = NULL; \
     } \
   while (0)

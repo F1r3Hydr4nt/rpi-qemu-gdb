@@ -269,6 +269,247 @@ void cipher_sync(gcry_cipher_hd_t c) {
     }
 }
 
+
+/****************
+ * Decrypt IN and write it to OUT.  If IN is NULL, in-place encryption has
+ * been requested.
+ */
+// gcry_err_code_t
+int
+_gcry_cipher_decrypt (gcry_cipher_hd_t h, void *out, size_t outsize,
+                      const void *in, size_t inlen)
+{
+  if (!in) /* Caller requested in-place encryption. */
+    {
+      in = out;
+      inlen = outsize;
+    }
+
+//   if (h->mode != GCRY_CIPHER_MODE_NONE && !h->marks.key)
+//     {
+//       log_error ("cipher_decrypt: key not set\n");
+//       return -1;// GPG_ERR_MISSING_KEY;
+//     }
+
+  return _gcry_cipher_cfb_decrypt (h, out, outsize, in, inlen);
+}
+
+static void _gcry_cast5_cfb_dec(gcry_cipher_hd_t context, unsigned char *iv, void *outbuf_arg,
+                              const void *inbuf_arg, size_t nblocks) {
+                                #define CAST5_BLOCKSIZE 8
+    // CAST5_context *ctx = context;
+    unsigned char *outbuf = outbuf_arg;
+    const unsigned char *inbuf = inbuf_arg;
+    unsigned char tmpbuf[CAST5_BLOCKSIZE * 3];
+    struct Block ivBlock, tmpBlock;
+
+// #ifdef USE_AMD64_ASM
+//     {
+//         if (nblocks >= 4) {
+//             while (nblocks >= 4) {
+//                 cast5_amd64_cfb_dec(ctx, outbuf, inbuf, iv);
+//                 nblocks -= 4;
+//                 outbuf += 4 * CAST5_BLOCKSIZE;
+//                 inbuf += 4 * CAST5_BLOCKSIZE;
+//             }
+//         }
+//     }
+// #elif defined(USE_ARM_ASM)
+//     {
+//         while (nblocks >= 2) {
+//             *gcry*cast5_arm_cfb_dec(ctx, outbuf, inbuf, iv);
+//             nblocks -= 2;
+//             outbuf += 2 * CAST5_BLOCKSIZE;
+//             inbuf += 2 * CAST5_BLOCKSIZE;
+//         }
+//     }
+// #endif
+
+// #if !defined(USE_AMD64_ASM) && !defined(USE_ARM_ASM)
+    for (; nblocks >= 3; nblocks -= 3) {
+        // Copy IV and next 2 blocks to temporary buffer
+        cipher_block_cpy(tmpbuf + 0, iv, CAST5_BLOCKSIZE);
+        cipher_block_cpy(tmpbuf + 8, inbuf + 0, CAST5_BLOCKSIZE * 2);
+        cipher_block_cpy(iv, inbuf + 16, CAST5_BLOCKSIZE);
+
+        // Process three blocks at once using Block structs
+        for (int i = 0; i < 3; i++) {
+            struct Block block = blockFromBytes(tmpbuf + (i * CAST5_BLOCKSIZE));
+            block = encrypt(context->key, block);
+            bytesFromBlock(block, tmpbuf + (i * CAST5_BLOCKSIZE));
+        }
+
+        // XOR the results with input to get plaintext
+        buf_xor(outbuf, inbuf, tmpbuf, CAST5_BLOCKSIZE * 3);
+        
+        outbuf += CAST5_BLOCKSIZE * 3;
+        inbuf += CAST5_BLOCKSIZE * 3;
+    }
+//#endif
+
+    // Handle remaining blocks individually
+    for (; nblocks; nblocks--) {
+        // Convert IV to Block struct, encrypt, and convert back
+        ivBlock = blockFromBytes(iv);
+        ivBlock = encrypt(context->key, ivBlock);
+        bytesFromBlock(ivBlock, iv);
+
+        // XOR the encrypted IV with input and copy to output
+        cipher_block_xor_n_copy(outbuf, iv, inbuf, CAST5_BLOCKSIZE);
+        
+        outbuf += CAST5_BLOCKSIZE;
+        inbuf += CAST5_BLOCKSIZE;
+    }
+
+    // Clear sensitive data
+    wipememory(tmpbuf, sizeof(tmpbuf));
+    
+    return 0;
+}
+
+
+
+/* Return bit-shift of blocksize. */
+static inline unsigned int _gcry_blocksize_shift(gcry_cipher_hd_t c)
+{
+  /* Only blocksizes 8 and 16 are used. Return value in such way
+   * that compiler can optimize calling functions based on this.  */
+  return //c->spec->blocksize == 8 ?
+   3;// : 4;
+}
+
+size_t _gcry_cipher_cfb_decrypt(gcry_cipher_hd_t c,
+                          unsigned char *outbuf, size_t outbuflen,
+                          const unsigned char *inbuf, size_t inbuflen) {
+    printf("_gcry_cipher_cfb_decrypt inbuflen %d outbuflen %d cfb_bulk %d\n", 
+           inbuflen, outbuflen, 1);
+    printf("inbuf: ");
+    for (size_t i = 0; i < inbuflen; i++) {
+        printf("%02x", inbuf[i]);
+        if ((i + 1) % 16 == 0) printf("\n");
+        else if ((i + 1) % 4 == 0) printf(" ");
+    }
+    printf("\n");
+    printf("Initial iv address: %p\n", (void*)c->u_iv.iv);
+    printf("Initial iv contents: ");
+    for (int i = 0; i < 8; i++) printf("%02x", c->u_iv.iv[i]);
+    printf("\n");
+
+    unsigned char *ivp;
+    size_t blocksize_shift = _gcry_blocksize_shift(c);
+    size_t blocksize = 8;//1 << blocksize_shift;
+    size_t blocksize_x_2 = blocksize + blocksize;
+    unsigned int burn, nburn;
+
+    struct Block ivBlock1 = blockFromBytes(c->u_iv.iv);
+    printBlock(ivBlock1);
+
+    if (outbuflen < inbuflen)
+        return -1;//GPG_ERR_BUFFER_TOO_SHORT;
+
+    if (inbuflen <= c->unused) {
+        printf("cfb_decrypt 1 %d %d %d\n", inbuflen, outbuflen, c->unused);
+        /* Short enough to be encoded by the remaining XOR mask. */
+        ivp = c->u_iv.iv + blocksize - c->unused;
+        buf_xor_n_copy(outbuf, ivp, inbuf, inbuflen);
+        c->unused -= inbuflen;
+        return 0;
+    }
+
+    burn = 0;
+
+    if (c->unused) {
+        printf("cfb_decrypt 2 %d %d %d\n", inbuflen, outbuflen, c->unused);
+        /* XOR the input with the IV and store input into IV */
+        inbuflen -= c->unused;
+        ivp = c->u_iv.iv + blocksize - c->unused;
+        buf_xor_n_copy(outbuf, ivp, inbuf, c->unused);
+        outbuf += c->unused;
+        inbuf += c->unused;
+        c->unused = 0;
+    }
+
+    /* Now we can process complete blocks. We use a loop as long as we
+       have at least 2 blocks and use conditions for the rest. This
+       also allows to use a bulk encryption function if available. */
+    if (inbuflen >= blocksize_x_2 && 1){//c->bulk.cfb_dec) {
+        printf("cfb_decrypt 3 %d %d %d\n", inbuflen, outbuflen, c->unused);
+        size_t nblocks = inbuflen >> blocksize_shift;
+        _gcry_cast5_cfb_dec(&c->context.c, c->u_iv.iv, outbuf, inbuf, nblocks);
+
+        outbuf += nblocks << blocksize_shift;
+        inbuf  += nblocks << blocksize_shift;
+        inbuflen -= nblocks << blocksize_shift;
+    } else {
+        printf("cfb_decrypt 4 %d %d %d\n", inbuflen, outbuflen, c->unused);
+        while (inbuflen >= blocksize_x_2) {
+            /* Encrypt the IV. */
+            struct Block ivBlock = blockFromBytes(c->u_iv.iv);
+            printBlock(ivBlock);
+            
+            ivBlock = encrypt(c->key, ivBlock);
+            bytesFromBlock(ivBlock, c->u_iv.iv);
+            printBlock(ivBlock);
+            
+            /* XOR the input with the IV and store input into IV. */
+            cipher_block_xor_n_copy(outbuf, c->u_iv.iv, inbuf, blocksize);
+            
+            outbuf += blocksize;
+            inbuf += blocksize;
+            inbuflen -= blocksize;
+        }
+    }
+
+    if (inbuflen >= blocksize) {
+        printf("cfb_decrypt 5 %d %d %d\n", inbuflen, outbuflen, c->unused);
+        /* Save the current IV and then encrypt the IV. */
+        cipher_block_cpy(c->lastiv, c->u_iv.iv, blocksize);
+
+        struct Block ivBlock = blockFromBytes(c->u_iv.iv);
+        printBlock(ivBlock);
+        
+        ivBlock = encrypt(c->key, ivBlock);
+        bytesFromBlock(ivBlock, c->u_iv.iv);
+        printBlock(ivBlock);
+
+        /* XOR the input with the IV and store input into IV */
+        cipher_block_xor_n_copy(outbuf, c->u_iv.iv, inbuf, blocksize);
+
+        outbuf += blocksize;
+        inbuf += blocksize;
+        inbuflen -= blocksize;
+    }
+
+    if (inbuflen) {
+        printf("cfb_decrypt 6 %d %d %d\n", inbuflen, outbuflen, c->unused);
+        /* Save the current IV and then encrypt the IV. */
+        cipher_block_cpy(c->lastiv, c->u_iv.iv, blocksize);
+
+        struct Block ivBlock = blockFromBytes(c->u_iv.iv);
+        printBlock(ivBlock);
+
+        ivBlock = encrypt(c->key, ivBlock);
+        bytesFromBlock(ivBlock, c->u_iv.iv);
+        printBlock(ivBlock);
+
+        c->unused = blocksize;
+        /* Apply the XOR. */
+        c->unused -= inbuflen;
+        buf_xor_n_copy(outbuf, c->u_iv.iv, inbuf, inbuflen);
+        outbuf += inbuflen;
+        inbuf += inbuflen;
+        inbuflen = 0;
+
+        ivBlock = blockFromBytes(c->u_iv.iv);
+        printBlock(ivBlock);
+    }
+
+    // if (burn > 0)
+    //     _gcry_burn_stack(burn + 4 * sizeof(void *));
+
+    return 0;
+}
+
 int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
                           unsigned char *outbuf, size_t outbuflen,
                           const unsigned char *inbuf, size_t inbuflen) {
@@ -389,92 +630,6 @@ int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
         // printf("\n");
         ivBlock = blockFromBytes(c->u_iv.iv);
         printBlock(ivBlock);
-    }
-
-    return 0;
-}
-
-size_t _gcry_cipher_cfb_decrypt(gcry_cipher_hd_t c,
-                               unsigned char *outbuf, size_t outbuflen,
-                               const unsigned char *inbuf, size_t inbuflen) {
-    printf("gcry_cipher_cfb_decrypt inbuflen %d outbuflen %d\n", inbuflen, outbuflen);
-    unsigned char *ivp;
-    size_t blocksize = 8;
-    size_t blocksize_x_2 = blocksize + blocksize;
-    unsigned int burn = 0;
-    (void)burn; // Suppress unused variable warning
-    int shouldShift = inbuflen > blocksize;
-    (void)shouldShift; // Suppress unused variable warning
-
-    if (outbuflen < inbuflen)
-        return -1; // GPG_ERR_BUFFER_TOO_SHORT
-
-    if (inbuflen <= c->unused) {
-        printf("cfb_decrypt 1 %d %d %d\n", inbuflen, outbuflen, c->unused);
-        /* Short enough to be encoded by the remaining XOR mask. */
-        ivp = c->u_iv.iv + blocksize - c->unused;
-        buf_xor_n_copy(outbuf, ivp, inbuf, inbuflen);
-        c->unused -= inbuflen;
-        return 0;
-    }
-
-    if (c->unused) {
-        printf("cfb_decrypt 2 %d %d %d\n", inbuflen, outbuflen, c->unused);
-        /* XOR the input with the IV and store input into IV. */
-        inbuflen -= c->unused;
-        ivp = c->u_iv.iv + blocksize - c->unused;
-        buf_xor_n_copy(outbuf, ivp, inbuf, c->unused);
-        outbuf += c->unused;
-        inbuf += c->unused;
-        c->unused = 0;
-    }
-
-    /* Process complete blocks */
-    printf("cfb_decrypt 4 %d %d %d\n", inbuflen, outbuflen, c->unused);
-    while (inbuflen >= blocksize_x_2) {
-        /* Encrypt the IV. */
-        struct Block ivBlock = blockFromBytes(c->u_iv.iv);
-        ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
-        bytesFromBlock(ivBlock, c->u_iv.iv);
-        
-        /* XOR the input with the IV and store input into IV. */
-        cipher_block_xor_n_copy(outbuf, c->u_iv.iv, inbuf, blocksize);
-        
-        outbuf += blocksize;
-        inbuf += blocksize;
-        inbuflen -= blocksize;
-    }
-
-    if (inbuflen >= blocksize) {
-        printf("cfb_decrypt 5 %d %d %d\n", inbuflen, outbuflen, c->unused);
-        /* Save the current IV and then encrypt the IV. */
-        cipher_block_cpy(c->lastiv, c->u_iv.iv, blocksize);
-        
-        struct Block ivBlock = blockFromBytes(c->u_iv.iv);
-        ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
-        bytesFromBlock(ivBlock, c->u_iv.iv);
-        
-        /* XOR the input with the IV and store input into IV */
-        cipher_block_xor_n_copy(outbuf, c->u_iv.iv, inbuf, blocksize);
-        
-        outbuf += blocksize;
-        inbuf += blocksize;
-        inbuflen -= blocksize;
-    }
-
-    if (inbuflen) {
-        printf("cfb_decrypt 6 %d %d %d\n", inbuflen, outbuflen, c->unused);
-        /* Save the current IV and then encrypt the IV. */
-        cipher_block_cpy(c->lastiv, c->u_iv.iv, blocksize);
-        
-        struct Block ivBlock = blockFromBytes(c->u_iv.iv);
-        ivBlock = encrypt(*(Key*)&c->context.c, ivBlock);
-        bytesFromBlock(ivBlock, c->u_iv.iv);
-        
-        c->unused = blocksize;
-        /* Apply the XOR. */
-        c->unused -= inbuflen;
-        buf_xor_n_copy(outbuf, c->u_iv.iv, inbuf, inbuflen);
     }
 
     return 0;
