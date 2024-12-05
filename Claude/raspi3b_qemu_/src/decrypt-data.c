@@ -33,7 +33,7 @@
 #include "../common/i18n.h"
 #include "../common/status.h"
 #include "../common/compliance.h"
-
+#include "libgcrypt.h"
 
 static int aead_decode_filter (void *opaque, int control, iobuf_t a,
                                byte *buf, size_t *ret_len);
@@ -239,13 +239,13 @@ decrypt_data (ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
   unsigned nprefix;
 
   *compliance_error = 0;
-  printf ("probably wrong\n");
+  // printf ("probably wrong\n");
 
   dfx = xtrycalloc (1, sizeof *dfx);
   if (!dfx)
     return gpg_error_from_syserror ();
   dfx->refcount = 1;
-
+  // printf("dek->algo_info_printed: %d\n", dek->algo_info_printed);
   // if ( opt.verbose && !dek->algo_info_printed )
   //   {
   //     // if (!openpgp_cipher_test_algo (dek->algo))
@@ -282,8 +282,8 @@ decrypt_data (ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
   //       }
   //   }
 
-  // printf (STATUS_DECRYPTION_INFO, "%d %d %d",
-  //                      ed->mdc_method, dek->algo, 0);
+  printf (STATUS_DECRYPTION_INFO, "%d %d %d",
+                       ed->mdc_method, dek->algo, 0);
 
   // if (opt.show_session_key)
   //   {
@@ -410,7 +410,20 @@ decrypt_data (ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
       //     if ( DBG_HASHING )
       //       gcry_md_debug (dfx->mdc_hash, "checkmdc");
       //   }
-      printf("SHOULD BE OPENING CIPHER\n");
+  memset(&dfx, 0, sizeof dfx);
+
+  dfx->cipher_hd = malloc(sizeof(struct gcry_cipher_handle));
+  if (!dfx->cipher_hd) {
+      return -1; // Handle allocation failure
+  }
+  memset(dfx->cipher_hd, 0, sizeof(struct gcry_cipher_handle));
+
+  printf("cipher_hd address: %p\n", (void*)dfx->cipher_hd);
+  if (dfx->cipher_hd) {
+      printf("cipher_hd is allocated\n");
+  } else {
+      printf("cipher_hd is NULL\n");
+  }
       // rc = openpgp_cipher_open (&dfx->cipher_hd, dek->algo,
       //                           GCRY_CIPHER_MODE_CFB,
       //                           (GCRY_CIPHER_SECURE
@@ -425,8 +438,7 @@ decrypt_data (ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
 
 
       /* log_hexdump( "thekey", dek->key, dek->keylen );*/
-      // rc = gcry_cipher_setkey (dfx->cipher_hd, dek->key, dek->keylen);
-      printf("SHOULLD BE SETTING KEY\n");
+      rc = _gcry_cipher_setkey (dfx->cipher_hd, dek->key, dek->keylen);
       // if ( gpg_err_code (rc) == GPG_ERR_WEAK_KEY )
       //   {
       //     printf (("WARNING: message was encrypted with"
@@ -445,9 +457,8 @@ decrypt_data (ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
           rc = gpg_error (GPG_ERR_INV_PACKET);
           goto leave;
         }
-      printf("SHOULLD BE SETTING IV\n");
 
-      // gcry_cipher_setiv (dfx->cipher_hd, NULL, 0);
+      _gcry_cipher_setiv (dfx->cipher_hd, NULL, 8);
 
       if ( ed->len )
         {

@@ -203,6 +203,7 @@ void printUint32Hex(uint32_t data)
 
 int _gcry_cipher_setkey(gcry_cipher_hd_t hd, const byte *key, size_t keylen)
 {
+    printf("_gcry_cipher_setkey\n");
     uint32_t *keywords;
     int i;
         
