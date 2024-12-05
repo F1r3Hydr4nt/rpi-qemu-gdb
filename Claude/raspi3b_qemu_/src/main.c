@@ -4,7 +4,7 @@
 #include "printf.h"
 #include <string.h>
 #include "encrypt.h"
-
+#include "encrypted.1k.h"
 // QEMU Versatile PB UART0 address
 #define UART0_DR *((volatile uint32_t *)0x101f1000)
 
@@ -90,7 +90,14 @@ void main()
     // int rc = encrypt_simple((uint8_t *)data, test_data_len,
     //                         passphrase,
     //                         output, &output_len, derivedKey);
-    decrypt_message(NULL, "message.txt");
+    // decrypt_message(NULL, "message.txt");
+
+     // ctrl_t ctrl; /* Your GPG control context */
+    int rc = decrypt_memory(NULL, encrypted_1k_gpg, encrypted_1k_gpg_len);
+    if (rc) {
+        printf("Decryption failed: %s\n");//, gpg_strerror(rc));
+    }
+    // return rc;
     while (1)
     {
         __asm__("wfi");

@@ -29,7 +29,7 @@
 #include "../common/util.h"
 #include "printf.h"
 #include "packet.h"
-#include "options.h"
+// #include "options.h"
 #include "../common/i18n.h"
 #include "../common/status.h"
 #include "../common/compliance.h"
@@ -246,15 +246,15 @@ decrypt_data (ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
     return gpg_error_from_syserror ();
   dfx->refcount = 1;
 
-  if ( opt.verbose && !dek->algo_info_printed )
-    {
-      // if (!openpgp_cipher_test_algo (dek->algo))
-      //   printf (("%s encrypted data\n"),
-      //             openpgp_cipher_algo_mode_name (dek->algo, ed->aead_algo));
-      // else
-      //   printf (("encrypted with unknown algorithm %d\n"), dek->algo );
-      dek->algo_info_printed = 1;
-    }
+  // if ( opt.verbose && !dek->algo_info_printed )
+  //   {
+  //     // if (!openpgp_cipher_test_algo (dek->algo))
+  //     //   printf (("%s encrypted data\n"),
+  //     //             openpgp_cipher_algo_mode_name (dek->algo, ed->aead_algo));
+  //     // else
+  //     //   printf (("encrypted with unknown algorithm %d\n"), dek->algo );
+  //     dek->algo_info_printed = 1;
+  //   }
 
   // if (ed->aead_algo)
   //   {
@@ -370,8 +370,8 @@ decrypt_data (ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
       if (rc)
         goto leave; /* Should never happen.  */
 
-      if (DBG_CRYPTO)
-        printf (dek->key, dek->keylen, "thekey:");
+      // if (DBG_CRYPTO)
+      //   printf (dek->key, dek->keylen, "thekey:");
       rc = gcry_cipher_setkey (dfx->cipher_hd, dek->key, dek->keylen);
       if (gpg_err_code (rc) == GPG_ERR_WEAK_KEY)
         {
