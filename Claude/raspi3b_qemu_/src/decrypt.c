@@ -37,6 +37,37 @@
 #include "common/i18n.h"
 #include "fwddecl.h"
 #include "printf.h"
+
+
+int decrypt_memory(ctrl_t ctrl, const unsigned char* data, size_t length) {
+    iobuf_t a;
+    int rc;
+
+    /* Create input iobuf from memory */
+    a = iobuf_temp_with_content((const char*)data, length);
+    if (!a) {
+        return gpg_error_from_syserror();
+    }
+
+    /* Add block filter for OpenPGP format */
+    // block_filter_ctx_t *bfx = xcalloc(1, sizeof *bfx);
+    // bfx->use = IOBUF_INPUT;
+    // bfx->size = 0;  /* Unknown size - read until EOF */
+    // rc = iobuf_push_filter(a, block_filter, bfx);
+    // if (rc) {
+    //     iobuf_close(a);
+    //     return rc;
+    // }
+
+    /* Process encryption packets */
+    rc = proc_encryption_packets(ctrl, NULL, a);
+
+    /* Clean up */
+    iobuf_close(a);
+    return rc;
+}
+
+
 /* Assume that the input is an encrypted message and decrypt
  * (and if signed, verify the signature on) it.
  * This command differs from the default operation, as it never
