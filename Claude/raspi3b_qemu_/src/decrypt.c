@@ -78,26 +78,26 @@ iobuf_get_fd (fp);
 
 //   handle_progress (pfx, fp, filename);
 
-  if ( !opt.no_armor )
-    {
-    //   if ( use_armor_filter( fp ) )
-        {
-        //   afx = new_armor_context ();
-        //   push_armor_filter ( afx, fp );
-	}
-    }
+//   if ( !opt.no_armor )
+//     {
+//     //   if ( use_armor_filter( fp ) )
+//         {
+//         //   afx = new_armor_context ();
+//         //   push_armor_filter ( afx, fp );
+// 	}
+//     }
 
-  if (!opt.outfile)
-    {
-      opt.outfile = "-";
-      opt.flags.dummy_outfile = 1;
-    }
-  else
-    opt.flags.dummy_outfile = 0;
-  printf("opt.outfile:%s\n",opt.outfile);
+//   if (!opt.outfile)
+//     {
+//       opt.outfile = "-";
+//       opt.flags.dummy_outfile = 1;
+//     }
+//   else
+//     opt.flags.dummy_outfile = 0;
+//   printf("opt.outfile:%s\n",opt.outfile);
   rc = proc_encryption_packets (ctrl, NULL, fp );
-  if (opt.flags.dummy_outfile)
-    opt.outfile = NULL;
+//   if (opt.flags.dummy_outfile)
+//     opt.outfile = NULL;
 
   iobuf_close (fp);
 //   release_armor_context (afx);

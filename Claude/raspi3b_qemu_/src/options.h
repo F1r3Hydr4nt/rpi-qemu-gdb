@@ -30,7 +30,6 @@
 #include "common/session-env.h"
 #include "common/compliance.h"
 
-
 /* Object to hold information pertaining to a keyserver; it also
    allows building a list of keyservers.  For historic reasons this is
    not a strlist_t.  */
@@ -299,23 +298,23 @@ struct
   unsigned int compat_flags;
 } opt;
 
-/* CTRL is used to keep some global variables we currently can't
-   avoid.  Future concurrent versions of gpg will put it into a per
-   request structure CTRL. */
-// EXTERN_UNLESS_MAIN_MODULE
-struct {
-  int in_auto_key_retrieve; /* True if we are doing an
-                               auto_key_retrieve. */
-  /* Hack to store the last error.  We currently need it because the
-     proc_packet machinery is not able to reliabale return error
-     codes.  Thus for the --server purposes we store some of the error
-     codes here.  FIXME! */
-  int lasterr;
-  // gpg_error_t lasterr;
+// /* CTRL is used to keep some global variables we currently can't
+//    avoid.  Future concurrent versions of gpg will put it into a per
+//    request structure CTRL. */
+// // EXTERN_UNLESS_MAIN_MODULE
+// struct {
+//   int in_auto_key_retrieve; /* True if we are doing an
+//                                auto_key_retrieve. */
+//   /* Hack to store the last error.  We currently need it because the
+//      proc_packet machinery is not able to reliabale return error
+//      codes.  Thus for the --server purposes we store some of the error
+//      codes here.  FIXME! */
+//   int lasterr;
+//   // gpg_error_t lasterr;
 
-  /* Kludge to silence some warnings using --secret-key-list. */
-  int silence_parse_warnings;
-} glo_ctrl;
+//   /* Kludge to silence some warnings using --secret-key-list. */
+//   int silence_parse_warnings;
+// } glo_ctrl;
 
 #define DBG_PACKET_VALUE  1	/* debug packet reading/writing */
 #define DBG_MPI_VALUE	  2	/* debug mpi details */
@@ -348,8 +347,8 @@ struct {
 #define DBG_EXTPROG (opt.debug & DBG_EXTPROG_VALUE)
 
 /* FIXME: We need to check why we did not put this into opt. */
-#define DBG_MEMORY    memory_debug_mode
-#define DBG_MEMSTAT   memory_stat_debug_mode
+// #define DBG_MEMORY    memory_debug_mode
+// #define DBG_MEMSTAT   memory_stat_debug_mode
 
 // EXTERN_UNLESS_MAIN_MODULE int memory_debug_mode;
 // EXTERN_UNLESS_MAIN_MODULE int memory_stat_debug_mode;
