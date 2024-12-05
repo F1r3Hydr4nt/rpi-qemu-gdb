@@ -85,59 +85,90 @@ void hex_string_to_key(const char *hex_string, Key *key) {
         (*key)[i] = value;
     }
 }
-
 void main()
 {
     init_printf(0, putc_uart);
     printf("Printf initialised!\n");
     print_memory_map();
-    // const uint8_t salt[] = {0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11};
-    // const uint8_t random[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF};
-    // const char *data = "Hello World!";
-    // const char *passphrase = "password";
-    // const char *derivedKey = "693B7847FA44CDC6E1C403F5E44E95C1";
-    // printf("\nEncrypting data: '%s'\n", data);
-    // printf("Passphrase: '%s'\n", passphrase);
-    // uint8_t key[16];
-    // uint32_t iterations = ((uint32_t)16 + (0xFF & 15)) << ((0xFF >> 4) + 6);
-    // //         derive_key(salt, passphrase, strlen(passphrase), iterations, key);
-    // // printf("Key: ");
-    // // for (int i = 0; i < 16; i++) {
-    // //    printf("%02x", key[i]);
-    // // }
-    // // printf("\n");
-    // size_t test_data_len = strlen(data);
-    // uint8_t output[1024];
-    // size_t output_len = sizeof(output);
-    // hex_string_to_bytes(derivedKey, key, 16);
 
-    // int rc = encrypt_simple((uint8_t *)data, test_data_len,
-    //                         passphrase,
-    //                         output, &output_len, derivedKey);
-    // decrypt_message(NULL, "message.txt");
-
-     // ctrl_t ctrl; /* Your GPG control context */
-     ctrl_t ctrl = malloc(sizeof(struct server_control_s));
-    if (!ctrl) return NULL;
-    const char *test_passphrase = "password";
-    ctrl->passphrase = malloc(strlen(test_passphrase) + 1);
-    my_strcpy(ctrl->passphrase, test_passphrase);
-    hex_string_to_key("693B7847FA44CDC6E1C403F5E44E95C1", &ctrl->session_key);
-
-    // Then access it directly
-    printf("Session Key values:\n");
-    for (int i = 0; i < 4; i++) {
-        printf("key[%d] = 0x%08x\n", i, ctrl->session_key[i]);
+    // Properly allocate control structure with debug output
+    ctrl_t ctrl = malloc(sizeof(struct server_control_s));
+    printf("Allocated ctrl at address: %p\n", (void*)ctrl);
+    if (!ctrl) {
+        printf("Failed to allocate control structure\n");
+        goto cleanup;
     }
-
-    ctrl->session_key = NULL;
+    
+    // Initialize with debug output
+    memset(ctrl, 0, sizeof(struct server_control_s));
+    printf("Zeroed ctrl structure of size: %d bytes\n", sizeof(struct server_control_s));
+    
+    // Set up passphrase with length verification
+    const char *test_passphrase = "password";
+    size_t pass_len = strlen(test_passphrase);
+    printf("Passphrase length before malloc: %d\n", pass_len);
+    
+    ctrl->passphrase = malloc(pass_len + 1);
+    printf("Allocated passphrase at address: %p\n", (void*)ctrl->passphrase);
+    if (!ctrl->passphrase) {
+        printf("Failed to allocate passphrase\n");
+        goto cleanup;
+    }
+    
+    my_strcpy(ctrl->passphrase, test_passphrase);
+    printf("Copied passphrase. Length after copy: %d\n", strlen(ctrl->passphrase));
+    
+    // Debug print the passphrase bytes
+    printf("Passphrase bytes: ");
+    for(size_t i = 0; i <= pass_len; i++) {
+        printf("%02x ", (unsigned char)ctrl->passphrase[i]);
+    }
+    printf("\n");
+    
+    // Set up and verify session key
+    printf("Setting up session key at address: %p\n", (void*)&ctrl->session_key);
+    // hex_string_to_key("693B7847FA44CDC6E1C403F5E44E95C1", &ctrl->session_key);
+    
+    // Print session key for verification
+    printf("Initial Session Key values:\n");
+    for (int i = 0; i < 4; i++) {
+        printf("key[%d] = 0x%08x at address %p\n", 
+               i, ctrl->session_key[i], (void*)&ctrl->session_key[i]);
+    }
+    
+    // Add some guard values
+    uint32_t guard1 = 0xDEADBEEF;
+    uint32_t guard2 = 0xBEEFDEAD;
+    printf("Guard values before decrypt: 0x%08x 0x%08x\n", guard1, guard2);
+    
+    // Decrypt the data
     int rc = decrypt_memory(ctrl, encrypted_1k_gpg, encrypted_1k_gpg_len);
     if (rc) {
-        printf("Decryption failed: %s\n");//, gpg_strerror(rc));
+        printf("Decryption failed with code: %d\n", rc);
     }
-    // return rc;
-    while (1)
-    {
+    
+    // Check guard values
+    printf("Guard values after decrypt: 0x%08x 0x%08x\n", guard1, guard2);
+    
+    // Print session key again to see if it changed
+    printf("Final Session Key values:\n");
+    for (int i = 0; i < 4; i++) {
+        printf("key[%d] = 0x%08x at address %p\n", 
+               i, ctrl->session_key[i], (void*)&ctrl->session_key[i]);
+    }
+
+cleanup:
+    if (ctrl) {
+        if (ctrl->passphrase) {
+            printf("Cleaning up passphrase at %p\n", (void*)ctrl->passphrase);
+            memset(ctrl->passphrase, 0, strlen(ctrl->passphrase));
+            free(ctrl->passphrase);
+        }
+        printf("Cleaning up ctrl at %p\n", (void*)ctrl);
+        free(ctrl);
+    }
+
+    while (1) {
         __asm__("wfi");
     }
 }
