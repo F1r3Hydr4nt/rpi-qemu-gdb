@@ -210,6 +210,10 @@ void wipememory(void *ptr, size_t len) {
         *p++ = 0;
 }
 
+void strcpy(char *dest, const char *src) {
+    while ((*dest++ = *src++) != '\0');
+}
+
 void *xtrycalloc(size_t nmemb, size_t size) {
     // Check for multiplication overflow
     if (nmemb && size && (nmemb * size) / nmemb != size) {
