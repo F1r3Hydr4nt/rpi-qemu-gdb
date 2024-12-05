@@ -40,6 +40,7 @@
 
 
 int decrypt_memory(ctrl_t ctrl, const unsigned char* data, size_t length) {
+  printf("decrypt_memory\n");
     iobuf_t a;
     int rc;
 

@@ -42,6 +42,7 @@
 // #include "call-dirmngr.h"
 #include "../common/compliance.h"
 #include "printf.h"
+#include "sha1.h"
 /* Put an upper limit on nested packets.  The 32 is an arbitrary
    value, a much lower should actually be sufficient.  */
 #define MAX_NESTING_DEPTH 32
@@ -100,6 +101,9 @@ struct mainproc_context
   } signed_data;
 
   DEK *dek;
+
+  char *passphrase;
+  Key session_key;
   int last_was_session_key;
   kbnode_t list;    /* The current list of packets. */
   iobuf_t iobuf;    /* Used to get the filename etc. */
@@ -382,6 +386,225 @@ reset_literals_seen(void)
 //   return 0;
 // }
 
+#define GETPASSWORD_FLAG_SYMDECRYPT  1
+
+void derive_key(const uint8_t *salt, const char *password, unsigned int pass_len, uint32_t iterations, uint8_t *key)
+{
+    SHA1_CTX ctx;
+    SHA1Init(&ctx);
+    unsigned int bytesProcessed = 0;
+    unsigned int index = 0;
+    while (bytesProcessed < iterations)
+    {
+        uint8_t byte;
+        if (index < 8)
+        {
+            byte = salt[index];
+        }
+        else
+        {
+            byte = password[(index - 8) % pass_len];
+        }
+        SHA1Update(&ctx, &byte, 1);
+        bytesProcessed++;
+        index++;
+        if (index >= 8 + pass_len)
+        {
+            index = 0;
+        }
+    }
+    SHA1Final(key, &ctx);
+}
+
+static uint8_t hex_digit(char h) {
+    if (h >= '0' && h <= '9') return h - '0';
+    if (h >= 'A' && h <= 'F') return h - 'A' + 10;
+    if (h >= 'a' && h <= 'f') return h - 'a' + 10;
+    return 0;
+}
+
+void hex_to_bytes(const char *hex, uint8_t *bytes, size_t length) {
+    for (size_t i = 0; i < length; i++) {
+        bytes[i] = (hex_digit(hex[i*2]) << 4) | hex_digit(hex[i*2 + 1]);
+    }
+}
+
+DEK *
+passphrase_to_dek (int cipher_algo, STRING2KEY *s2k,
+                   int create, int nocache,
+                   const char *tryagain_text, unsigned int flags,
+                   int *canceled, const char *passphrase, const char* derivedKey)
+{
+  char *pw = NULL;
+  DEK *dek;
+  STRING2KEY help_s2k;
+  int dummy_canceled;
+  char s2k_cacheidbuf[1+16+1];
+  char *s2k_cacheid = NULL;
+
+  if (!canceled)
+    canceled = &dummy_canceled;
+  *canceled = 0;
+
+  // if (opt.no_symkey_cache)
+  //   nocache = 1;  /* Force no symmetric key caching.  */
+
+  // if ( !s2k )
+  //   {
+  //     log_assert (create && !nocache);
+  //     /* This is used for the old rfc1991 mode
+  //      * Note: This must match the code in encode.c with opt.rfc1991 set */
+  //     memset (&help_s2k, 0, sizeof (help_s2k));
+  //     s2k = &help_s2k;
+  //     s2k->hash_algo = S2K_DIGEST_ALGO;
+  //   }
+
+  /* Create a new salt or what else to be filled into the s2k for a
+     new key.  */
+  if (create && (s2k->mode == 1 || s2k->mode == 3))
+    {
+      // gcry_randomize (s2k->salt, 8, GCRY_STRONG_RANDOM);
+
+       printf("FIXING SALT VALUE\n");
+    s2k->salt[0] = 0x0a;
+    s2k->salt[1] = 0x0b;
+    s2k->salt[2] = 0x0c;
+    s2k->salt[3] = 0x0d;
+    s2k->salt[4] = 0x0e;
+    s2k->salt[5] = 0x0f;
+    s2k->salt[6] = 0x10;
+    s2k->salt[7] = 0x11;
+      if ( s2k->mode == 3 )
+        {
+          /* We delay the encoding until it is really needed.  This is
+             if we are going to dynamically calibrate it, we need to
+             call out to gpg-agent and that should not be done during
+             option processing in main().  */
+          // if (!opt.s2k_count)
+          //   opt.s2k_count = encode_s2k_iterations (0);
+          s2k->count = 0xFF;//opt.s2k_count;
+        }
+    }
+
+  // /* If we do not have a passphrase available in NEXT_PW and status
+  //    information are request, we print them now. */
+  // if ( !next_pw && is_status_enabled() )
+  //   {
+  //     char buf[50];
+
+  //     snprintf (buf, sizeof buf, "%d %d %d",
+  //               cipher_algo, s2k->mode, s2k->hash_algo );
+  //     write_status_text ( STATUS_NEED_PASSPHRASE_SYM, buf );
+  //   }
+
+  // if ( next_pw )
+  //   {
+  //     /* Simply return the passphrase we already have in NEXT_PW. */
+  //     pw = next_pw;
+  //     next_pw = NULL;
+  //   }
+  // else if ( have_static_passphrase () )
+  //   {
+  //     /* Return the passphrase we have stored in FD_PASSWD. */
+  //     pw = xmalloc_secure ( strlen(fd_passwd)+1 );
+  //     strcpy ( pw, fd_passwd );
+  //   }
+  // else
+  //   {
+  //     if (!nocache && (s2k->mode == 1 || s2k->mode == 3))
+	// {
+	//   memset (s2k_cacheidbuf, 0, sizeof s2k_cacheidbuf);
+	//   *s2k_cacheidbuf = 'S';
+	//   bin2hex (s2k->salt, 8, s2k_cacheidbuf + 1);
+	//   s2k_cacheid = s2k_cacheidbuf;
+	// }
+
+  //     if (opt.pinentry_mode == PINENTRY_MODE_LOOPBACK)
+  //       {
+  //         char buf[32];
+
+  //         snprintf (buf, sizeof (buf), "%u", 100);
+  //         write_status_text (STATUS_INQUIRE_MAXLEN, buf);
+  //       }
+
+  //     /* Divert to the gpg-agent. */
+  //     pw = passphrase_get (create, create && nocache, s2k_cacheid,
+  //                          create? opt.passphrase_repeat : 0,
+  //                          tryagain_text, flags, canceled);
+  //     if (*canceled)
+  //       {
+  //         xfree (pw);
+	//   write_status( STATUS_CANCELED_BY_USER );
+  //         return NULL;
+  //       }
+  //   }
+
+  // if ( !pw || !*pw )
+  //   write_status( STATUS_MISSING_PASSPHRASE );
+
+  /* Hash the passphrase and store it in a newly allocated DEK object.
+     Keep a copy of the passphrase in LAST_PW for use by
+     get_last_passphrase(). */
+  dek = xmalloc_clear ( sizeof *dek );
+  dek->algo = cipher_algo;
+  // if ( (!pw || !*pw) && create)
+  //   dek->keylen = 0;
+  // else
+  //   {
+  //     int err;
+
+      dek->keylen = 16;// openpgp_cipher_get_algo_keylen (dek->algo);
+      // if (!(dek->keylen > 0 && dek->keylen <= DIM(dek->key)))
+      //   BUG ();
+  //     err = gcry_kdf_derive (pw, strlen (pw),
+  //                            s2k->mode == 3? GCRY_KDF_ITERSALTED_S2K :
+  //                            s2k->mode == 1? GCRY_KDF_SALTED_S2K :
+  //                            /* */           GCRY_KDF_SIMPLE_S2K,
+  //                            s2k->hash_algo, s2k->salt, 8,
+  //                            S2K_DECODE_COUNT(s2k->count),
+  //                            dek->keylen, dek->key);
+  //     if (err)
+  //       {
+  //         log_error ("gcry_kdf_derive failed: %s", gpg_strerror (err));
+  //         xfree (pw);
+  //         xfree (dek);
+	//   write_status( STATUS_MISSING_PASSPHRASE );
+  //         return NULL;
+  //       }
+  // }
+  // if (s2k_cacheid)
+  //   memcpy (dek->s2k_cacheid, s2k_cacheid, sizeof dek->s2k_cacheid);
+  // xfree(last_pw);
+  // last_pw = pw;
+      uint32_t iterations = ((uint32_t)16 + (0xFF & 15)) << ((0xFF >> 4) + 6);
+  if(derivedKey){
+    printf("DERIVED: %s\n", derivedKey);
+    // Usage example:
+uint8_t key[dek->keylen];  // For SHA1 output
+hex_to_bytes(derivedKey, key, dek->keylen);
+memcpy(dek->key, key, dek->keylen);
+
+  }
+  else derive_key(s2k->salt, passphrase, strlen(passphrase), iterations, dek->key);
+
+
+  
+    printf("DEK Information:\n");
+    printf("Algorithm: %d\n", dek->algo);
+    printf("Key Length: %d bytes\n", dek->keylen);
+    // printf("Algorithm Info Printed: %s\n", dek->algo_info_printed ? "Yes" : "No");
+    // printf("Use AEAD: %d\n", dek->use_aead);
+    // printf("Use MDC: %s\n", dek->use_mdc ? "Yes" : "No");
+    // printf("Symmetric: %s\n", dek->symmetric ? "Yes" : "No");
+    // log_hexdump( dek->key, dek->keylen);
+    printf("Key: ");
+    for (int i = 0; i < dek->keylen; i++) {
+       printf("%02x", dek->key[i]);
+    }
+    printf("\n");
+    // printf("S2K Cache ID: %s\n", dek->s2k_cacheid);
+  return dek;
+}
 
 static void
 proc_symkey_enc (CTX c, PACKET *pkt)
@@ -443,7 +666,11 @@ proc_symkey_enc (CTX c, PACKET *pkt)
       //   }
       else
         {
-          printf("DO DEK HERE\n");
+          printf("passphrase len: %zu\n", strlen(c->passphrase));
+          printf("DO DEK HERE %s\n",c->passphrase);
+  c->dek = passphrase_to_dek (algo,
+                                   &enc->s2k, 0, 1, NULL, 0, 0, c->passphrase, NULL);// derivedKey);
+                                   
           // c->dek = passphrase_to_dek (algo, &enc->s2k, 0, 0, NULL,
           //                             GETPASSWORD_FLAG_SYMDECRYPT, NULL);
           if (c->dek)
@@ -1515,12 +1742,15 @@ proc_encrypt_cb (iobuf_t a, void *info )
 // }
 
 
+
+
 int
 proc_packets (ctrl_t ctrl, void *anchor, iobuf_t a )
 {
+  printf("proc_packets\n");
   int rc;
   CTX c = xmalloc_clear (sizeof *c);
-
+  
   c->ctrl = ctrl;
   c->anchor = anchor;
   rc = do_proc_packets (ctrl, c, a);
@@ -1616,7 +1846,7 @@ proc_packets (ctrl_t ctrl, void *anchor, iobuf_t a )
 int
 proc_encryption_packets (ctrl_t ctrl, void *anchor, iobuf_t a )
 {
-  printf("proc_encryption_packets a->use: %d", a->use);
+  printf("proc_encryption_packets a->use: %d\n", a->use);
   CTX c = xmalloc_clear (sizeof *c);
   int rc;
 
@@ -1654,7 +1884,10 @@ check_nesting (CTX c)
 static int
 do_proc_packets (ctrl_t ctrl, CTX c, iobuf_t a)
 {
-  printf("do_proc_packets");
+  printf("do_proc_packets %s\n", ctrl->passphrase);
+  // Copy across any main ctx passphrase or session_key
+  c->passphrase = malloc(strlen(ctrl->passphrase) + 1);
+  my_strcpy(c->passphrase, ctrl->passphrase);
   //log_printhex(c->iobuf->d.buf,c->iobuf->d.len,"do_proc_packets");
   PACKET *pkt;
   struct parse_packet_ctx_s parsectx;

@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
+#include <stddef.h>
+#include "libgcrypt.h"
 #ifndef GNUPG_G10_GPG_H
 #define GNUPG_G10_GPG_H
 
@@ -103,6 +105,9 @@ struct server_control_s
 
   /* This is used to cache a key data base handle.  */
   KEYDB_HANDLE cached_getkey_kdb;
+
+  char *passphrase;
+  Key *session_key;
 };
 
 

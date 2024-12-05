@@ -665,7 +665,7 @@ parse (parse_packet_ctx_t ctx, PACKET *pkt, int onlykeypkts, off_t * retpos,
   inp = ctx->inp;
 
  again:
-  printf (!pkt->pkt.generic);
+  // printf (!pkt->pkt.generic);
   if (retpos || list_mode)
     {
       pos = iobuf_tell (inp);
@@ -919,7 +919,7 @@ static const char *pkt_type_str[] = {
 };
 
 /* Add at start of switch statement */
-printf("Processing packet type: %s (%d)", 
+printf("Processing packet type: %s (%d)\n", 
           pkttype < sizeof(pkt_type_str)/sizeof(*pkt_type_str) ? 
           pkt_type_str[pkttype] : "UNKNOWN", pkttype);
   switch (pkttype)
@@ -1248,6 +1248,8 @@ parse_marker (IOBUF inp, int pkttype, unsigned long pktlen)
   return GPG_ERR_INV_PACKET;
 }
 
+/* Decode an rfc4880 encoded S2K count.  */
+#define S2K_DECODE_COUNT(_val) ((16ul + ((_val) & 15)) << (((_val) >> 4) + 6))
 
 static int
 parse_symkeyenc (IOBUF inp, int pkttype, unsigned long pktlen,
@@ -1352,13 +1354,13 @@ parse_symkeyenc (IOBUF inp, int pkttype, unsigned long pktlen,
 	printf (("WARNING: potentially insecure symmetrically"
 		    " encrypted session key\n"));
     }
-  printf (!pktlen);
+  // printf (!pktlen);
 
-  if (list_mode)
+  if (list_mode || 1)
     {
-      printf (listfp,
+      printf (//listfp,
                   ":symkey enc packet: version %d, cipher %d, aead %d,"
-                  "s2k %d, hash %d",
+                  "s2k %d, hash %d\n",
                   version, cipher_algo, aead_algo, s2kmode, hash_algo);
       if (seskeylen)
         {
@@ -1367,20 +1369,23 @@ parse_symkeyenc (IOBUF inp, int pkttype, unsigned long pktlen,
            * we show only the size of the entire encrypted session
            * key.  */
           if (aead_algo)
-            printf (listfp, ", encrypted seskey %d bytes", seskeylen);
+            printf (// listfp, 
+            ", encrypted seskey %d bytes", seskeylen);
           else
-            printf (listfp, ", seskey %d bits", (seskeylen - 1) * 8);
+            printf (// listfp, 
+            ", seskey %d bits\n", (seskeylen - 1) * 8);
         }
-      printf (listfp, "\n");
+      // printf (listfp, "\n");
       if (s2kmode == 1 || s2kmode == 3)
 	{
-	  printf (listfp, "\tsalt ");
-          es_write_hexstring (listfp, k->s2k.salt, 8, 0, NULL);
+	  // printf (listfp, "\tsalt ");
+    //       es_write_hexstring (listfp, k->s2k.salt, 8, 0, NULL);
 	  if (s2kmode == 3)
-	    printf (listfp, ", count %lu (%lu)",
+	    printf (// listfp, 
+      ", count %lu (%lu)\n",
                         S2K_DECODE_COUNT ((ulong) k->s2k.count),
                         (ulong) k->s2k.count);
-	  printf (listfp, "\n");
+	  //printf (listfp, "\n");
 	}
     }
 

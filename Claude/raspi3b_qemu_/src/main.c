@@ -5,6 +5,8 @@
 #include <string.h>
 #include "encrypt.h"
 #include "encrypted.1k.h"
+#include "fwddecl.h"
+#include "gpg.h"
 // QEMU Versatile PB UART0 address
 #define UART0_DR *((volatile uint32_t *)0x101f1000)
 
@@ -27,7 +29,6 @@ size_t strlen(const char *str)
         ;
     return (s - str);
 }
-
 void hex_string_to_bytes(const char *hex, uint8_t *bytes, size_t len)
 {
     for (size_t i = 0; i < len; i++)
@@ -62,6 +63,29 @@ void putc_uart(void *p, char c)
     uart_putc(c);
 }
 
+// Convert single hex character to integer value
+static uint8_t hex_to_int(char c) {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    return 0;  // Invalid hex charactergfd
+}
+
+void hex_string_to_key(const char *hex_string, Key *key) {
+    printf("Key array address: %p\n", (void*)key);
+    
+    for (int i = 0; i < 4; i++) {
+        uint32_t value = 0;
+        for (int j = 0; j < 8; j++) {
+            char c = hex_string[i * 8 + j];
+            value = (value << 4) | hex_to_int(c);
+        }
+        printf("Storing 0x%08x at index %d (address: %p)\n", 
+               value, i, (void*)&((*key)[i]));
+        (*key)[i] = value;
+    }
+}
+
 void main()
 {
     init_printf(0, putc_uart);
@@ -93,7 +117,21 @@ void main()
     // decrypt_message(NULL, "message.txt");
 
      // ctrl_t ctrl; /* Your GPG control context */
-    int rc = decrypt_memory(NULL, encrypted_1k_gpg, encrypted_1k_gpg_len);
+     ctrl_t ctrl = malloc(sizeof(struct server_control_s));
+    if (!ctrl) return NULL;
+    const char *test_passphrase = "password";
+    ctrl->passphrase = malloc(strlen(test_passphrase) + 1);
+    my_strcpy(ctrl->passphrase, test_passphrase);
+    hex_string_to_key("693B7847FA44CDC6E1C403F5E44E95C1", &ctrl->session_key);
+
+    // Then access it directly
+    printf("Session Key values:\n");
+    for (int i = 0; i < 4; i++) {
+        printf("key[%d] = 0x%08x\n", i, ctrl->session_key[i]);
+    }
+
+    ctrl->session_key = NULL;
+    int rc = decrypt_memory(ctrl, encrypted_1k_gpg, encrypted_1k_gpg_len);
     if (rc) {
         printf("Decryption failed: %s\n");//, gpg_strerror(rc));
     }

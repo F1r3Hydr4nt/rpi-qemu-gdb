@@ -1219,7 +1219,7 @@ iobuf_alloc (int use, size_t bufsize)
   iobuf_t a;
   static int number = 0;
 
-  printf (use == IOBUF_INPUT || use == IOBUF_INPUT_TEMP
+  printf ("iobuf_alloc %d \n",use == IOBUF_INPUT || use == IOBUF_INPUT_TEMP
               || use == IOBUF_OUTPUT || use == IOBUF_OUTPUT_TEMP);
   if (bufsize == 0)
     {
@@ -1336,7 +1336,7 @@ iobuf_temp_with_content (const char *buffer, size_t length)
   int i;
 
   a = iobuf_alloc (IOBUF_INPUT_TEMP, length);
-  printf (length == a->d.size);
+  printf ("iobuf_temp_with_content: %d bytes\n", a->d.size);
   /* memcpy (a->d.buf, buffer, length); */
   for (i=0; i < length; i++)
     a->d.buf[i] = buffer[i];
@@ -1643,7 +1643,7 @@ iobuf_push_filter (iobuf_t a,
                    void *ov)
 {
 
-   printf("iobuf_push_filter %d",a->use);
+   printf("iobuf_push_filter %d\n",a->use);
   return iobuf_push_filter2 (a, f, ov, 0);
 }
 
@@ -2103,7 +2103,7 @@ iobuf_readbyte (iobuf_t a)
       return -1;
     }
 
-  printf (a->d.start <= a->d.len);
+  // printf (a->d.start <= a->d.len);
 
   if (a->nlimit && a->nbytes >= a->nlimit)
     return -1;			/* forced EOF */
@@ -2115,7 +2115,7 @@ iobuf_readbyte (iobuf_t a)
 //  else if ((c = underflow (a, 1)) == -1)
   //  return -1;			/* EOF */
 
-  printf (a->d.start <= a->d.len);
+  // printf (a->d.start <= a->d.len);
 
   /* Note: if underflow doesn't return EOF, then it returns the first
      byte that was read and advances a->d.start appropriately.  */

@@ -43,7 +43,7 @@ static void size2a(size_t num, char *bf)
     }
     *bf = 0;
 }
-
+#define PRINTF_LONG_SUPPORT 1
 #ifdef PRINTF_LONG_SUPPORT
 
 static void uli2a(unsigned long int num, unsigned int base, int uc, char *bf)
