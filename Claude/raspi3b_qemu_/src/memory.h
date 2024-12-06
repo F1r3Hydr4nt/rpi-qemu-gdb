@@ -6,7 +6,6 @@
 // Standard memory functions
 void* malloc(size_t size);
 void free(void* ptr);
-void strcpy(char *dest, const char *src);
 
 // x* memory functions
 void* xmalloc(size_t n);

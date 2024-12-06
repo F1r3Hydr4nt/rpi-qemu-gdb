@@ -1,9 +1,7 @@
 #include <stdint.h>
 #include <stddef.h>
-#include "sha1.h"
 #include "printf.h"
 #include <string.h>
-#include "encrypt.h"
 #include "encrypted.1k.h"
 #include "fwddecl.h"
 #include "gpg.h"
@@ -18,31 +16,14 @@ extern char __bss_start[], __bss_end[];
 // Function prototypes
 void uart_putc(char c);
 void putc_uart(void *p, char c);
-void derive_key(const uint8_t *salt, const char *password, unsigned int pass_len, uint32_t iterations, uint8_t *key);
-void hex_string_to_bytes(const char *hex, uint8_t *bytes, size_t len);
 void print_memory_map(void);
 
 size_t strlen(const char *str)
 {
     const char *s;
-    for (s = str; *s; ++s)
-        ;
+    for (s = str; *s; ++s);
     return (s - str);
 }
-void hex_string_to_bytes(const char *hex, uint8_t *bytes, size_t len)
-{
-    for (size_t i = 0; i < len; i++)
-    {
-        uint8_t high = hex[i * 2];
-        uint8_t low = hex[i * 2 + 1];
-        high = (high >= 'a') ? (high - 'a' + 10) : (high >= 'A') ? (high - 'A' + 10)
-                                                                 : (high - '0');
-        low = (low >= 'a') ? (low - 'a' + 10) : (low >= 'A') ? (low - 'A' + 10)
-                                                             : (low - '0');
-        bytes[i] = (high << 4) | low;
-    }
-}
-
 void print_memory_map(void)
 {
     printf("Memory Map:\n");
@@ -109,7 +90,8 @@ void main()
     printf("Setting up session key at address: %p\n", (void*)&ctrl->session_key);
     ctrl->session_key = malloc(key_len + 1);
     my_strcpy(ctrl->session_key, key);
-    
+    printf("Copied session key: %s\n", ctrl->session_key);
+    // ctrl->session_key = NULL; // 
     // Add some guard values
     uint32_t guard1 = 0xDEADBEEF;
     uint32_t guard2 = 0xBEEFDEAD;
