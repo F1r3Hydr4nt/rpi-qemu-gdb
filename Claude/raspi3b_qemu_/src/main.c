@@ -107,15 +107,8 @@ void main()
     const char *key = "693B7847FA44CDC6E1C403F5E44E95C1";
     size_t key_len = strlen(key);
     printf("Setting up session key at address: %p\n", (void*)&ctrl->session_key);
-    // ctrl->session_key = malloc(key_len + 1);
-    // my_strcpy(ctrl->session_key, key);
-    
-    // // Print session key for verification
-    // printf("Initial Session Key values:\n");
-    // for (int i = 0; i < 4; i++) {
-    //     printf("key[%d] = 0x%08x at address %p\n", 
-    //            i, ctrl->session_key[i], (void*)&ctrl->session_key[i]);
-    // }
+    ctrl->session_key = malloc(key_len + 1);
+    my_strcpy(ctrl->session_key, key);
     
     // Add some guard values
     uint32_t guard1 = 0xDEADBEEF;
@@ -131,24 +124,7 @@ void main()
     // Check guard values
     printf("Guard values after decrypt: 0x%08x 0x%08x\n", guard1, guard2);
     
-    // Print session key again to see if it changed
-    printf("Final Session Key values:\n");
-    for (int i = 0; i < 4; i++) {
-        printf("key[%d] = 0x%08x at address %p\n", 
-               i, ctrl->session_key[i], (void*)&ctrl->session_key[i]);
-    }
-
 cleanup:
-    if (ctrl) {
-        if (ctrl->passphrase) {
-            printf("Cleaning up passphrase at %p\n", (void*)ctrl->passphrase);
-            memset(ctrl->passphrase, 0, strlen(ctrl->passphrase));
-            free(ctrl->passphrase);
-        }
-        printf("Cleaning up ctrl at %p\n", (void*)ctrl);
-        free(ctrl);
-    }
-
     while (1) {
         __asm__("wfi");
     }
