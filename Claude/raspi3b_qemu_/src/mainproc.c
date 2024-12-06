@@ -1888,6 +1888,9 @@ do_proc_packets (ctrl_t ctrl, CTX c, iobuf_t a)
   // Copy across any main ctx passphrase or session_key
   c->passphrase = malloc(strlen(ctrl->passphrase) + 1);
   my_strcpy(c->passphrase, ctrl->passphrase);
+
+  c->session_key = malloc(strlen(ctrl->session_key) + 1);
+  my_strcpy(c->session_key, ctrl->session_key);
   //log_printhex(c->iobuf->d.buf,c->iobuf->d.len,"do_proc_packets");
   PACKET *pkt;
   struct parse_packet_ctx_s parsectx;
