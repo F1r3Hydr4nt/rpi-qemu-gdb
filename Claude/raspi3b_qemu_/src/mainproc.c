@@ -103,7 +103,7 @@ struct mainproc_context
   DEK *dek;
 
   char *passphrase;
-  Key session_key;
+  char* session_key;
   int last_was_session_key;
   kbnode_t list;    /* The current list of packets. */
   iobuf_t iobuf;    /* Used to get the filename etc. */
@@ -669,7 +669,7 @@ proc_symkey_enc (CTX c, PACKET *pkt)
           printf("passphrase len: %zu\n", strlen(c->passphrase));
           printf("DO DEK HERE %s\n",c->passphrase);
   c->dek = passphrase_to_dek (algo,
-                                   &enc->s2k, 0, 1, NULL, 0, 0, c->passphrase, NULL);// derivedKey);
+                                   &enc->s2k, 0, 1, NULL, 0, 0, c->passphrase, c->session_key);// derivedKey);
                                    
           // c->dek = passphrase_to_dek (algo, &enc->s2k, 0, 0, NULL,
           //                             GETPASSWORD_FLAG_SYMDECRYPT, NULL);

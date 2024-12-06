@@ -63,28 +63,6 @@ void putc_uart(void *p, char c)
     uart_putc(c);
 }
 
-// Convert single hex character to integer value
-static uint8_t hex_to_int(char c) {
-    if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-    return 0;  // Invalid hex charactergfd
-}
-
-void hex_string_to_key(const char *hex_string, Key *key) {
-    printf("Key array address: %p\n", (void*)key);
-    
-    for (int i = 0; i < 4; i++) {
-        uint32_t value = 0;
-        for (int j = 0; j < 8; j++) {
-            char c = hex_string[i * 8 + j];
-            value = (value << 4) | hex_to_int(c);
-        }
-        printf("Storing 0x%08x at index %d (address: %p)\n", 
-               value, i, (void*)&((*key)[i]));
-        (*key)[i] = value;
-    }
-}
 void main()
 {
     init_printf(0, putc_uart);
@@ -126,15 +104,18 @@ void main()
     printf("\n");
     
     // Set up and verify session key
+    const char *key = "693B7847FA44CDC6E1C403F5E44E95C1";
+    size_t key_len = strlen(key);
     printf("Setting up session key at address: %p\n", (void*)&ctrl->session_key);
-    // hex_string_to_key("693B7847FA44CDC6E1C403F5E44E95C1", &ctrl->session_key);
+    // ctrl->session_key = malloc(key_len + 1);
+    // my_strcpy(ctrl->session_key, key);
     
-    // Print session key for verification
-    printf("Initial Session Key values:\n");
-    for (int i = 0; i < 4; i++) {
-        printf("key[%d] = 0x%08x at address %p\n", 
-               i, ctrl->session_key[i], (void*)&ctrl->session_key[i]);
-    }
+    // // Print session key for verification
+    // printf("Initial Session Key values:\n");
+    // for (int i = 0; i < 4; i++) {
+    //     printf("key[%d] = 0x%08x at address %p\n", 
+    //            i, ctrl->session_key[i], (void*)&ctrl->session_key[i]);
+    // }
     
     // Add some guard values
     uint32_t guard1 = 0xDEADBEEF;
