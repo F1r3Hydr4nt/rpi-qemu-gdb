@@ -280,12 +280,34 @@ int
 _gcry_cipher_decrypt (gcry_cipher_hd_t h, void *out, size_t outsize,
                       const void *in, size_t inlen)
 {
+    printf("Caller params - in: %p, inlen: %zu\n", in, inlen);
+    printf("_gcry_cipher_decrypt inlen: %d, outSize: %d, unused: %d\n", inlen, outsize, h->unused);
   if (!in) /* Caller requested in-place encryption. */
     {
+      printf("Caller requested in-place encryption.\n");
       in = out;
       inlen = outsize;
     }
+printf("Before CFB decrypt - inbuf contents: ");
+for(size_t i = 0; i < inlen; i++) {
+    printf("%02x ", ((unsigned char*)in)[i]);
+}
+printf("\n");
+printf("Before CFB decrypt - out contents: ");
+for(size_t i = 0; i < outsize; i++) {
+    printf("%02x ", ((unsigned char*)out)[i]);
+}
+printf("\n");
+printf("After in=out assignment - out contents: ");
+for(size_t i = 0; i < outsize; i++) {
+    printf("%02x ", ((unsigned char*)out)[i]);
+}
+printf("\n");
 
+// Just before CFB decrypt call
+if (inlen != outsize) {
+    printf("Warning: inlen (%zu) != outsize (%zu)\n", inlen, outsize);
+}
 //   if (h->mode != GCRY_CIPHER_MODE_NONE && !h->marks.key)
 //     {
 //       log_error ("cipher_decrypt: key not set\n");

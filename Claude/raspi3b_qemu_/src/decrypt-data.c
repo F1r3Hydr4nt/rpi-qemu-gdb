@@ -35,12 +35,12 @@
 #include "../common/compliance.h"
 #include "libgcrypt.h"
 
-static int aead_decode_filter (void *opaque, int control, iobuf_t a,
-                               byte *buf, size_t *ret_len);
-static int mdc_decode_filter ( void *opaque, int control, IOBUF a,
-                               byte *buf, size_t *ret_len);
-static int decode_filter ( void *opaque, int control, IOBUF a,
-					byte *buf, size_t *ret_len);
+static int aead_decode_filter(void *opaque, int control, iobuf_t a,
+                              byte *buf, size_t *ret_len);
+static int mdc_decode_filter(void *opaque, int control, IOBUF a,
+                             byte *buf, size_t *ret_len);
+static int decode_filter(void *opaque, int control, IOBUF a,
+                         byte *buf, size_t *ret_len);
 
 /* Our context object.  */
 struct decode_filter_context_s
@@ -48,7 +48,7 @@ struct decode_filter_context_s
   /* Recounter (max value is 2).  We need it because we do not know
    * whether the iobuf or the outer control code frees this object
    * first.  */
-  int  refcount;
+  int refcount;
 
   /* The cipher handle.  */
   gcry_cipher_hd_t cipher_hd;
@@ -101,27 +101,25 @@ struct decode_filter_context_s
 };
 typedef struct decode_filter_context_s *decode_filter_ctx_t;
 
-
 /* Helper to release the decode context.  */
 static void
-release_dfx_context (decode_filter_ctx_t dfx)
+release_dfx_context(decode_filter_ctx_t dfx)
 {
   if (!dfx)
     return;
 
-  printf (dfx->refcount);
-  if ( !--dfx->refcount )
-    {
-      // gcry_cipher_close (dfx->cipher_hd);
-      xfree (dfx->cipher_hd);
-      dfx->cipher_hd = NULL;
-      // gcry_md_close (dfx->mdc_hash);
-      xfree (dfx->mdc_hash);
-      dfx->mdc_hash = NULL;
-      xfree (dfx);
-    }
+  printf(dfx->refcount);
+  if (!--dfx->refcount)
+  {
+    // gcry_cipher_close (dfx->cipher_hd);
+    xfree(dfx->cipher_hd);
+    dfx->cipher_hd = NULL;
+    // gcry_md_close (dfx->mdc_hash);
+    xfree(dfx->mdc_hash);
+    dfx->mdc_hash = NULL;
+    xfree(dfx);
+  }
 }
-
 
 // /* Set the nonce and the additional data for the current chunk.  This
 //  * also reset the decryption machinery so that the handle can be
@@ -194,7 +192,6 @@ release_dfx_context (decode_filter_ctx_t dfx)
 //   return gcry_cipher_authenticate (dfx->cipher_hd, ad, final? 21 : 13);
 // }
 
-
 // /* Helper to check the 16 byte tag in TAGBUF.  The FINAL flag is only
 //  * for debug messages.  */
 // static gpg_error_t
@@ -217,23 +214,47 @@ release_dfx_context (decode_filter_ctx_t dfx)
 //   return 0;
 // }
 
-
 /****************
  * Decrypt the data, specified by ED with the key DEK.  On return
  * COMPLIANCE_ERROR is set to true iff the decryption can claim that
  * it was compliant in the current mode; otherwise this flag is set to
  * false.
  */
-int
-decrypt_data (ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
-              int *compliance_error)
+int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
+                 int *compliance_error)
 {
-  printf ("decrypt_data\n");
+  printf("decrypt_data\n");
+  printf("ed pointer: %p\n", (void *)ed);
+  printf("ed->len: %d\n", ed->len);
+  printf("ed->buf pointer: %p\n", (void *)ed->buf);
+  printf("ed->mdc_method: %d\n", ed->mdc_method);
+  printf("ed->is_partial: %d\n", ed->is_partial);
+  printf("ed->aead_algo: %d\n", ed->aead_algo);
+  // printf("ed->buf contents: ");
+  // byte buffer[64];
+  // size_t bytes = 0;
+  // while (bytes < sizeof(buffer))
+  // {
+  //   int c = iobuf_get(ed->buf);
+  //   if (c == -1)
+  //     break;
+  //   printf("%02x ", c);
+  //   buffer[bytes++] = c;
+  // }
+  // printf("\n");
+
+  // // Store first 10 bytes
+  // byte saved[10];
+  // memcpy(saved, buffer, 10);
+
+  // // Create new iobuf with saved bytes
+  // iobuf_t new_buf = iobuf_temp_with_content(saved, 10);
+  // ed->buf = new_buf;
   decode_filter_ctx_t dfx;
   enum gcry_cipher_modes ciphermode;
   unsigned int startivlen;
   byte *p;
-  int rc=0, c, i;
+  int rc = 0, c, i;
   byte temp[32];
   unsigned blocksize;
   unsigned nprefix;
@@ -241,9 +262,9 @@ decrypt_data (ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
   *compliance_error = 0;
   // printf ("probably wrong\n");
 
-  dfx = xtrycalloc (1, sizeof *dfx);
+  dfx = xtrycalloc(1, sizeof *dfx);
   if (!dfx)
-    return gpg_error_from_syserror ();
+    return gpg_error_from_syserror();
   dfx->refcount = 1;
   // printf("dek->algo_info_printed: %d\n", dek->algo_info_printed);
   // if ( opt.verbose && !dek->algo_info_printed )
@@ -264,14 +285,14 @@ decrypt_data (ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
   //     printf (startivlen <= sizeof dfx->startiv);
   //   }
   // else
-    ciphermode = GCRY_CIPHER_MODE_CFB;
+  ciphermode = GCRY_CIPHER_MODE_CFB;
 
   /* Check compliance.  */
   // if (!gnupg_cipher_is_allowed (opt.compliance, 0, dek->algo, ciphermode))
   //   {
   //     printf (("cipher algorithm '%s' may not be used in %s mode\n"),
-	// 	 openpgp_cipher_algo_mode_name (dek->algo,ed->aead_algo),
-	// 	 gnupg_compliance_option_string (opt.compliance));
+  // 	 openpgp_cipher_algo_mode_name (dek->algo,ed->aead_algo),
+  // 	 gnupg_compliance_option_string (opt.compliance));
   //     *compliance_error = 1;
   //     if (opt.flags.require_compliance)
   //       {
@@ -282,8 +303,8 @@ decrypt_data (ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
   //       }
   //   }
 
-  printf (STATUS_DECRYPTION_INFO, "%d %d %d",
-                       ed->mdc_method, dek->algo, 0);
+  printf(STATUS_DECRYPTION_INFO, "%d %d %d",
+         ed->mdc_method, dek->algo, 0);
 
   // if (opt.show_session_key)
   //   {
@@ -308,191 +329,190 @@ decrypt_data (ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
   // rc = openpgp_cipher_test_algo (dek->algo);
   // if (rc)
   //   goto leave;
-  blocksize = 8;//openpgp_cipher_get_algo_blklen (dek->algo);
-  if ( !blocksize || blocksize > 16 )
-    printf ("unsupported blocksize %u\n", blocksize );
+  blocksize = 8; // openpgp_cipher_get_algo_blklen (dek->algo);
+  if (!blocksize || blocksize > 16)
+    printf("unsupported blocksize %u\n", blocksize);
 
   if (ed->aead_algo)
+  {
+    if (blocksize != 16)
     {
-      if (blocksize != 16)
-        {
-          rc = gpg_error (GPG_ERR_CIPHER_ALGO);
-          goto leave;
-        }
-
-      if (ed->chunkbyte > 56)
-        {
-          printf ("invalid AEAD chunkbyte %u\n", ed->chunkbyte);
-          rc = gpg_error (GPG_ERR_INV_PACKET);
-          goto leave;
-        }
-
-      /* Read the Start-IV. */
-      if (ed->len)
-        {
-          for (i=0; i < startivlen && ed->len; i++, ed->len--)
-            {
-              if ((c=iobuf_get (ed->buf)) == -1)
-                break;
-              dfx->startiv[i] = c;
-            }
-        }
-      else
-        {
-          for (i=0; i < startivlen; i++ )
-            if ( (c=iobuf_get (ed->buf)) == -1 )
-              break;
-            else
-              dfx->startiv[i] = c;
-        }
-      if (i != startivlen)
-        {
-          printf ("Start-IV in AEAD packet too short (%d/%u)\n",
-                     i, startivlen);
-          rc = gpg_error (GPG_ERR_TOO_SHORT);
-          goto leave;
-        }
-
-      dfx->cipher_algo = ed->cipher_algo;
-      dfx->aead_algo = ed->aead_algo;
-      dfx->chunkbyte = ed->chunkbyte;
-      dfx->chunksize = (uint64_t)1 << (dfx->chunkbyte + 6);
-
-      if (dek->algo != dfx->cipher_algo)
-        printf ("Note: different cipher algorithms used (%s/%s)\n",
-                  openpgp_cipher_algo_name (dek->algo),
-                  openpgp_cipher_algo_name (dfx->cipher_algo));
-
-      rc = openpgp_cipher_open (&dfx->cipher_hd,
-                                dfx->cipher_algo,
-                                ciphermode,
-                                GCRY_CIPHER_SECURE);
-      if (rc)
-        goto leave; /* Should never happen.  */
-
-      // if (DBG_CRYPTO)
-      //   printf (dek->key, dek->keylen, "thekey:");
-      rc = gcry_cipher_setkey (dfx->cipher_hd, dek->key, dek->keylen);
-      if (gpg_err_code (rc) == GPG_ERR_WEAK_KEY)
-        {
-          printf (("WARNING: message was encrypted with"
-                      " a weak key in the symmetric cipher.\n"));
-          rc = 0;
-        }
-      else if (rc)
-        {
-          printf("key setup failed: %s\n", gpg_strerror (rc));
-          goto leave;
-        }
-
-      if (!ed->buf)
-        {
-          printf(("problem handling encrypted packet\n"));
-          goto leave;
-        }
-
+      rc = gpg_error(GPG_ERR_CIPHER_ALGO);
+      goto leave;
     }
+
+    if (ed->chunkbyte > 56)
+    {
+      printf("invalid AEAD chunkbyte %u\n", ed->chunkbyte);
+      rc = gpg_error(GPG_ERR_INV_PACKET);
+      goto leave;
+    }
+
+    /* Read the Start-IV. */
+    if (ed->len)
+    {
+      for (i = 0; i < startivlen && ed->len; i++, ed->len--)
+      {
+        if ((c = iobuf_get(ed->buf)) == -1)
+          break;
+        dfx->startiv[i] = c;
+      }
+    }
+    else
+    {
+      for (i = 0; i < startivlen; i++)
+        if ((c = iobuf_get(ed->buf)) == -1)
+          break;
+        else
+          dfx->startiv[i] = c;
+    }
+    if (i != startivlen)
+    {
+      printf("Start-IV in AEAD packet too short (%d/%u)\n",
+             i, startivlen);
+      rc = gpg_error(GPG_ERR_TOO_SHORT);
+      goto leave;
+    }
+
+    dfx->cipher_algo = ed->cipher_algo;
+    dfx->aead_algo = ed->aead_algo;
+    dfx->chunkbyte = ed->chunkbyte;
+    dfx->chunksize = (uint64_t)1 << (dfx->chunkbyte + 6);
+
+    if (dek->algo != dfx->cipher_algo)
+      printf("Note: different cipher algorithms used (%s/%s)\n",
+             openpgp_cipher_algo_name(dek->algo),
+             openpgp_cipher_algo_name(dfx->cipher_algo));
+
+    rc = openpgp_cipher_open(&dfx->cipher_hd,
+                             dfx->cipher_algo,
+                             ciphermode,
+                             GCRY_CIPHER_SECURE);
+    if (rc)
+      goto leave; /* Should never happen.  */
+
+    // if (DBG_CRYPTO)
+    //   printf (dek->key, dek->keylen, "thekey:");
+    rc = gcry_cipher_setkey(dfx->cipher_hd, dek->key, dek->keylen);
+    if (gpg_err_code(rc) == GPG_ERR_WEAK_KEY)
+    {
+      printf(("WARNING: message was encrypted with"
+              " a weak key in the symmetric cipher.\n"));
+      rc = 0;
+    }
+    else if (rc)
+    {
+      printf("key setup failed: %s\n", gpg_strerror(rc));
+      goto leave;
+    }
+
+    if (!ed->buf)
+    {
+      printf(("problem handling encrypted packet\n"));
+      goto leave;
+    }
+  }
   else /* CFB encryption.  */
+  {
+    nprefix = blocksize;
+    if (ed->len && ed->len < (nprefix + 2))
     {
-      nprefix = blocksize;
-      if ( ed->len && ed->len < (nprefix+2) )
-        {
-          /* An invalid message.  We can't check that during parsing
-           * because we may not know the used cipher then.  */
-          rc = gpg_error (GPG_ERR_INV_PACKET);
-          goto leave;
-        }
-
-      // if ( ed->mdc_method )
-      //   {
-      //     if (gcry_md_open (&dfx->mdc_hash, ed->mdc_method, 0 ))
-      //       BUG ();
-      //     if ( DBG_HASHING )
-      //       gcry_md_debug (dfx->mdc_hash, "checkmdc");
-      //   }
-  memset(&dfx, 0, sizeof dfx);
-
-  dfx->cipher_hd = malloc(sizeof(struct gcry_cipher_handle));
-  if (!dfx->cipher_hd) {
-      return -1; // Handle allocation failure
-  }
-  memset(dfx->cipher_hd, 0, sizeof(struct gcry_cipher_handle));
-
-  printf("cipher_hd address: %p\n", (void*)dfx->cipher_hd);
-  if (dfx->cipher_hd) {
-      printf("cipher_hd is allocated\n");
-  } else {
-      printf("cipher_hd is NULL\n");
-  }
-      // rc = openpgp_cipher_open (&dfx->cipher_hd, dek->algo,
-      //                           GCRY_CIPHER_MODE_CFB,
-      //                           (GCRY_CIPHER_SECURE
-      //                            | ((ed->mdc_method || dek->algo >= 100)?
-      //                               0 : GCRY_CIPHER_ENABLE_SYNC)));
-      if (rc)
-        {
-          /* We should never get an error here cause we already checked
-           * that the algorithm is available.  */
-          BUG();
-        }
-
-
-      /* log_hexdump( "thekey", dek->key, dek->keylen );*/
-      rc = _gcry_cipher_setkey (dfx->cipher_hd, dek->key, dek->keylen);
-      // if ( gpg_err_code (rc) == GPG_ERR_WEAK_KEY )
-      //   {
-      //     printf (("WARNING: message was encrypted with"
-      //                 " a weak key in the symmetric cipher.\n"));
-      //     rc = 0;
-      //   }
-      // else if (rc)
-      //   {
-      //     printf("key setup failed: %s\n", gpg_strerror (rc) );
-      //     goto leave;
-      //   }
-
-      if (!ed->buf)
-        {
-          printf (("problem handling encrypted packet\n"));
-          rc = gpg_error (GPG_ERR_INV_PACKET);
-          goto leave;
-        }
-
-      _gcry_cipher_setiv (dfx->cipher_hd, NULL, 8);
-
-      if ( ed->len )
-        {
-          for (i=0; i < (nprefix+2) && ed->len; i++, ed->len-- )
-            {
-              if ( (c=iobuf_get(ed->buf)) == -1 )
-                break;
-              else
-                temp[i] = c;
-            }
-        }
-      else
-        {
-          for (i=0; i < (nprefix+2); i++ )
-            if ( (c=iobuf_get(ed->buf)) == -1 )
-              break;
-            else
-              temp[i] = c;
-        }
-
-      _gcry_cipher_decrypt (dfx->cipher_hd, temp, nprefix+2, NULL, 0);
-      cipher_sync (dfx->cipher_hd);
-      p = temp;
-      /* log_hexdump( "prefix", temp, nprefix+2 ); */
-      if (dek->symmetric
-          && (p[nprefix-2] != p[nprefix] || p[nprefix-1] != p[nprefix+1]) )
-        {
-          rc = gpg_error (GPG_ERR_BAD_KEY);
-          goto leave;
-        }
-
-      // if ( dfx->mdc_hash )
-      //   gcry_md_write (dfx->mdc_hash, temp, nprefix+2);
+      /* An invalid message.  We can't check that during parsing
+       * because we may not know the used cipher then.  */
+      rc = gpg_error(GPG_ERR_INV_PACKET);
+      goto leave;
     }
+
+    // if ( ed->mdc_method )
+    //   {
+    //     if (gcry_md_open (&dfx->mdc_hash, ed->mdc_method, 0 ))
+    //       BUG ();
+    //     if ( DBG_HASHING )
+    //       gcry_md_debug (dfx->mdc_hash, "checkmdc");
+    //   }
+    memset(&dfx, 0, sizeof dfx);
+
+    dfx->cipher_hd = malloc(sizeof(struct gcry_cipher_handle));
+    if (!dfx->cipher_hd)
+    {
+      return -1; // Handle allocation failure
+    }
+    memset(dfx->cipher_hd, 0, sizeof(struct gcry_cipher_handle));
+
+    // rc = openpgp_cipher_open (&dfx->cipher_hd, dek->algo,
+    //                           GCRY_CIPHER_MODE_CFB,
+    //                           (GCRY_CIPHER_SECURE
+    //                            | ((ed->mdc_method || dek->algo >= 100)?
+    //                               0 : GCRY_CIPHER_ENABLE_SYNC)));
+    if (rc)
+    {
+      /* We should never get an error here cause we already checked
+       * that the algorithm is available.  */
+      BUG();
+    }
+
+    /* log_hexdump( "thekey", dek->key, dek->keylen );*/
+    rc = _gcry_cipher_setkey(dfx->cipher_hd, dek->key, dek->keylen);
+    // if ( gpg_err_code (rc) == GPG_ERR_WEAK_KEY )
+    //   {
+    //     printf (("WARNING: message was encrypted with"
+    //                 " a weak key in the symmetric cipher.\n"));
+    //     rc = 0;
+    //   }
+    // else if (rc)
+    //   {
+    //     printf("key setup failed: %s\n", gpg_strerror (rc) );
+    //     goto leave;
+    //   }
+
+    if (!ed->buf)
+    {
+      printf(("problem handling encrypted packet\n"));
+      rc = gpg_error(GPG_ERR_INV_PACKET);
+      goto leave;
+    }
+
+    _gcry_cipher_setiv(dfx->cipher_hd, NULL, 8);
+
+    if (ed->len)
+    {
+      printf("ed->len: %d\n", ed->len);
+      for (i = 0; i < (nprefix + 2) && ed->len; i++, ed->len--)
+      {
+        if ((c = iobuf_get(ed->buf)) == -1)
+          break;
+        else
+          temp[i] = c;
+      }
+    }
+    else
+    {
+     printf("else ed->len: %d\n", ed->len);
+      for (i = 0; i < (nprefix + 2); i++) {
+          // printf("Buffer state: start=%d len=%d\n", ed->buf->d.start, ed->buf->d.len);
+          if ((c = iobuf_get(ed->buf)) == -1) {
+              // printf("Got EOF at iter %d\n", i); 
+              break;
+          } else {
+              // printf("Got byte: 0x%02x (start=%d)\n", c, ed->buf->d.start);
+              temp[i] = c;
+          }
+      }
+    }
+
+    _gcry_cipher_decrypt(dfx->cipher_hd, temp, nprefix + 2, NULL, 0);
+    cipher_sync(dfx->cipher_hd);
+    p = temp;
+    /* log_hexdump( "prefix", temp, nprefix+2 ); */
+    if (dek->symmetric && (p[nprefix - 2] != p[nprefix] || p[nprefix - 1] != p[nprefix + 1]))
+    {
+      rc = gpg_error(GPG_ERR_BAD_KEY);
+      goto leave;
+    }
+
+    // if ( dfx->mdc_hash )
+    //   gcry_md_write (dfx->mdc_hash, temp, nprefix+2);
+  }
 
   dfx->refcount++;
   dfx->partial = !!ed->is_partial;
@@ -502,7 +522,7 @@ decrypt_data (ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
   // else if (ed->mdc_method)
   //   iobuf_push_filter ( ed->buf, mdc_decode_filter, dfx );
   // else
-    iobuf_push_filter ( ed->buf, decode_filter, dfx );
+  iobuf_push_filter(ed->buf, decode_filter, dfx);
 
   // if (opt.unwrap_encryption)
   //   {
@@ -515,7 +535,7 @@ decrypt_data (ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
   //         iobuf_t output = iobuf_esopen (fp, "w", 0);
   //         // armor_filter_context_t *afx = NULL;
 
-	//   es_setbuf (fp, NULL);
+  //   es_setbuf (fp, NULL);
 
   //         // if (opt.armor)
   //         //   {
@@ -537,11 +557,11 @@ decrypt_data (ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
   //     xfree (filename);
   //   }
   // else
-    proc_packets (ctrl, procctx, ed->buf );
+  proc_packets(ctrl, procctx, ed->buf);
 
   ed->buf = NULL;
-  if (dfx->eof_seen > 1 )
-    rc = gpg_error (GPG_ERR_INV_PACKET);
+  if (dfx->eof_seen > 1)
+    rc = gpg_error(GPG_ERR_INV_PACKET);
   // else if ( ed->mdc_method )
   //   {
   //     /* We used to let parse-packet.c handle the MDC packet but this
@@ -574,65 +594,63 @@ decrypt_data (ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
   //     /* printf(gcry_md_read (dfx->mdc_hash,0), datalen, "MDC calc:"); */
   //   }
 
- leave:
-  release_dfx_context (dfx);
+leave:
+  release_dfx_context(dfx);
   return rc;
 }
-
 
 /* Fill BUFFER with up to NBYTES-OFFSET from STREAM utilizing
  * information from the context DFX.  Returns the new offset which is
  * the number of bytes read plus the original offset.  On EOF the
  * respective flag in DFX is set. */
 static size_t
-fill_buffer (decode_filter_ctx_t dfx, iobuf_t stream,
-             byte *buffer, size_t nbytes, size_t offset)
+fill_buffer(decode_filter_ctx_t dfx, iobuf_t stream,
+            byte *buffer, size_t nbytes, size_t offset)
 {
   size_t nread = offset;
   size_t curr;
   int ret;
 
   if (dfx->partial)
+  {
+    while (nread < nbytes)
     {
-      while (nread < nbytes)
-        {
-          curr = nbytes - nread;
+      curr = nbytes - nread;
 
-          ret = iobuf_read (stream, &buffer[nread], curr);
-          if (ret == -1)
-            {
-              dfx->eof_seen = 1; /* Normal EOF. */
-              break;
-            }
+      ret = iobuf_read(stream, &buffer[nread], curr);
+      if (ret == -1)
+      {
+        dfx->eof_seen = 1; /* Normal EOF. */
+        break;
+      }
 
-          nread += ret;
-        }
+      nread += ret;
     }
+  }
   else
+  {
+    while (nread < nbytes && dfx->length)
     {
-      while (nread < nbytes && dfx->length)
-        {
-          curr = nbytes - nread;
-          if (curr > dfx->length)
-            curr = dfx->length;
+      curr = nbytes - nread;
+      if (curr > dfx->length)
+        curr = dfx->length;
 
-          ret = iobuf_read (stream, &buffer[nread], curr);
-          if (ret == -1)
-            {
-              dfx->eof_seen = 3; /* Premature EOF. */
-              break;
-            }
+      ret = iobuf_read(stream, &buffer[nread], curr);
+      if (ret == -1)
+      {
+        dfx->eof_seen = 3; /* Premature EOF. */
+        break;
+      }
 
-          nread += ret;
-          dfx->length -= ret;
-        }
-      if (!dfx->length)
-        dfx->eof_seen = 1; /* Normal EOF.  */
+      nread += ret;
+      dfx->length -= ret;
     }
+    if (!dfx->length)
+      dfx->eof_seen = 1; /* Normal EOF.  */
+  }
 
   return nread;
 }
-
 
 // /* The core of the AEAD decryption.  This is the underflow function of
 //  * the aead_decode_filter.  */
@@ -879,7 +897,6 @@ fill_buffer (decode_filter_ctx_t dfx, iobuf_t stream,
 //   return err;
 // }
 
-
 // /* The IOBUF filter used to decrypt AEAD encrypted data.  */
 // static int
 // aead_decode_filter (void *opaque, int control, IOBUF a,
@@ -913,7 +930,6 @@ fill_buffer (decode_filter_ctx_t dfx, iobuf_t stream,
 
 //   return rc;
 // }
-
 
 // static int
 // mdc_decode_filter (void *opaque, int control, IOBUF a,
@@ -1004,47 +1020,45 @@ fill_buffer (decode_filter_ctx_t dfx, iobuf_t stream,
 //   return rc;
 // }
 
-
 static int
-decode_filter( void *opaque, int control, IOBUF a, byte *buf, size_t *ret_len)
+decode_filter(void *opaque, int control, IOBUF a, byte *buf, size_t *ret_len)
 {
   decode_filter_ctx_t fc = opaque;
   size_t size = *ret_len;
   size_t n;
   int rc = 0;
 
+  if (control == IOBUFCTRL_UNDERFLOW && fc->eof_seen)
+  {
+    *ret_len = 0;
+    rc = -1;
+  }
+  else if (control == IOBUFCTRL_UNDERFLOW)
+  {
+    printf(a);
 
-  if ( control == IOBUFCTRL_UNDERFLOW && fc->eof_seen )
+    n = fill_buffer(fc, a, buf, size, 0);
+    if (n)
     {
-      *ret_len = 0;
-      rc = -1;
+      if (fc->cipher_hd)
+        // gcry_cipher_decrypt (fc->cipher_hd, buf, n, NULL, 0);
+        printf("cipher_hd is allocated\n");
     }
-  else if ( control == IOBUFCTRL_UNDERFLOW )
+    else
     {
-      printf (a);
-
-      n = fill_buffer (fc, a, buf, size, 0);
-      if (n)
-        {
-          if (fc->cipher_hd)
-            // gcry_cipher_decrypt (fc->cipher_hd, buf, n, NULL, 0);
-            printf("cipher_hd is allocated\n");
-        }
-      else
-        {
-          if (!fc->eof_seen)
-            fc->eof_seen = 1;
-          rc = -1; /* Return EOF. */
-        }
-      *ret_len = n;
+      if (!fc->eof_seen)
+        fc->eof_seen = 1;
+      rc = -1; /* Return EOF. */
     }
-  else if ( control == IOBUFCTRL_FREE )
-    {
-      release_dfx_context (fc);
-    }
-  else if ( control == IOBUFCTRL_DESC )
-    {
-//      mem2str (buf, "decode_filter", *ret_len);
-    }
+    *ret_len = n;
+  }
+  else if (control == IOBUFCTRL_FREE)
+  {
+    release_dfx_context(fc);
+  }
+  else if (control == IOBUFCTRL_DESC)
+  {
+    //      mem2str (buf, "decode_filter", *ret_len);
+  }
   return rc;
 }
