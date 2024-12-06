@@ -913,7 +913,7 @@ printf("block_filter %s\n", control_mode_str[control]);
 		{
 		  /* These OpenPGP introduced huffman like encoded length
 		   * bytes are really a mess :-( */
-            	      printf("These OpenPGP introduced huffman like encoded length bytes are really a mess :-(" );
+      ///printf("These OpenPGP introduced huffman like encoded length bytes are really a mess :-(" );
 		  if (a->first_c)
 		    {
 		      c = a->first_c;
@@ -1642,7 +1642,6 @@ iobuf_push_filter (iobuf_t a,
 			     iobuf_t chain, byte * buf, size_t * len),
                    void *ov)
 {
-
    printf("iobuf_push_filter %d\n",a->use);
   return iobuf_push_filter2 (a, f, ov, 0);
 }
@@ -1881,178 +1880,178 @@ iobuf_pop_filter (iobuf_t a, int (*f) (void *opaque, int control,
 }
 
 
-// /****************
-//  * read underflow: read at least one byte into the buffer and return
-//  * the first byte or -1 on EOF.
-//  */
-// static int
-// underflow (iobuf_t a, int clear_pending_eof)
-// {
-//   return underflow_target (a, clear_pending_eof, 1);
-// }
+/****************
+ * read underflow: read at least one byte into the buffer and return
+ * the first byte or -1 on EOF.
+ */
+static int
+underflow (iobuf_t a, int clear_pending_eof)
+{
+  return underflow_target (a, clear_pending_eof, 1);
+}
 
 
-// /****************
-//  * read underflow: read TARGET bytes into the buffer and return
-//  * the first byte or -1 on EOF.
-//  */
-// static int
-// underflow_target (iobuf_t a, int clear_pending_eof, size_t target)
-// {
-//   size_t len;
-//   int rc;
+/****************
+ * read underflow: read TARGET bytes into the buffer and return
+ * the first byte or -1 on EOF.
+ */
+static int
+underflow_target (iobuf_t a, int clear_pending_eof, size_t target)
+{
+  size_t len;
+  int rc;
 
-//   if (DBG_IOBUF)
-//     printf ("iobuf-%d.%d: underflow: buffer size: %d; still buffered: %d => space for %d bytes\n",
-// 	       a->no, a->subno,
-// 	       (int) a->d.size, (int) (a->d.len - a->d.start),
-// 	       (int) (a->d.size - (a->d.len - a->d.start)));
+  if (DBG_IOBUF)
+    printf ("iobuf-%d.%d: underflow: buffer size: %d; still buffered: %d => space for %d bytes\n",
+	       a->no, a->subno,
+	       (int) a->d.size, (int) (a->d.len - a->d.start),
+	       (int) (a->d.size - (a->d.len - a->d.start)));
 
-//   if (a->use == IOBUF_INPUT_TEMP)
-//     /* By definition, there isn't more data to read into the
-//        buffer.  */
-//     return -1;
+  if (a->use == IOBUF_INPUT_TEMP)
+    /* By definition, there isn't more data to read into the
+       buffer.  */
+    return -1;
 
-//   printf (a->use == IOBUF_INPUT);
+  printf (a->use == IOBUF_INPUT);
 
-//   /* If there is still some buffered data, then move it to the start
-//      of the buffer and try to fill the end of the buffer.  (This is
-//      useful if we are called from iobuf_peek().)  */
-//   printf (a->d.start <= a->d.len);
-//   a->d.len -= a->d.start;
-//   memmove (a->d.buf, &a->d.buf[a->d.start], a->d.len);
-//   a->d.start = 0;
+  /* If there is still some buffered data, then move it to the start
+     of the buffer and try to fill the end of the buffer.  (This is
+     useful if we are called from iobuf_peek().)  */
+  printf (a->d.start <= a->d.len);
+  a->d.len -= a->d.start;
+  memmove (a->d.buf, &a->d.buf[a->d.start], a->d.len);
+  a->d.start = 0;
 
-//   if (a->d.len < target && a->filter_eof)
-//     /* The last time we tried to read from this filter, we got an EOF.
-//        We couldn't return the EOF, because there was buffered data.
-//        Since there is no longer any buffered data, return the
-//        error.  */
-//     {
-//       if (DBG_IOBUF)
-// 	printf ("iobuf-%d.%d: underflow: eof (pending eof)\n",
-// 		   a->no, a->subno);
-//       if (! clear_pending_eof)
-// 	return -1;
+  if (a->d.len < target && a->filter_eof)
+    /* The last time we tried to read from this filter, we got an EOF.
+       We couldn't return the EOF, because there was buffered data.
+       Since there is no longer any buffered data, return the
+       error.  */
+    {
+      if (DBG_IOBUF)
+	printf ("iobuf-%d.%d: underflow: eof (pending eof)\n",
+		   a->no, a->subno);
+      if (! clear_pending_eof)
+	return -1;
 
-//       if (a->chain)
-// 	/* A filter follows this one.  Free this filter.  */
-// 	{
-// 	  iobuf_t b = a->chain;
-// 	  if (DBG_IOBUF)
-// 	    printf ("iobuf-%d.%d: filter popped (pending EOF returned)\n",
-// 		       a->no, a->subno);
-// 	  xfree (a->d.buf);
-// 	  xfree (a->real_fname);
-// 	  memcpy (a, b, sizeof *a);
-// 	  xfree (b);
-// 	  print_chain (a);
-// 	}
-//       else
-// 	a->filter_eof = 0;	/* for the top level filter */
-//       return -1;		/* return one(!) EOF */
-//     }
+      if (a->chain)
+	/* A filter follows this one.  Free this filter.  */
+	{
+	  iobuf_t b = a->chain;
+	  if (DBG_IOBUF)
+	    printf ("iobuf-%d.%d: filter popped (pending EOF returned)\n",
+		       a->no, a->subno);
+	  xfree (a->d.buf);
+	  xfree (a->real_fname);
+	  memcpy (a, b, sizeof *a);
+	  xfree (b);
+	  print_chain (a);
+	}
+      else
+	a->filter_eof = 0;	/* for the top level filter */
+      return -1;		/* return one(!) EOF */
+    }
 
-//   if (a->d.len == 0 && a->error)
-//     /* The last time we tried to read from this filter, we got an
-//        error.  We couldn't return the error, because there was
-//        buffered data.  Since there is no longer any buffered data,
-//        return the error.  */
-//     {
-//       if (DBG_IOBUF)
-// 	// printf ("iobuf-%d.%d: pending error (%s) returned\n",
-// //		   a->no, a->subno, gpg_strerror (a->error));
-//       return -1;
-//     }
+  if (a->d.len == 0 && a->error)
+    /* The last time we tried to read from this filter, we got an
+       error.  We couldn't return the error, because there was
+       buffered data.  Since there is no longer any buffered data,
+       return the error.  */
+    {
+      if (DBG_IOBUF)
+	// printf ("iobuf-%d.%d: pending error (%s) returned\n",
+//		   a->no, a->subno, gpg_strerror (a->error));
+      return -1;
+    }
 
-//   if (a->filter && ! a->filter_eof && ! a->error)
-//     /* We have a filter function and the last time we tried to read we
-//        didn't get an EOF or an error.  Try to fill the buffer.  */
-//     {
-//       /* Be careful to account for any buffered data.  */
-//       len = a->d.size - a->d.len;
-//       if (DBG_IOBUF)
-// 	printf ("iobuf-%d.%d: underflow: A->FILTER (%lu bytes)\n",
-// 		   a->no, a->subno, (ulong) len);
-//       if (len == 0)
-// 	/* There is no space for more data.  Don't bother calling
-// 	   A->FILTER.  */
-// 	rc = 0;
-//       else
-// 	rc = a->filter (a->filter_ov, IOBUFCTRL_UNDERFLOW, a->chain,
-// 			&a->d.buf[a->d.len], &len);
-//       a->d.len += len;
+  if (a->filter && ! a->filter_eof && ! a->error)
+    /* We have a filter function and the last time we tried to read we
+       didn't get an EOF or an error.  Try to fill the buffer.  */
+    {
+      /* Be careful to account for any buffered data.  */
+      len = a->d.size - a->d.len;
+      if (DBG_IOBUF)
+	printf ("iobuf-%d.%d: underflow: A->FILTER (%lu bytes)\n",
+		   a->no, a->subno, (ulong) len);
+      if (len == 0)
+	/* There is no space for more data.  Don't bother calling
+	   A->FILTER.  */
+	rc = 0;
+      else
+	rc = a->filter (a->filter_ov, IOBUFCTRL_UNDERFLOW, a->chain,
+			&a->d.buf[a->d.len], &len);
+      a->d.len += len;
 
-//       if (DBG_IOBUF)
-// 	// printf ("iobuf-%d.%d: A->FILTER() returned rc=%d (%s), read %lu bytes\n",
-// 	// 	   a->no, a->subno,
-// 	// 	   rc, rc == 0 ? "ok" : rc == -1 ? "EOF" : gpg_strerror (rc),
-// 	// 	   (ulong) len);
-// /*  	    if( a->no == 1 ) */
-// /*                   printf ("     data:", a->d.buf, len); */
+      if (DBG_IOBUF)
+	// printf ("iobuf-%d.%d: A->FILTER() returned rc=%d (%s), read %lu bytes\n",
+	// 	   a->no, a->subno,
+	// 	   rc, rc == 0 ? "ok" : rc == -1 ? "EOF" : gpg_strerror (rc),
+	// 	   (ulong) len);
+/*  	    if( a->no == 1 ) */
+/*                   printf ("     data:", a->d.buf, len); */
 
-//       if (rc == -1)
-// 	/* EOF.  */
-// 	{
-// 	  size_t dummy_len = 0;
+      if (rc == -1)
+	/* EOF.  */
+	{
+	  size_t dummy_len = 0;
 
-// 	  /* Tell the filter to free itself */
-// 	  if ((rc = a->filter (a->filter_ov, IOBUFCTRL_FREE, a->chain,
-// 			       NULL, &dummy_len)))
-// 	    printf ("IOBUFCTRL_FREE failed: %s\n", gpg_strerror (rc));
+	  /* Tell the filter to free itself */
+	  if ((rc = a->filter (a->filter_ov, IOBUFCTRL_FREE, a->chain,
+			       NULL, &dummy_len)))
+	    printf ("IOBUFCTRL_FREE failed: %s\n");//, gpg_strerror (rc));
 
-// 	  /* Free everything except for the internal buffer.  */
-// 	  if (a->filter_ov && a->filter_ov_owner)
-// 	    xfree (a->filter_ov);
-// 	  a->filter_ov = NULL;
-// 	  a->filter = NULL;
-// 	  a->filter_eof = 1;
+	  /* Free everything except for the internal buffer.  */
+	  if (a->filter_ov && a->filter_ov_owner)
+	    xfree (a->filter_ov);
+	  a->filter_ov = NULL;
+	  a->filter = NULL;
+	  a->filter_eof = 1;
 
-// 	  if (clear_pending_eof && a->d.len == 0 && a->chain)
-// 	    /* We don't need to keep this filter around at all:
+	  if (clear_pending_eof && a->d.len == 0 && a->chain)
+	    /* We don't need to keep this filter around at all:
 
-// 	         - we got an EOF
-// 		 - we have no buffered data
-// 		 - a filter follows this one.
+	         - we got an EOF
+		 - we have no buffered data
+		 - a filter follows this one.
 
-// 	      Unlink this filter.  */
-// 	    {
-// 	      iobuf_t b = a->chain;
-// 	      if (DBG_IOBUF)
-// 		printf ("iobuf-%d.%d: pop in underflow (nothing buffered, got EOF)\n",
-// 			   a->no, a->subno);
-// 	      xfree (a->d.buf);
-// 	      xfree (a->real_fname);
-// 	      memcpy (a, b, sizeof *a);
-// 	      xfree (b);
+	      Unlink this filter.  */
+	    {
+	      iobuf_t b = a->chain;
+	      if (DBG_IOBUF)
+		printf ("iobuf-%d.%d: pop in underflow (nothing buffered, got EOF)\n",
+			   a->no, a->subno);
+	      xfree (a->d.buf);
+	      xfree (a->real_fname);
+	      memcpy (a, b, sizeof *a);
+	      xfree (b);
 
-// 	      print_chain (a);
+	      print_chain (a);
 
-// 	      return -1;
-// 	    }
-// 	  else if (a->d.len == 0)
-// 	    /* We can't unlink this filter (it is the only one in the
-// 	       pipeline), but we can immediately return EOF.  */
-// 	    return -1;
-// 	}
-//       else if (rc)
-// 	/* Record the error.  */
-// 	{
-// 	  a->error = rc;
+	      return -1;
+	    }
+	  else if (a->d.len == 0)
+	    /* We can't unlink this filter (it is the only one in the
+	       pipeline), but we can immediately return EOF.  */
+	    return -1;
+	}
+      else if (rc)
+	/* Record the error.  */
+	{
+	  a->error = rc;
 
-// 	  if (a->d.len == 0)
-// 	    /* There is no buffered data.  Immediately return EOF.  */
-// 	    return -1;
-// 	}
-//     }
+	  if (a->d.len == 0)
+	    /* There is no buffered data.  Immediately return EOF.  */
+	    return -1;
+	}
+    }
 
-//   printf (a->d.start <= a->d.len);
-//   if (a->d.start < a->d.len)
-//     return a->d.buf[a->d.start++];
+  printf (a->d.start <= a->d.len);
+  if (a->d.start < a->d.len)
+    return a->d.buf[a->d.start++];
 
-//   /* EOF.  */
-//   return -1;
-// }
+  /* EOF.  */
+  return -1;
+}
 
 
 static int
@@ -2112,8 +2111,8 @@ iobuf_readbyte (iobuf_t a)
     {
       c = a->d.buf[a->d.start++];
     }
-//  else if ((c = underflow (a, 1)) == -1)
-  //  return -1;			/* EOF */
+  else if ((c = underflow (a, 1)) == -1)
+    return -1;			/* EOF */
 
   // printf (a->d.start <= a->d.len);
 

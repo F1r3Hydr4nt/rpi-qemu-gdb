@@ -1034,7 +1034,7 @@ proc_encrypted(CTX c, PACKET *pkt)
   //     if (compliant)
   //       compliance_de_vs |= 1;
   //   }
-
+printf("pkt->pkt.encrypted: %p\n", (void*)pkt->pkt.encrypted);
   if (!result)
   {
     int compl_error;
