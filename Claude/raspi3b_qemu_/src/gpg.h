@@ -107,7 +107,7 @@ struct server_control_s
   KEYDB_HANDLE cached_getkey_kdb;
 
   char *passphrase;
-  Key *session_key;
+  char *session_key;
 };
 
 
