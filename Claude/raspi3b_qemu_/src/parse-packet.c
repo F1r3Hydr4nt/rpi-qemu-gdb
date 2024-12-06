@@ -3434,6 +3434,19 @@ static int
 parse_encrypted (IOBUF inp, int pkttype, unsigned long pktlen,
 		 PACKET * pkt, int new_ctb, int partial)
 {
+  printf ("parse_encrypted\n");
+ printf("Packet length: %lu\n", pktlen);
+    
+    unsigned char peek_buf[16];
+    if (iobuf_peek(inp, peek_buf, sizeof(peek_buf)) >= 0) {
+        printf("Input buffer head: ");
+        for(int i = 0; i < sizeof(peek_buf); i++) {
+            printf("%02x ", peek_buf[i]);
+        }
+        printf("\n");
+    }
+    
+  
   int rc = 0;
   PKT_encrypted *ed;
   unsigned long orig_pktlen = pktlen;
@@ -3489,6 +3502,10 @@ parse_encrypted (IOBUF inp, int pkttype, unsigned long pktlen,
      required during decryption.  */
   ed->len = pktlen;
 
+  // Add before ed->buf = inp
+  if (ed->len > 0) {
+      printf("Encrypted data length: %lu\n", ed->len);
+  }
   if (list_mode)
     {
       if (orig_pktlen)

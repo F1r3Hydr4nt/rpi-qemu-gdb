@@ -47,7 +47,6 @@
    value, a much lower should actually be sufficient.  */
 #define MAX_NESTING_DEPTH 32
 
-
 /* An object to build a list of keyid related info.  */
 struct kidlist_item
 {
@@ -66,7 +65,6 @@ struct symlist_item
   int other_error;
 };
 
-
 /*
  * Object to hold the processing context.
  */
@@ -74,9 +72,9 @@ typedef struct mainproc_context *CTX;
 struct mainproc_context
 {
   ctrl_t ctrl;
-  struct mainproc_context *anchor;  /* May be useful in the future. */
+  struct mainproc_context *anchor; /* May be useful in the future. */
   PKT_public_key *last_pubkey;
-  PKT_user_id     *last_user_id;
+  PKT_user_id *last_user_id;
   // md_filter_context_t mfx;
   int sigs_only;    /* Process only signatures and reject all other stuff. */
   int encrypt_only; /* Process only encryption messages. */
@@ -103,47 +101,43 @@ struct mainproc_context
   DEK *dek;
 
   char *passphrase;
-  char* session_key;
+  char *session_key;
   int last_was_session_key;
-  kbnode_t list;    /* The current list of packets. */
-  iobuf_t iobuf;    /* Used to get the filename etc. */
-  int trustletter;  /* Temporary usage in list_node. */
-  ulong symkeys;    /* Number of symmetrically encrypted session keys.  */
-  struct kidlist_item *pkenc_list; /* List of encryption packets. */
+  kbnode_t list;                    /* The current list of packets. */
+  iobuf_t iobuf;                    /* Used to get the filename etc. */
+  int trustletter;                  /* Temporary usage in list_node. */
+  ulong symkeys;                    /* Number of symmetrically encrypted session keys.  */
+  struct kidlist_item *pkenc_list;  /* List of encryption packets. */
   struct symlist_item *symenc_list; /* List of sym. encryption packets. */
-  int seen_pkt_encrypted_aead; /* PKT_ENCRYPTED_AEAD packet seen. */
-  int seen_pkt_encrypted_mdc;  /* PKT_ENCRYPTED_MDC packet seen. */
-  struct {
-    unsigned int sig_seen:1;      /* Set to true if a signature packet
-                                     has been seen. */
-    unsigned int data:1;          /* Any data packet seen */
-    unsigned int uncompress_failed:1;
+  int seen_pkt_encrypted_aead;      /* PKT_ENCRYPTED_AEAD packet seen. */
+  int seen_pkt_encrypted_mdc;       /* PKT_ENCRYPTED_MDC packet seen. */
+  struct
+  {
+    unsigned int sig_seen : 1; /* Set to true if a signature packet
+                                  has been seen. */
+    unsigned int data : 1;     /* Any data packet seen */
+    unsigned int uncompress_failed : 1;
   } any;
 };
-
 
 /* Counter with the number of literal data packets seen.  Note that
  * this is also bumped at the end of an encryption.  This counter is
  * used for a basic consistency check of a received PGP message.  */
 static int literals_seen;
 
-
 /*** Local prototypes.  ***/
-static int do_proc_packets (ctrl_t ctrl, CTX c, iobuf_t a);
-static void list_node (CTX c, kbnode_t node);
-static void proc_tree (CTX c, kbnode_t node);
-
+static int do_proc_packets(ctrl_t ctrl, CTX c, iobuf_t a);
+static void list_node(CTX c, kbnode_t node);
+static void proc_tree(CTX c, kbnode_t node);
 
 /*** Functions.  ***/
 
 /* Reset the literal data counter.  This is required to setup a new
  * decryption or verification context.  */
-void
-reset_literals_seen(void)
+void reset_literals_seen(void)
 {
   literals_seen = 0;
 }
-
 
 // static void
 // release_list( CTX c )
@@ -174,7 +168,6 @@ reset_literals_seen(void)
 //   c->dek = NULL;
 // }
 
-
 // static int
 // add_onepass_sig (CTX c, PACKET *pkt)
 // {
@@ -187,7 +180,6 @@ reset_literals_seen(void)
 
 //   return 1;
 // }
-
 
 // static int
 // add_gpg_control (CTX c, PACKET *pkt)
@@ -207,7 +199,6 @@ reset_literals_seen(void)
 //   return 1;
 // }
 
-
 // static int
 // add_user_id (CTX c, PACKET *pkt)
 // {
@@ -219,7 +210,6 @@ reset_literals_seen(void)
 //   add_kbnode (c->list, new_kbnode (pkt));
 //   return 1;
 // }
-
 
 // static int
 // add_subkey (CTX c, PACKET *pkt)
@@ -233,7 +223,6 @@ reset_literals_seen(void)
 //   return 1;
 // }
 
-
 // static int
 // add_ring_trust (CTX c, PACKET *pkt)
 // {
@@ -245,7 +234,6 @@ reset_literals_seen(void)
 //   add_kbnode (c->list, new_kbnode (pkt));
 //   return 1;
 // }
-
 
 // static int
 // add_signature (CTX c, PACKET *pkt)
@@ -276,7 +264,6 @@ reset_literals_seen(void)
 
 //   return 1;
 // }
-
 
 // static gpg_error_t
 // symkey_decrypt_seskey (DEK *dek, byte *seskey, size_t slen)
@@ -386,60 +373,65 @@ reset_literals_seen(void)
 //   return 0;
 // }
 
-#define GETPASSWORD_FLAG_SYMDECRYPT  1
+#define GETPASSWORD_FLAG_SYMDECRYPT 1
 
 void derive_key(const uint8_t *salt, const char *password, unsigned int pass_len, uint32_t iterations, uint8_t *key)
 {
-    SHA1_CTX ctx;
-    SHA1Init(&ctx);
-    unsigned int bytesProcessed = 0;
-    unsigned int index = 0;
-    while (bytesProcessed < iterations)
+  SHA1_CTX ctx;
+  SHA1Init(&ctx);
+  unsigned int bytesProcessed = 0;
+  unsigned int index = 0;
+  while (bytesProcessed < iterations)
+  {
+    uint8_t byte;
+    if (index < 8)
     {
-        uint8_t byte;
-        if (index < 8)
-        {
-            byte = salt[index];
-        }
-        else
-        {
-            byte = password[(index - 8) % pass_len];
-        }
-        SHA1Update(&ctx, &byte, 1);
-        bytesProcessed++;
-        index++;
-        if (index >= 8 + pass_len)
-        {
-            index = 0;
-        }
+      byte = salt[index];
     }
-    SHA1Final(key, &ctx);
-}
-
-static uint8_t hex_digit(char h) {
-    if (h >= '0' && h <= '9') return h - '0';
-    if (h >= 'A' && h <= 'F') return h - 'A' + 10;
-    if (h >= 'a' && h <= 'f') return h - 'a' + 10;
-    return 0;
-}
-
-void hex_to_bytes(const char *hex, uint8_t *bytes, size_t length) {
-    for (size_t i = 0; i < length; i++) {
-        bytes[i] = (hex_digit(hex[i*2]) << 4) | hex_digit(hex[i*2 + 1]);
+    else
+    {
+      byte = password[(index - 8) % pass_len];
     }
+    SHA1Update(&ctx, &byte, 1);
+    bytesProcessed++;
+    index++;
+    if (index >= 8 + pass_len)
+    {
+      index = 0;
+    }
+  }
+  SHA1Final(key, &ctx);
 }
 
-DEK *
-passphrase_to_dek (int cipher_algo, STRING2KEY *s2k,
-                   int create, int nocache,
-                   const char *tryagain_text, unsigned int flags,
-                   int *canceled, const char *passphrase, const char* derivedKey)
+static uint8_t hex_digit(char h)
+{
+  if (h >= '0' && h <= '9')
+    return h - '0';
+  if (h >= 'A' && h <= 'F')
+    return h - 'A' + 10;
+  if (h >= 'a' && h <= 'f')
+    return h - 'a' + 10;
+  return 0;
+}
+
+void hex_to_bytes(const char *hex, uint8_t *bytes, size_t length)
+{
+  for (size_t i = 0; i < length; i++)
+  {
+    bytes[i] = (hex_digit(hex[i * 2]) << 4) | hex_digit(hex[i * 2 + 1]);
+  }
+}
+
+DEK *passphrase_to_dek(int cipher_algo, STRING2KEY *s2k,
+                       int create, int nocache,
+                       const char *tryagain_text, unsigned int flags,
+                       int *canceled, const char *passphrase, const char *derivedKey)
 {
   char *pw = NULL;
   DEK *dek;
   STRING2KEY help_s2k;
   int dummy_canceled;
-  char s2k_cacheidbuf[1+16+1];
+  char s2k_cacheidbuf[1 + 16 + 1];
   char *s2k_cacheid = NULL;
 
   if (!canceled)
@@ -462,10 +454,10 @@ passphrase_to_dek (int cipher_algo, STRING2KEY *s2k,
   /* Create a new salt or what else to be filled into the s2k for a
      new key.  */
   if (create && (s2k->mode == 1 || s2k->mode == 3))
-    {
-      // gcry_randomize (s2k->salt, 8, GCRY_STRONG_RANDOM);
+  {
+    // gcry_randomize (s2k->salt, 8, GCRY_STRONG_RANDOM);
 
-       printf("FIXING SALT VALUE\n");
+    printf("FIXING SALT VALUE\n");
     s2k->salt[0] = 0x0a;
     s2k->salt[1] = 0x0b;
     s2k->salt[2] = 0x0c;
@@ -474,17 +466,17 @@ passphrase_to_dek (int cipher_algo, STRING2KEY *s2k,
     s2k->salt[5] = 0x0f;
     s2k->salt[6] = 0x10;
     s2k->salt[7] = 0x11;
-      if ( s2k->mode == 3 )
-        {
-          /* We delay the encoding until it is really needed.  This is
-             if we are going to dynamically calibrate it, we need to
-             call out to gpg-agent and that should not be done during
-             option processing in main().  */
-          // if (!opt.s2k_count)
-          //   opt.s2k_count = encode_s2k_iterations (0);
-          s2k->count = 0xFF;//opt.s2k_count;
-        }
+    if (s2k->mode == 3)
+    {
+      /* We delay the encoding until it is really needed.  This is
+         if we are going to dynamically calibrate it, we need to
+         call out to gpg-agent and that should not be done during
+         option processing in main().  */
+      // if (!opt.s2k_count)
+      //   opt.s2k_count = encode_s2k_iterations (0);
+      s2k->count = 0xFF; // opt.s2k_count;
     }
+  }
 
   // /* If we do not have a passphrase available in NEXT_PW and status
   //    information are request, we print them now. */
@@ -512,12 +504,12 @@ passphrase_to_dek (int cipher_algo, STRING2KEY *s2k,
   // else
   //   {
   //     if (!nocache && (s2k->mode == 1 || s2k->mode == 3))
-	// {
-	//   memset (s2k_cacheidbuf, 0, sizeof s2k_cacheidbuf);
-	//   *s2k_cacheidbuf = 'S';
-	//   bin2hex (s2k->salt, 8, s2k_cacheidbuf + 1);
-	//   s2k_cacheid = s2k_cacheidbuf;
-	// }
+  // {
+  //   memset (s2k_cacheidbuf, 0, sizeof s2k_cacheidbuf);
+  //   *s2k_cacheidbuf = 'S';
+  //   bin2hex (s2k->salt, 8, s2k_cacheidbuf + 1);
+  //   s2k_cacheid = s2k_cacheidbuf;
+  // }
 
   //     if (opt.pinentry_mode == PINENTRY_MODE_LOOPBACK)
   //       {
@@ -534,7 +526,7 @@ passphrase_to_dek (int cipher_algo, STRING2KEY *s2k,
   //     if (*canceled)
   //       {
   //         xfree (pw);
-	//   write_status( STATUS_CANCELED_BY_USER );
+  //   write_status( STATUS_CANCELED_BY_USER );
   //         return NULL;
   //       }
   //   }
@@ -545,7 +537,7 @@ passphrase_to_dek (int cipher_algo, STRING2KEY *s2k,
   /* Hash the passphrase and store it in a newly allocated DEK object.
      Keep a copy of the passphrase in LAST_PW for use by
      get_last_passphrase(). */
-  dek = xmalloc_clear ( sizeof *dek );
+  dek = xmalloc_clear(sizeof *dek);
   dek->algo = cipher_algo;
   // if ( (!pw || !*pw) && create)
   //   dek->keylen = 0;
@@ -553,9 +545,9 @@ passphrase_to_dek (int cipher_algo, STRING2KEY *s2k,
   //   {
   //     int err;
 
-      dek->keylen = 16;// openpgp_cipher_get_algo_keylen (dek->algo);
-      // if (!(dek->keylen > 0 && dek->keylen <= DIM(dek->key)))
-      //   BUG ();
+  dek->keylen = 16; // openpgp_cipher_get_algo_keylen (dek->algo);
+  // if (!(dek->keylen > 0 && dek->keylen <= DIM(dek->key)))
+  //   BUG ();
   //     err = gcry_kdf_derive (pw, strlen (pw),
   //                            s2k->mode == 3? GCRY_KDF_ITERSALTED_S2K :
   //                            s2k->mode == 1? GCRY_KDF_SALTED_S2K :
@@ -568,7 +560,7 @@ passphrase_to_dek (int cipher_algo, STRING2KEY *s2k,
   //         log_error ("gcry_kdf_derive failed: %s", gpg_strerror (err));
   //         xfree (pw);
   //         xfree (dek);
-	//   write_status( STATUS_MISSING_PASSPHRASE );
+  //   write_status( STATUS_MISSING_PASSPHRASE );
   //         return NULL;
   //       }
   // }
@@ -576,168 +568,167 @@ passphrase_to_dek (int cipher_algo, STRING2KEY *s2k,
   //   memcpy (dek->s2k_cacheid, s2k_cacheid, sizeof dek->s2k_cacheid);
   // xfree(last_pw);
   // last_pw = pw;
-      uint32_t iterations = ((uint32_t)16 + (0xFF & 15)) << ((0xFF >> 4) + 6);
-  if(derivedKey){
-    printf("DERIVED: %s\n", derivedKey);
+  uint32_t iterations = ((uint32_t)16 + (0xFF & 15)) << ((0xFF >> 4) + 6);
+  if (derivedKey != NULL)
+  {
+    printf("OVERRIDDEN: %s\n", derivedKey);
     // Usage example:
-uint8_t key[dek->keylen];  // For SHA1 output
-hex_to_bytes(derivedKey, key, dek->keylen);
-memcpy(dek->key, key, dek->keylen);
-
+    uint8_t key[dek->keylen]; // For SHA1 output
+    hex_to_bytes(derivedKey, key, dek->keylen);
+    memcpy(dek->key, key, dek->keylen);
   }
-  else derive_key(s2k->salt, passphrase, strlen(passphrase), iterations, dek->key);
+  else
+    derive_key(s2k->salt, passphrase, strlen(passphrase), iterations, dek->key);
 
-
-  
-    printf("DEK Information:\n");
-    printf("Algorithm: %d\n", dek->algo);
-    printf("Key Length: %d bytes\n", dek->keylen);
-    // printf("Algorithm Info Printed: %s\n", dek->algo_info_printed ? "Yes" : "No");
-    // printf("Use AEAD: %d\n", dek->use_aead);
-    // printf("Use MDC: %s\n", dek->use_mdc ? "Yes" : "No");
-    // printf("Symmetric: %s\n", dek->symmetric ? "Yes" : "No");
-    // log_hexdump( dek->key, dek->keylen);
-    printf("Key: ");
-    for (int i = 0; i < dek->keylen; i++) {
-       printf("%02x", dek->key[i]);
-    }
-    printf("\n");
-    // printf("S2K Cache ID: %s\n", dek->s2k_cacheid);
+  printf("DEK Information:\n");
+  printf("Algorithm: %d\n", dek->algo);
+  printf("Key Length: %d bytes\n", dek->keylen);
+  // printf("Algorithm Info Printed: %s\n", dek->algo_info_printed ? "Yes" : "No");
+  // printf("Use AEAD: %d\n", dek->use_aead);
+  // printf("Use MDC: %s\n", dek->use_mdc ? "Yes" : "No");
+  // printf("Symmetric: %s\n", dek->symmetric ? "Yes" : "No");
+  // log_hexdump( dek->key, dek->keylen);
+  printf("Key: ");
+  for (int i = 0; i < dek->keylen; i++)
+  {
+    printf("%02x", dek->key[i]);
+  }
+  printf("\n");
+  // printf("S2K Cache ID: %s\n", dek->s2k_cacheid);
   return dek;
 }
 
 static void
-proc_symkey_enc (CTX c, PACKET *pkt)
+proc_symkey_enc(CTX c, PACKET *pkt)
 {
-  printf ("proc_symkey_enc\n");
+  printf("proc_symkey_enc\n");
   gpg_error_t err;
   PKT_symkey_enc *enc;
 
   enc = pkt->pkt.symkey_enc;
   if (!enc)
-    printf ("invalid symkey encrypted packet\n");
-  else if(!c->dek)
+    printf("invalid symkey encrypted packet\n");
+  else if (!c->dek)
+  {
+    printf("no DEK\n");
+    int algo = enc->cipher_algo;
+    const char *s = "CAST5"; // openpgp_cipher_algo_name (algo);
+    const char *a =          //(enc->aead_algo ? openpgp_aead_algo_name (enc->aead_algo)
+        /**/                 //:
+        "CFB";               //);
+
+    if (1) //! openpgp_cipher_test_algo (algo))
     {
-      printf ("no DEK\n");
-      int algo = enc->cipher_algo;
-      const char *s = "CAST5";//openpgp_cipher_algo_name (algo);
-      const char *a = //(enc->aead_algo ? openpgp_aead_algo_name (enc->aead_algo)
-                       /**/           //: 
-                       "CFB";//);
-
-      if (1)//!openpgp_cipher_test_algo (algo))
-        {
-          if (1)//!opt.quiet)
-            {
-              /* Note: TMPSTR is only used to avoid i18n changes.  */
-              // char *tmpstr = xstrconcat (s, ".", a, NULL);
-              // if (enc->seskeylen)
-              //   printf (("%s encrypted session key\n"), tmpstr);
-              // else
-                printf (("%s %s encrypted data\n"), s, a);
-              // xfree (tmpstr);
-            }
-        }
-      else
-        {
-          printf (("encrypted with unknown algorithm %d\n"), algo);
-          s = NULL; /* Force a goto leave.  */
-        }
-
-      // if (openpgp_md_test_algo (enc->s2k.hash_algo))
-      //   {
-      //     printf(("passphrase generated with unknown digest"
-      //                 " algorithm %d\n"),enc->s2k.hash_algo);
-      //     s = NULL;
-      //   }
-
-      c->last_was_session_key = 2;
-      if (!s)// || opt.list_only)
-        goto leave;
-
-      // if (opt.override_session_key)
-      //   {
-      //     c->dek = xmalloc_clear (sizeof *c->dek);
-      //     if (get_override_session_key (c->dek, opt.override_session_key))
-      //       {
-      //         xfree (c->dek);
-      //         c->dek = NULL;
-      //       }
-      //   }
-      else
-        {
-          printf("passphrase len: %zu\n", strlen(c->passphrase));
-          printf("DO DEK HERE %s\n",c->passphrase);
-  c->dek = passphrase_to_dek (algo,
-                                   &enc->s2k, 0, 1, NULL, 0, 0, c->passphrase, c->session_key);// derivedKey);
-                                   
-          // c->dek = passphrase_to_dek (algo, &enc->s2k, 0, 0, NULL,
-          //                             GETPASSWORD_FLAG_SYMDECRYPT, NULL);
-          if (c->dek)
-            {
-              c->dek->symmetric = 1;
-              c->dek->use_aead = enc->aead_algo;
-
-              /* FIXME: This doesn't work perfectly if a symmetric key
-                 comes before a public key in the message - if the
-                 user doesn't know the passphrase, then there is a
-                 chance that the "decrypted" algorithm will happen to
-                 be a valid one, which will make the returned dek
-                 appear valid, so we won't try any public keys that
-                 come later. */
-              // if (enc->seskeylen)
-              //   {
-              //     err = symkey_decrypt_seskey (c->dek,
-              //                                  enc->seskey, enc->seskeylen);
-              //     if (err)
-              //       {
-              //         printf ("decryption of the symmetrically encrypted"
-              //                    " session key failed: %s\n",
-              //                    gpg_strerror (err));
-              //         if (gpg_err_code (err) != GPG_ERR_BAD_KEY
-              //             && gpg_err_code (err) != GPG_ERR_CHECKSUM)
-              //           log_fatal ("process terminated to be bug compatible\n");
-              //         else
-              //           printf (STATUS_ERROR,
-              //                              "symkey_decrypt.maybe_error"
-              //                              " 11_BAD_PASSPHRASE");
-
-              //         if (c->dek->s2k_cacheid[0])
-              //           {
-              //             // if (opt.debug)
-              //             //   log_debug ("cleared passphrase cached with ID:"
-              //             //              " %s\n", c->dek->s2k_cacheid);
-              //             // passphrase_clear_cache (c->dek->s2k_cacheid);
-              //           }
-              //         xfree (c->dek);
-              //         c->dek = NULL;
-              //       }
-              //   }
-              // else
-                c->dek->algo_info_printed = 1;
-            }
-        }
+      if (1) //! opt.quiet)
+      {
+        /* Note: TMPSTR is only used to avoid i18n changes.  */
+        // char *tmpstr = xstrconcat (s, ".", a, NULL);
+        // if (enc->seskeylen)
+        //   printf (("%s encrypted session key\n"), tmpstr);
+        // else
+        printf(("%s %s encrypted data\n"), s, a);
+        // xfree (tmpstr);
+      }
+    }
+    else
+    {
+      printf(("encrypted with unknown algorithm %d\n"), algo);
+      s = NULL; /* Force a goto leave.  */
     }
 
- leave:
+    // if (openpgp_md_test_algo (enc->s2k.hash_algo))
+    //   {
+    //     printf(("passphrase generated with unknown digest"
+    //                 " algorithm %d\n"),enc->s2k.hash_algo);
+    //     s = NULL;
+    //   }
+
+    c->last_was_session_key = 2;
+    if (!s) // || opt.list_only)
+      goto leave;
+
+    // if (opt.override_session_key)
+    //   {
+    //     c->dek = xmalloc_clear (sizeof *c->dek);
+    //     if (get_override_session_key (c->dek, opt.override_session_key))
+    //       {
+    //         xfree (c->dek);
+    //         c->dek = NULL;
+    //       }
+    //   }
+    else
+    {
+      printf("passphrase len: %zu\n", strlen(c->passphrase));
+      printf("DO DEK HERE %s\n", c->passphrase);
+      c->dek = passphrase_to_dek(algo,
+                                 &enc->s2k, 0, 1, NULL, 0, 0, c->passphrase, c->session_key); // derivedKey);
+
+      // c->dek = passphrase_to_dek (algo, &enc->s2k, 0, 0, NULL,
+      //                             GETPASSWORD_FLAG_SYMDECRYPT, NULL);
+      if (c->dek)
+      {
+        c->dek->symmetric = 1;
+        c->dek->use_aead = enc->aead_algo;
+
+        /* FIXME: This doesn't work perfectly if a symmetric key
+           comes before a public key in the message - if the
+           user doesn't know the passphrase, then there is a
+           chance that the "decrypted" algorithm will happen to
+           be a valid one, which will make the returned dek
+           appear valid, so we won't try any public keys that
+           come later. */
+        // if (enc->seskeylen)
+        //   {
+        //     err = symkey_decrypt_seskey (c->dek,
+        //                                  enc->seskey, enc->seskeylen);
+        //     if (err)
+        //       {
+        //         printf ("decryption of the symmetrically encrypted"
+        //                    " session key failed: %s\n",
+        //                    gpg_strerror (err));
+        //         if (gpg_err_code (err) != GPG_ERR_BAD_KEY
+        //             && gpg_err_code (err) != GPG_ERR_CHECKSUM)
+        //           log_fatal ("process terminated to be bug compatible\n");
+        //         else
+        //           printf (STATUS_ERROR,
+        //                              "symkey_decrypt.maybe_error"
+        //                              " 11_BAD_PASSPHRASE");
+
+        //         if (c->dek->s2k_cacheid[0])
+        //           {
+        //             // if (opt.debug)
+        //             //   log_debug ("cleared passphrase cached with ID:"
+        //             //              " %s\n", c->dek->s2k_cacheid);
+        //             // passphrase_clear_cache (c->dek->s2k_cacheid);
+        //           }
+        //         xfree (c->dek);
+        //         c->dek = NULL;
+        //       }
+        //   }
+        // else
+        c->dek->algo_info_printed = 1;
+      }
+    }
+  }
+
+leave:
   /* Record infos from the packet.  */
   {
-    struct symlist_item  *symitem;
-    symitem = xcalloc (1, sizeof *symitem);
+    struct symlist_item *symitem;
+    symitem = xcalloc(1, sizeof *symitem);
     if (enc)
-      {
-        symitem->cipher_algo = enc->cipher_algo;
-        symitem->cfb_mode = !enc->aead_algo;
-      }
+    {
+      symitem->cipher_algo = enc->cipher_algo;
+      symitem->cfb_mode = !enc->aead_algo;
+    }
     else
       symitem->other_error = 1;
     symitem->next = c->symenc_list;
     c->symenc_list = symitem;
   }
   c->symkeys++;
-//   free_packet (pkt, NULL);
+  //   free_packet (pkt, NULL);
 }
-
 
 // static void
 // proc_pubkey_enc (ctrl_t ctrl, CTX c, PACKET *pkt)
@@ -834,7 +825,6 @@ proc_symkey_enc (CTX c, PACKET *pkt)
 //   free_packet(pkt, NULL);
 // }
 
-
 // /*
 //  * Print the list of public key encrypted packets which we could
 //  * not decrypt.
@@ -900,11 +890,10 @@ proc_symkey_enc (CTX c, PACKET *pkt)
 //     }
 // }
 
-
 static void
-proc_encrypted (CTX c, PACKET *pkt)
+proc_encrypted(CTX c, PACKET *pkt)
 {
-  printf ("processing encrypted packet\n");
+  printf("processing encrypted packet\n");
   int result = 0;
   int early_plaintext = literals_seen;
   unsigned int compliance_de_vs = 0;
@@ -915,30 +904,30 @@ proc_encrypted (CTX c, PACKET *pkt)
     c->seen_pkt_encrypted_mdc = 1;
 
   if (early_plaintext)
-    {
-      printf (("WARNING: multiple plaintexts seen\n"));
-      printf ("decryption.early_plaintext", GPG_ERR_BAD_DATA);
-      /* We fail only later so that we can print some more info first.  */
-    }
+  {
+    printf(("WARNING: multiple plaintexts seen\n"));
+    printf("decryption.early_plaintext", GPG_ERR_BAD_DATA);
+    /* We fail only later so that we can print some more info first.  */
+  }
 
-  if (1)//!opt.quiet)
-    {
-      if (c->symkeys>1)
-        printf (("encrypted with %lu passphrases\n"), c->symkeys);
-      else if (c->symkeys == 1)
-        printf (("encrypted with 1 passphrase\n"));
-      // print_pkenc_list (c->ctrl, c->pkenc_list, 1 );
-      // print_pkenc_list (c->ctrl, c->pkenc_list, 0 );
-    }
+  if (1) //! opt.quiet)
+  {
+    if (c->symkeys > 1)
+      printf(("encrypted with %lu passphrases\n"), c->symkeys);
+    else if (c->symkeys == 1)
+      printf(("encrypted with 1 passphrase\n"));
+    // print_pkenc_list (c->ctrl, c->pkenc_list, 1 );
+    // print_pkenc_list (c->ctrl, c->pkenc_list, 0 );
+  }
 
   /* FIXME: Figure out the session key by looking at all pkenc packets. */
 
-  //printf (STATUS_BEGIN_DECRYPTION);
+  // printf (STATUS_BEGIN_DECRYPTION);
 
   /*log_debug("dat: %sencrypted data\n", c->dek?"":"conventional ");*/
   // if (opt.list_only)
   //   result = -1;
-  //else
+  // else
   //  if (!c->dek && !c->last_was_session_key)
   //   {
   //     int algo;
@@ -986,7 +975,7 @@ proc_encrypted (CTX c, PACKET *pkt)
   //           }
   //         printf(("enter passphrase: "));
   //         /*c->dek = passphrase_to_dek (algo, s2k, 0, 0, NULL,
-  //                                     //GETPASSWORD_FLAG_SYMDECRYPT, 
+  //                                     //GETPASSWORD_FLAG_SYMDECRYPT,
   //                                     1, &canceled);*/
   //         if (c->dek)
   //           c->dek->algo_info_printed = 1;
@@ -1046,20 +1035,19 @@ proc_encrypted (CTX c, PACKET *pkt)
   //       compliance_de_vs |= 1;
   //   }
 
-
   if (!result)
-    {
-      int compl_error;
-      result = decrypt_data (c->ctrl, c, pkt->pkt.encrypted, c->dek,
-                             &compl_error);
-      if (!result && !compl_error)
-        compliance_de_vs |= 2;
-    }
+  {
+    int compl_error;
+    result = decrypt_data(c->ctrl, c, pkt->pkt.encrypted, c->dek,
+                          &compl_error);
+    if (!result && !compl_error)
+      compliance_de_vs |= 2;
+  }
 
   /* Trigger the deferred error.  The second condition makes sure that a
    * printf printed in the cry_cipher_checktag never gets ignored.  */
   if (!result && early_plaintext)
-    result = gpg_error (GPG_ERR_BAD_DATA);
+    result = gpg_error(GPG_ERR_BAD_DATA);
   // else if (!result && pkt->pkt.encrypted->aead_algo
   //          && log_get_errorcount (0))
   //   result = gpg_error (GPG_ERR_BAD_SIGNATURE);
@@ -1097,79 +1085,73 @@ proc_encrypted (CTX c, PACKET *pkt)
   //     printf (("decryption forced to fail!\n"));
   //     printf (STATUS_DECRYPTION_FAILED);
   //   }
-  else if (!result || (gpg_err_code (result) == GPG_ERR_BAD_SIGNATURE
-                       && !pkt->pkt.encrypted->aead_algo
-                       && 1))//opt.ignore_mdc_error))
-    {
-      /* All is fine or for an MDC message the MDC failed but the
-       * --ignore-mdc-error option is active.  For compatibility
-       * reasons we issue GOODMDC also for AEAD messages.  */
-      printf (STATUS_DECRYPTION_OKAY);
-     // if (opt.verbose > 1)
-        printf(("decryption okay\n"));
+  else if (!result || (gpg_err_code(result) == GPG_ERR_BAD_SIGNATURE && !pkt->pkt.encrypted->aead_algo && 1)) // opt.ignore_mdc_error))
+  {
+    /* All is fine or for an MDC message the MDC failed but the
+     * --ignore-mdc-error option is active.  For compatibility
+     * reasons we issue GOODMDC also for AEAD messages.  */
+    printf(STATUS_DECRYPTION_OKAY);
+    // if (opt.verbose > 1)
+    printf(("decryption okay\n"));
 
-      // if (pkt->pkt.encrypted->aead_algo)
-      //   {
-      //     printf (STATUS_GOODMDC);
-      //     compliance_de_vs |= 4;
-      //   }
-      // else if (pkt->pkt.encrypted->mdc_method && !result)
-      //   {
-      //     printf (STATUS_GOODMDC);
-      //     compliance_de_vs |= 4;
-      //   }
-      // else
-        printf (("WARNING: message was not integrity protected\n"));
-    }
-  else if (gpg_err_code (result) == GPG_ERR_BAD_SIGNATURE
-           || gpg_err_code (result) == GPG_ERR_TRUNCATED)
-    {
-      // glo_ctrl.lasterr = result;
-      printf (("WARNING: encrypted message has been manipulated!\n"));
-      printf (STATUS_BADMDC);
-      printf (STATUS_DECRYPTION_FAILED);
-    }
+    // if (pkt->pkt.encrypted->aead_algo)
+    //   {
+    //     printf (STATUS_GOODMDC);
+    //     compliance_de_vs |= 4;
+    //   }
+    // else if (pkt->pkt.encrypted->mdc_method && !result)
+    //   {
+    //     printf (STATUS_GOODMDC);
+    //     compliance_de_vs |= 4;
+    //   }
+    // else
+    printf(("WARNING: message was not integrity protected\n"));
+  }
+  else if (gpg_err_code(result) == GPG_ERR_BAD_SIGNATURE || gpg_err_code(result) == GPG_ERR_TRUNCATED)
+  {
+    // glo_ctrl.lasterr = result;
+    printf(("WARNING: encrypted message has been manipulated!\n"));
+    printf(STATUS_BADMDC);
+    printf(STATUS_DECRYPTION_FAILED);
+  }
   else
+  {
+    if (gpg_err_code(result) == GPG_ERR_BAD_KEY || gpg_err_code(result) == GPG_ERR_CHECKSUM || gpg_err_code(result) == GPG_ERR_CIPHER_ALGO)
     {
-      if (gpg_err_code (result) == GPG_ERR_BAD_KEY
-          || gpg_err_code (result) == GPG_ERR_CHECKSUM
-          || gpg_err_code (result) == GPG_ERR_CIPHER_ALGO)
-        {
-          if (c->symkeys)
-            printf (STATUS_ERROR,
-                               "symkey_decrypt.maybe_error"
-                               " 11_BAD_PASSPHRASE");
+      if (c->symkeys)
+        printf(STATUS_ERROR,
+               "symkey_decrypt.maybe_error"
+               " 11_BAD_PASSPHRASE");
 
-          // if (*c->dek->s2k_cacheid != '\0')
-          //   {
-          //     if (opt.debug)
-          //       log_debug ("cleared passphrase cached with ID: %s\n",
-          //                  c->dek->s2k_cacheid);
-          //     passphrase_clear_cache (c->dek->s2k_cacheid);
-          //   }
-        }
-      // glo_ctrl.lasterr = result;
-      printf (STATUS_DECRYPTION_FAILED);
-      printf (("decryption failed: %s\n"));//, gpg_strerror (result));
-      /* Hmmm: does this work when we have encrypted using multiple
-       * ways to specify the session key (symmmetric and PK). */
+      // if (*c->dek->s2k_cacheid != '\0')
+      //   {
+      //     if (opt.debug)
+      //       log_debug ("cleared passphrase cached with ID: %s\n",
+      //                  c->dek->s2k_cacheid);
+      //     passphrase_clear_cache (c->dek->s2k_cacheid);
+      //   }
     }
-
+    // glo_ctrl.lasterr = result;
+    printf(STATUS_DECRYPTION_FAILED);
+    printf(("decryption failed: %s\n")); //, gpg_strerror (result));
+    /* Hmmm: does this work when we have encrypted using multiple
+     * ways to specify the session key (symmmetric and PK). */
+  }
 
   /* If we concluded that the decryption was compliant, issue a
    * compliance status before the end of the decryption status.  */
-  if (compliance_de_vs == (4|2|1))
-    {
-      write_status_strings (STATUS_DECRYPTION_COMPLIANCE_MODE,
-                            gnupg_status_compliance_flag (CO_DE_VS),
-                            NULL);
-    }
+  if (compliance_de_vs == (4 | 2 | 1))
+  {
+    write_status_strings(STATUS_DECRYPTION_COMPLIANCE_MODE,
+                         gnupg_status_compliance_flag(CO_DE_VS),
+                         NULL);
+  }
 
-  xfree (c->dek);
+  xfree(c->dek);
   c->dek = NULL;
-  free_packet (pkt, NULL);
+  free_packet(pkt, NULL);
   c->last_was_session_key = 0;
-  printf (STATUS_END_DECRYPTION);
+  printf(STATUS_END_DECRYPTION);
 
   /* Bump the counter even if we have not seen a literal data packet
    * inside an encryption container.  This acts as a sentinel in case
@@ -1188,23 +1170,21 @@ proc_encrypted (CTX c, PACKET *pkt)
   //   }
 }
 
-
 static int
-have_seen_pkt_encrypted_aead_or_mdc( CTX c )
+have_seen_pkt_encrypted_aead_or_mdc(CTX c)
 {
   CTX cc;
 
   for (cc = c; cc; cc = cc->anchor)
-    {
-      if (cc->seen_pkt_encrypted_aead)
-	return 1;
-      if (cc->seen_pkt_encrypted_mdc)
-	return 1;
-    }
+  {
+    if (cc->seen_pkt_encrypted_aead)
+      return 1;
+    if (cc->seen_pkt_encrypted_mdc)
+      return 1;
+  }
 
   return 0;
 }
-
 
 // static void
 // proc_plaintext( CTX c, PACKET *pkt )
@@ -1342,7 +1322,6 @@ have_seen_pkt_encrypted_aead_or_mdc( CTX c )
 //     c->list = n;
 // }
 
-
 // static int
 // proc_compressed_cb (iobuf_t a, void *info)
 // {
@@ -1356,14 +1335,12 @@ have_seen_pkt_encrypted_aead_or_mdc( CTX c )
 //                                    ((CTX)info)->sigfilename );
 // }
 
-
 static int
-proc_encrypt_cb (iobuf_t a, void *info )
+proc_encrypt_cb(iobuf_t a, void *info)
 {
   CTX c = info;
-  return proc_encryption_packets (c->ctrl, info, a );
+  return proc_encryption_packets(c->ctrl, info, a);
 }
-
 
 // static int
 // proc_compressed (CTX c, PACKET *pkt)
@@ -1397,7 +1374,6 @@ proc_encrypt_cb (iobuf_t a, void *info )
 //   c->last_was_session_key = 0;
 //   return rc;
 // }
-
 
 // /*
 //  * Check the signature.  If R_PK is not NULL a copy of the public key
@@ -1531,7 +1507,6 @@ proc_encrypt_cb (iobuf_t a, void *info )
 //   return rc;
 // }
 
-
 // static void
 // print_userid (PACKET *pkt)
 // {
@@ -1557,7 +1532,6 @@ proc_encrypt_cb (iobuf_t a, void *info )
 //     print_utf8_buffer (es_stdout, pkt->pkt.user_id->name,
 //                        pkt->pkt.user_id->len );
 // }
-
 
 // /*
 //  * List the keyblock in a user friendly way
@@ -1741,24 +1715,19 @@ proc_encrypt_cb (iobuf_t a, void *info )
 //     printf ("invalid node with packet of type %d\n", node->pkt->pkttype);
 // }
 
-
-
-
-int
-proc_packets (ctrl_t ctrl, void *anchor, iobuf_t a )
+int proc_packets(ctrl_t ctrl, void *anchor, iobuf_t a)
 {
   printf("proc_packets\n");
   int rc;
-  CTX c = xmalloc_clear (sizeof *c);
-  
+  CTX c = xmalloc_clear(sizeof *c);
+
   c->ctrl = ctrl;
   c->anchor = anchor;
-  rc = do_proc_packets (ctrl, c, a);
-  xfree (c);
+  rc = do_proc_packets(ctrl, c, a);
+  xfree(c);
 
   return rc;
 }
-
 
 // int
 // proc_signature_packets (ctrl_t ctrl, void *anchor, iobuf_t a,
@@ -1798,7 +1767,6 @@ proc_packets (ctrl_t ctrl, void *anchor, iobuf_t a )
 //   xfree (c);
 //   return rc;
 // }
-
 
 // int
 // proc_signature_packets_by_fd (ctrl_t ctrl,
@@ -1842,19 +1810,17 @@ proc_packets (ctrl_t ctrl, void *anchor, iobuf_t a )
 //   return rc;
 // }
 
-
-int
-proc_encryption_packets (ctrl_t ctrl, void *anchor, iobuf_t a )
+int proc_encryption_packets(ctrl_t ctrl, void *anchor, iobuf_t a)
 {
   printf("proc_encryption_packets a->use: %d\n", a->use);
-  CTX c = xmalloc_clear (sizeof *c);
+  CTX c = xmalloc_clear(sizeof *c);
   int rc;
 
   c->ctrl = ctrl;
   c->anchor = anchor;
   c->encrypt_only = 1;
-  rc = do_proc_packets (ctrl, c, a);
-  xfree (c);
+  rc = do_proc_packets(ctrl, c, a);
+  xfree(c);
   return rc;
 }
 
@@ -1863,198 +1829,206 @@ proc_encryption_packets (ctrl_t ctrl, void *anchor, iobuf_t a )
 #define MAX_NESTING_DEPTH 32
 
 static int
-check_nesting (CTX c)
+check_nesting(CTX c)
 {
   int level;
 
-  for (level=0; c; c = c->anchor)
+  for (level = 0; c; c = c->anchor)
     level++;
 
   if (level > MAX_NESTING_DEPTH)
-    {
-      printf ("input data with too deeply nested packets\n");
-      printf (STATUS_UNEXPECTED, "1");
-      return GPG_ERR_BAD_DATA;
-    }
+  {
+    printf("input data with too deeply nested packets\n");
+    printf(STATUS_UNEXPECTED, "1");
+    return GPG_ERR_BAD_DATA;
+  }
 
   return 0;
 }
 
-
 static int
-do_proc_packets (ctrl_t ctrl, CTX c, iobuf_t a)
+do_proc_packets(ctrl_t ctrl, CTX c, iobuf_t a)
 {
   printf("do_proc_packets %s\n", ctrl->passphrase);
   // Copy across any main ctx passphrase or session_key
-  c->passphrase = malloc(strlen(ctrl->passphrase) + 1);
-  my_strcpy(c->passphrase, ctrl->passphrase);
-
-  c->session_key = malloc(strlen(ctrl->session_key) + 1);
-  my_strcpy(c->session_key, ctrl->session_key);
-  //log_printhex(c->iobuf->d.buf,c->iobuf->d.len,"do_proc_packets");
+  if (ctrl->passphrase != NULL)
+  {
+    c->passphrase = malloc(strlen(ctrl->passphrase) + 1);
+    my_strcpy(c->passphrase, ctrl->passphrase);
+  }
+  if (ctrl->session_key != NULL)
+  {
+    printf("do_proc_packets %s\n", ctrl->session_key);
+    c->session_key = malloc(strlen(ctrl->session_key) + 1);
+    my_strcpy(c->session_key, ctrl->session_key);
+  }
+  // log_printhex(c->iobuf->d.buf,c->iobuf->d.len,"do_proc_packets");
   PACKET *pkt;
   struct parse_packet_ctx_s parsectx;
   int rc = 0;
   int any_data = 0;
   int newpkt;
 
-  rc = check_nesting (c);
+  rc = check_nesting(c);
   if (rc)
     return rc;
 
-  pkt = xmalloc( sizeof *pkt );
+  pkt = xmalloc(sizeof *pkt);
   c->iobuf = a;
   init_packet(pkt);
-  init_parse_packet (&parsectx, a);
-  while ((rc=parse_packet (&parsectx, pkt)) != -1)
+  init_parse_packet(&parsectx, a);
+  while ((rc = parse_packet(&parsectx, pkt)) != -1)
+  {
+    any_data = 1;
+    if (rc)
     {
-      any_data = 1;
-      if (rc)
-        {
-          free_packet (pkt, &parsectx);
-          /* Stop processing when an invalid packet has been encountered
-           * but don't do so when we are doing a --list-packets.  */
-          if (gpg_err_code (rc) == GPG_ERR_INV_PACKET
-              && 1)//opt.list_packets == 0)
-            break;
-          continue;
-	      }
-      newpkt = -1;
-  //     if (opt.list_packets)
-  //       {
-  //         switch (pkt->pkttype)
-  //           {
-  //           case PKT_PUBKEY_ENC:    proc_pubkey_enc (ctrl, c, pkt); break;
-  //           case PKT_SYMKEY_ENC:    proc_symkey_enc (c, pkt); break;
-  //           case PKT_ENCRYPTED:
-  //           case PKT_ENCRYPTED_MDC:
-  //           case PKT_ENCRYPTED_AEAD:proc_encrypted (c, pkt); break;
-  //           case PKT_COMPRESSED:    rc = proc_compressed (c, pkt); break;
-  //           default: newpkt = 0; break;
-	//     }
-	// }
-  //     else if (c->sigs_only)
-  //       {
-  //         switch (pkt->pkttype)
-  //           {
-  //           case PKT_PUBLIC_KEY:
-  //           case PKT_SECRET_KEY:
-  //           case PKT_USER_ID:
-  //           case PKT_SYMKEY_ENC:
-  //           case PKT_PUBKEY_ENC:
-  //           case PKT_ENCRYPTED:
-  //           case PKT_ENCRYPTED_MDC:
-  //           case PKT_ENCRYPTED_AEAD:
-  //             printf( STATUS_UNEXPECTED, "0" );
-  //             rc = GPG_ERR_UNEXPECTED;
-  //             goto leave;
+      free_packet(pkt, &parsectx);
+      /* Stop processing when an invalid packet has been encountered
+       * but don't do so when we are doing a --list-packets.  */
+      if (gpg_err_code(rc) == GPG_ERR_INV_PACKET && 1) // opt.list_packets == 0)
+        break;
+      continue;
+    }
+    newpkt = -1;
+    //     if (opt.list_packets)
+    //       {
+    //         switch (pkt->pkttype)
+    //           {
+    //           case PKT_PUBKEY_ENC:    proc_pubkey_enc (ctrl, c, pkt); break;
+    //           case PKT_SYMKEY_ENC:    proc_symkey_enc (c, pkt); break;
+    //           case PKT_ENCRYPTED:
+    //           case PKT_ENCRYPTED_MDC:
+    //           case PKT_ENCRYPTED_AEAD:proc_encrypted (c, pkt); break;
+    //           case PKT_COMPRESSED:    rc = proc_compressed (c, pkt); break;
+    //           default: newpkt = 0; break;
+    //     }
+    // }
+    //     else if (c->sigs_only)
+    //       {
+    //         switch (pkt->pkttype)
+    //           {
+    //           case PKT_PUBLIC_KEY:
+    //           case PKT_SECRET_KEY:
+    //           case PKT_USER_ID:
+    //           case PKT_SYMKEY_ENC:
+    //           case PKT_PUBKEY_ENC:
+    //           case PKT_ENCRYPTED:
+    //           case PKT_ENCRYPTED_MDC:
+    //           case PKT_ENCRYPTED_AEAD:
+    //             printf( STATUS_UNEXPECTED, "0" );
+    //             rc = GPG_ERR_UNEXPECTED;
+    //             goto leave;
 
-  //           case PKT_SIGNATURE:   newpkt = add_signature (c, pkt); break;
-  //           case PKT_PLAINTEXT:   proc_plaintext (c, pkt); break;
-  //           case PKT_COMPRESSED:  rc = proc_compressed (c, pkt); break;
-  //           case PKT_ONEPASS_SIG: newpkt = add_onepass_sig (c, pkt); break;
-  //           case PKT_GPG_CONTROL: newpkt = add_gpg_control (c, pkt); break;
-  //           default: newpkt = 0; break;
-	//     }
-	// }
-      if (c->encrypt_only)
-        {
-          switch (pkt->pkttype)
-            {
-            case PKT_PUBLIC_KEY:
-            case PKT_SECRET_KEY:
-            case PKT_USER_ID:
-     //         printf (STATUS_UNEXPECTED, "0");
-              rc = GPG_ERR_UNEXPECTED;
-              goto leave;
-
-            // case PKT_SIGNATURE:   newpkt = add_signature (c, pkt); break;
-            case PKT_SYMKEY_ENC:  proc_symkey_enc (c, pkt); break;
-            // case PKT_PUBKEY_ENC:  proc_pubkey_enc (ctrl, c, pkt); break;
-            case PKT_ENCRYPTED:
-            case PKT_ENCRYPTED_MDC:
-            case PKT_ENCRYPTED_AEAD: proc_encrypted (c, pkt); break;
-            // case PKT_PLAINTEXT:   proc_plaintext (c, pkt); break;
-            // case PKT_COMPRESSED:  rc = proc_compressed (c, pkt); break;
-            //case PKT_ONEPASS_SIG: newpkt = add_onepass_sig (c, pkt); break;
-            // case PKT_GPG_CONTROL: newpkt = add_gpg_control (c, pkt); break;
-            default: newpkt = 0; break;
-	    }
-	}
-  //     else
-  //       {
-  //         switch (pkt->pkttype)
-  //           {
-  //           case PKT_PUBLIC_KEY:
-  //           case PKT_SECRET_KEY:
-  //             release_list (c);
-  //             c->list = new_kbnode (pkt);
-  //             newpkt = 1;
-  //             break;
-  //           case PKT_PUBLIC_SUBKEY:
-  //           case PKT_SECRET_SUBKEY:
-  //             newpkt = add_subkey (c, pkt);
-  //             break;
-  //           case PKT_USER_ID:     newpkt = add_user_id (c, pkt); break;
-  //           case PKT_SIGNATURE:   newpkt = add_signature (c, pkt); break;
-  //           case PKT_PUBKEY_ENC:  proc_pubkey_enc (ctrl, c, pkt); break;
-  //           case PKT_SYMKEY_ENC:  proc_symkey_enc (c, pkt); break;
-  //           case PKT_ENCRYPTED:
-  //           case PKT_ENCRYPTED_MDC:
-  //           case PKT_ENCRYPTED_AEAD: proc_encrypted (c, pkt); break;
-  //           case PKT_PLAINTEXT:   proc_plaintext (c, pkt); break;
-  //           case PKT_COMPRESSED:  rc = proc_compressed (c, pkt); break;
-  //           case PKT_ONEPASS_SIG: newpkt = add_onepass_sig (c, pkt); break;
-  //           case PKT_GPG_CONTROL: newpkt = add_gpg_control(c, pkt); break;
-  //           case PKT_RING_TRUST:  newpkt = add_ring_trust (c, pkt); break;
-  //           default: newpkt = 0; break;
-	//     }
-	// }
-
-      if (rc)
+    //           case PKT_SIGNATURE:   newpkt = add_signature (c, pkt); break;
+    //           case PKT_PLAINTEXT:   proc_plaintext (c, pkt); break;
+    //           case PKT_COMPRESSED:  rc = proc_compressed (c, pkt); break;
+    //           case PKT_ONEPASS_SIG: newpkt = add_onepass_sig (c, pkt); break;
+    //           case PKT_GPG_CONTROL: newpkt = add_gpg_control (c, pkt); break;
+    //           default: newpkt = 0; break;
+    //     }
+    // }
+    if (c->encrypt_only)
+    {
+      switch (pkt->pkttype)
+      {
+      case PKT_PUBLIC_KEY:
+      case PKT_SECRET_KEY:
+      case PKT_USER_ID:
+        //         printf (STATUS_UNEXPECTED, "0");
+        rc = GPG_ERR_UNEXPECTED;
         goto leave;
 
-      /* This is a very ugly construct and frankly, I don't remember why
-       * I used it.  Adding the MDC check here is a hack.
-       * The right solution is to initiate another context for encrypted
-       * packet and not to reuse the current one ...  It works right
-       * when there is a compression packet between which adds just
-       * an extra layer.
-       * Hmmm: Rewrite this whole module here??
-       */
-      if (pkt->pkttype != PKT_SIGNATURE && pkt->pkttype != PKT_MDC)
-        c->any.data = (pkt->pkttype == PKT_PLAINTEXT);
-
-      if (newpkt == -1)
-        ;
-      else if (newpkt)
-        {
-          pkt = xmalloc (sizeof *pkt);
-          init_packet (pkt);
-	}
-      else
-        free_packet (pkt, &parsectx);
+      // case PKT_SIGNATURE:   newpkt = add_signature (c, pkt); break;
+      case PKT_SYMKEY_ENC:
+        proc_symkey_enc(c, pkt);
+        break;
+      // case PKT_PUBKEY_ENC:  proc_pubkey_enc (ctrl, c, pkt); break;
+      case PKT_ENCRYPTED:
+      case PKT_ENCRYPTED_MDC:
+      case PKT_ENCRYPTED_AEAD:
+        proc_encrypted(c, pkt);
+        break;
+      // case PKT_PLAINTEXT:   proc_plaintext (c, pkt); break;
+      // case PKT_COMPRESSED:  rc = proc_compressed (c, pkt); break;
+      // case PKT_ONEPASS_SIG: newpkt = add_onepass_sig (c, pkt); break;
+      // case PKT_GPG_CONTROL: newpkt = add_gpg_control (c, pkt); break;
+      default:
+        newpkt = 0;
+        break;
+      }
     }
+    //     else
+    //       {
+    //         switch (pkt->pkttype)
+    //           {
+    //           case PKT_PUBLIC_KEY:
+    //           case PKT_SECRET_KEY:
+    //             release_list (c);
+    //             c->list = new_kbnode (pkt);
+    //             newpkt = 1;
+    //             break;
+    //           case PKT_PUBLIC_SUBKEY:
+    //           case PKT_SECRET_SUBKEY:
+    //             newpkt = add_subkey (c, pkt);
+    //             break;
+    //           case PKT_USER_ID:     newpkt = add_user_id (c, pkt); break;
+    //           case PKT_SIGNATURE:   newpkt = add_signature (c, pkt); break;
+    //           case PKT_PUBKEY_ENC:  proc_pubkey_enc (ctrl, c, pkt); break;
+    //           case PKT_SYMKEY_ENC:  proc_symkey_enc (c, pkt); break;
+    //           case PKT_ENCRYPTED:
+    //           case PKT_ENCRYPTED_MDC:
+    //           case PKT_ENCRYPTED_AEAD: proc_encrypted (c, pkt); break;
+    //           case PKT_PLAINTEXT:   proc_plaintext (c, pkt); break;
+    //           case PKT_COMPRESSED:  rc = proc_compressed (c, pkt); break;
+    //           case PKT_ONEPASS_SIG: newpkt = add_onepass_sig (c, pkt); break;
+    //           case PKT_GPG_CONTROL: newpkt = add_gpg_control(c, pkt); break;
+    //           case PKT_RING_TRUST:  newpkt = add_ring_trust (c, pkt); break;
+    //           default: newpkt = 0; break;
+    //     }
+    // }
+
+    if (rc)
+      goto leave;
+
+    /* This is a very ugly construct and frankly, I don't remember why
+     * I used it.  Adding the MDC check here is a hack.
+     * The right solution is to initiate another context for encrypted
+     * packet and not to reuse the current one ...  It works right
+     * when there is a compression packet between which adds just
+     * an extra layer.
+     * Hmmm: Rewrite this whole module here??
+     */
+    if (pkt->pkttype != PKT_SIGNATURE && pkt->pkttype != PKT_MDC)
+      c->any.data = (pkt->pkttype == PKT_PLAINTEXT);
+
+    if (newpkt == -1)
+      ;
+    else if (newpkt)
+    {
+      pkt = xmalloc(sizeof *pkt);
+      init_packet(pkt);
+    }
+    else
+      free_packet(pkt, &parsectx);
+  }
 
   if (rc == GPG_ERR_INV_PACKET)
-    printf (STATUS_NODATA, "3");
+    printf(STATUS_NODATA, "3");
 
   if (any_data)
     rc = 0;
   else if (rc == -1)
-    printf (STATUS_NODATA, "2");
+    printf(STATUS_NODATA, "2");
 
-
- leave:
-//  release_list (c);
+leave:
+  //  release_list (c);
   xfree(c->dek);
-  free_packet (pkt, &parsectx);
-  deinit_parse_packet (&parsectx);
-  xfree (pkt);
+  free_packet(pkt, &parsectx);
+  deinit_parse_packet(&parsectx);
+  xfree(pkt);
   // free_md_filter_context (&c->mfx);
   return rc;
 }
-
 
 // /* Helper for pka_uri_from_sig to parse the to-be-verified address out
 //    of the notation data. */
@@ -2089,7 +2063,6 @@ do_proc_packets (ctrl_t ctrl, CTX c, iobuf_t a)
 
 //   return pka;
 // }
-
 
 // /* Return the URI from a DNS PKA record.  If this record has already
 //    be retrieved for the signature we merely return it; if not we go
@@ -2132,7 +2105,6 @@ do_proc_packets (ctrl_t ctrl, CTX c, iobuf_t a)
 //   return sig->pka_info? sig->pka_info->uri : NULL;
 // }
 
-
 // /* Return true if the AKL has the WKD method specified.  */
 // static int
 // akl_has_wkd_method (void)
@@ -2144,7 +2116,6 @@ do_proc_packets (ctrl_t ctrl, CTX c, iobuf_t a)
 //       return 1;
 //   return 0;
 // }
-
 
 // /* Return the ISSUER fingerprint buffer and its lenbgth at R_LEN.
 //  * Returns NULL if not available.  The returned buffer is valid as
@@ -2165,7 +2136,6 @@ do_proc_packets (ctrl_t ctrl, CTX c, iobuf_t a)
 //   return NULL;
 // }
 
-
 // /* Return the ISSUER fingerprint string in human readable format if
 //  * available.  Caller must release the string.  */
 // /* FIXME: Move to another file.  */
@@ -2178,7 +2148,6 @@ do_proc_packets (ctrl_t ctrl, CTX c, iobuf_t a)
 //   p = issuer_fpr_raw (sig, &n);
 //   return p? bin2hex (p, n, NULL) : NULL;
 // }
-
 
 // static void
 // print_good_bad_signature (int statno, const char *keyid_str, kbnode_t un,
@@ -2206,7 +2175,6 @@ do_proc_packets (ctrl_t ctrl, CTX c, iobuf_t a)
 
 //   xfree (p);
 // }
-
 
 // static int
 // check_sig_and_print (CTX c, kbnode_t node)
@@ -2883,7 +2851,6 @@ do_proc_packets (ctrl_t ctrl, CTX c, iobuf_t a)
 //             rc = gpg_error (GPG_ERR_FORBIDDEN);
 //         }
 
-
 //       free_public_key (pk);
 //       pk = NULL;
 //       release_kbnode( keyblock );
@@ -2914,7 +2881,6 @@ do_proc_packets (ctrl_t ctrl, CTX c, iobuf_t a)
 //   xfree (issuer_fpr);
 //   return rc;
 // }
-
 
 // /*
 //  * Process the tree which starts at node
