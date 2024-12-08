@@ -612,16 +612,16 @@ int skip_some_packets(iobuf_t inp, unsigned int n)
    If RETPOS is not NULL, then the position of CTX->INP (as returned by
    iobuf_tell) is saved there before any data is read from CTX->INP.
   */
+
 static int
-parse(parse_packet_ctx_t ctx, PACKET *pkt, int onlykeypkts, off_t *retpos,
-      int *skip, IOBUF out, int do_skip
+parse (parse_packet_ctx_t ctx, PACKET *pkt, int onlykeypkts, off_t * retpos,
+       int *skip, IOBUF out, int do_skip
 #if DEBUG_PARSE_PACKET
-      ,
-      const char *dbg_w, const char *dbg_f, int dbg_l
+       , const char *dbg_w, const char *dbg_f, int dbg_l
 #endif
-)
+       )
 {
-  printf("parse\n");
+  printf ("parse\n");
   int rc = 0;
   iobuf_t inp;
   int c, ctb, pkttype, lenbytes;
@@ -635,33 +635,36 @@ parse(parse_packet_ctx_t ctx, PACKET *pkt, int onlykeypkts, off_t *retpos,
   *skip = 0;
   inp = ctx->inp;
 
-again:
+ again:
   // printf (!pkt->pkt.generic);
   if (retpos || list_mode)
-  {
-    pos = iobuf_tell(inp);
-    if (retpos)
-      *retpos = pos;
-  }
+    {
+      pos = iobuf_tell (inp);
+      if (retpos)
+        *retpos = pos;
+    }
   else
     pos = 0; /* (silence compiler warning) */
 
   /* The first byte of a packet is the so-called tag.  The highest bit
      must be set.  */
-  if ((ctb = iobuf_get(inp)) == -1)
-  {
-    rc = -1;
-    goto leave;
-  }
+  if ((ctb = iobuf_get (inp)) == -1)
+    {
+      rc = -1;
+      goto leave;
+    }
   hdrlen = 0;
   hdr[hdrlen++] = ctb;
+// Initial packet parsing
+printf("Starting packet parse at position: %lu\n", (unsigned long)iobuf_tell(inp));
+printf("Read CTB: 0x%02x (new_format=%d)\n", ctb, !!(ctb & 0x40));
 
   if (!(ctb & 0x80))
-  {
-    printf("%s: invalid packet (ctb=%02x)\n", iobuf_where(inp), ctb);
-    rc = gpg_error(GPG_ERR_INV_PACKET);
-    goto leave;
-  }
+    {
+      printf ("%s: invalid packet (ctb=%02x)\n", iobuf_where (inp), ctb);
+      rc = gpg_error (GPG_ERR_INV_PACKET);
+      goto leave;
+    }
 
   /* Immediately following the header is the length.  There are two
      formats: the old format and the new format.  If bit 6 (where the
@@ -671,119 +674,132 @@ again:
   pktlen = 0;
   new_ctb = !!(ctb & 0x40);
   if (new_ctb)
-  {
-    /* Get the packet's type.  This is encoded in the 6 least
- significant bits of the tag.  */
-    pkttype = ctb & 0x3f;
-
-    /* Extract the packet's length.  New format packets have 4 ways
- to encode the packet length.  The value of the first byte
- determines the encoding and partially determines the length.
- See section 4.2.2 of RFC 4880 for details.  */
-    if ((c = iobuf_get(inp)) == -1)
     {
-      printf("%s: 1st length byte missing\n", iobuf_where(inp));
-      rc = gpg_error(GPG_ERR_INV_PACKET);
-      goto leave;
-    }
+      /* Get the packet's type.  This is encoded in the 6 least
+	 significant bits of the tag.  */
+      pkttype = ctb & 0x3f;
 
-    hdr[hdrlen++] = c;
-    if (c < 192)
-      pktlen = c;
-    else if (c < 224)
-    {
-      pktlen = (c - 192) * 256;
-      if ((c = iobuf_get(inp)) == -1)
-      {
-        printf("%s: 2nd length byte missing\n",
-               iobuf_where(inp));
-        rc = gpg_error(GPG_ERR_INV_PACKET);
-        goto leave;
-      }
+      /* Extract the packet's length.  New format packets have 4 ways
+	 to encode the packet length.  The value of the first byte
+	 determines the encoding and partially determines the length.
+	 See section 4.2.2 of RFC 4880 for details.  */
+      if ((c = iobuf_get (inp)) == -1)
+	{
+	  printf ("%s: 1st length byte missing\n", iobuf_where (inp));
+	  rc = gpg_error (GPG_ERR_INV_PACKET);
+	  goto leave;
+	}
+
+
       hdr[hdrlen++] = c;
-      pktlen += c + 192;
-    }
-    else if (c == 255)
-    {
-      int i;
-      char value[4];
-
-      for (i = 0; i < 4; i++)
-      {
-        if ((c = iobuf_get(inp)) == -1)
+      if (c < 192)
+        pktlen = c;
+      else if (c < 224)
         {
-          printf("%s: 4 byte length invalid\n", iobuf_where(inp));
-          rc = gpg_error(GPG_ERR_INV_PACKET);
-          goto leave;
+          pktlen = (c - 192) * 256;
+          if ((c = iobuf_get (inp)) == -1)
+            {
+              printf ("%s: 2nd length byte missing\n",
+                         iobuf_where (inp));
+              rc = gpg_error (GPG_ERR_INV_PACKET);
+              goto leave;
+            }
+          hdr[hdrlen++] = c;
+          pktlen += c + 192;
         }
-        value[i] = hdr[hdrlen++] = c;
-      }
+      else if (c == 255)
+        {
+	  int i;
+	  char value[4];
 
-      pktlen = buf32_to_ulong(value);
-    }
-    else /* Partial body length.  */
-    {
-      switch (pkttype)
-      {
-      case PKT_PLAINTEXT:
-      case PKT_ENCRYPTED:
-      case PKT_ENCRYPTED_MDC:
-      case PKT_ENCRYPTED_AEAD:
-      case PKT_COMPRESSED:
-        iobuf_set_partial_body_length_mode(inp, c & 0xff);
-        pktlen = 0; /* To indicate partial length.  */
-        partial = 1;
-        break;
+	  for (i = 0; i < 4; i ++)
+            {
+              if ((c = iobuf_get (inp)) == -1)
+                {
+                  printf ("%s: 4 byte length invalid\n", iobuf_where (inp));
+                  rc = gpg_error (GPG_ERR_INV_PACKET);
+                  goto leave;
+                }
+              value[i] = hdr[hdrlen++] = c;
+            }
 
-      default:
-        printf("%s: partial length invalid for"
-               " packet type %d\n",
-               iobuf_where(inp), pkttype);
-        rc = gpg_error(GPG_ERR_INV_PACKET);
-        goto leave;
-      }
+	  pktlen = buf32_to_ulong (value);
+        }
+      else /* Partial body length.  */
+        {
+          switch (pkttype)
+            {
+            case PKT_PLAINTEXT:
+            case PKT_ENCRYPTED:
+            case PKT_ENCRYPTED_MDC:
+            case PKT_ENCRYPTED_AEAD:
+            case PKT_COMPRESSED:
+              iobuf_set_partial_body_length_mode (inp, c & 0xff);
+              pktlen = 0;	/* To indicate partial length.  */
+              partial = 1;
+              break;
+
+            default:
+              printf ("%s: partial length invalid for"
+                         " packet type %d\n", iobuf_where (inp), pkttype);
+              rc = gpg_error (GPG_ERR_INV_PACKET);
+              goto leave;
+            }
+        }
+
     }
-  }
   else
-  /* This is an old format packet.  */
-  {
-    /* Extract the packet's type.  This is encoded in bits 2-5.  */
-    pkttype = (ctb >> 2) & 0xf;
+    /* This is an old format packet.  */
+    {
+      /* Extract the packet's type.  This is encoded in bits 2-5.  */
+      pkttype = (ctb >> 2) & 0xf;
 
-    /* The type of length encoding is encoded in bits 0-1 of the
- tag.  */
-    lenbytes = ((ctb & 3) == 3) ? 0 : (1 << (ctb & 3));
-    if (!lenbytes)
-    {
-      pktlen = 0; /* Don't know the value.  */
-      /* This isn't really partial, but we can treat it the same
-         in a "read until the end" sort of way.  */
-      partial = 1;
-      if (pkttype != PKT_ENCRYPTED && pkttype != PKT_PLAINTEXT && pkttype != PKT_COMPRESSED)
-      {
-        printf("%s: indeterminate length for invalid"
-               " packet type %d\n",
-               iobuf_where(inp), pkttype);
-        rc = gpg_error(GPG_ERR_INV_PACKET);
-        goto leave;
-      }
+      /* The type of length encoding is encoded in bits 0-1 of the
+	 tag.  */
+      lenbytes = ((ctb & 3) == 3) ? 0 : (1 << (ctb & 3));
+      if (!lenbytes)
+	{
+	  pktlen = 0;	/* Don't know the value.  */
+	  /* This isn't really partial, but we can treat it the same
+	     in a "read until the end" sort of way.  */
+	  partial = 1;
+	  if (pkttype != PKT_ENCRYPTED && pkttype != PKT_PLAINTEXT
+	      && pkttype != PKT_COMPRESSED)
+	    {
+	      printf ("%s: indeterminate length for invalid"
+			 " packet type %d\n", iobuf_where (inp), pkttype);
+	      rc = gpg_error (GPG_ERR_INV_PACKET);
+	      goto leave;
+	    }
+	}
+      else
+	{
+	  for (; lenbytes; lenbytes--)
+	    {
+	      pktlen <<= 8;
+	      c = iobuf_get (inp);
+	      if (c == -1)
+		{
+		  printf ("%s: length invalid\n", iobuf_where (inp));
+		  rc = gpg_error (GPG_ERR_INV_PACKET);
+		  goto leave;
+		}
+	      pktlen |= hdr[hdrlen++] = c;
+	    }
+	}
     }
-    else
-    {
-      for (; lenbytes; lenbytes--)
-      {
-        pktlen <<= 8;
-        c = iobuf_get(inp);
-        if (c == -1)
-        {
-          printf("%s: length invalid\n", iobuf_where(inp));
-          rc = gpg_error(GPG_ERR_INV_PACKET);
-          goto leave;
-        }
-        pktlen |= hdr[hdrlen++] = c;
-      }
-    }
-  }
+
+// Length parsing - new format
+printf("Parsing new format packet length\n");
+printf("First length byte: 0x%02x\n", c);
+printf("One byte length: %lu\n", pktlen);
+printf("Two byte length: %lu\n", pktlen);
+printf("Four byte length: %lu\n", pktlen);
+printf("Partial length encoding: mode=0x%02x\n", c & 0xff);
+
+// Length parsing - old format
+printf("Parsing old format length (lenbytes=%d)\n", lenbytes);
+printf("Old format packet length: %lu\n", pktlen);
 
   /* Sometimes the decompressing layer enters an error state in which
      it simply outputs 0xff for every byte read.  If we have a stream
@@ -793,196 +809,213 @@ again:
      packet, which won't be 4 GB, we reject such packets as
      invalid.  */
   if (pkttype == 63 && pktlen == 0xFFFFFFFF)
-  {
-    /* With some probability this is caused by a problem in the
-     * the uncompressing layer - in some error cases it just loops
-     * and spits out 0xff bytes. */
-    printf("%s: garbled packet detected\n", iobuf_where(inp));
-    // g10_exit (2);
-    return -2;
-  }
-
-  if (out && pkttype)
-  {
-    /* This type of copying won't work if the packet uses a partial
- body length.  (In other words, this only works if HDR is
- actually the length.)  Currently, no callers require this
- functionality so we just log this as an error.  */
-    if (partial)
     {
-      printf("parse: Can't copy partial packet.  Aborting.\n");
-      rc = gpg_error(GPG_ERR_INV_PACKET);
-      goto leave;
+      /* With some probability this is caused by a problem in the
+       * the uncompressing layer - in some error cases it just loops
+       * and spits out 0xff bytes. */
+      printf ("%s: garbled packet detected\n", iobuf_where (inp));
+      // g10_exit (2);
+      return -1;
     }
 
-    rc = iobuf_write(out, hdr, hdrlen);
-    if (!rc)
-      rc = copy_packet(inp, out, pkttype, pktlen, partial);
-    goto leave;
-  }
+  if (out && pkttype)
+    {
+      /* This type of copying won't work if the packet uses a partial
+	 body length.  (In other words, this only works if HDR is
+	 actually the length.)  Currently, no callers require this
+	 functionality so we just log this as an error.  */
+      if (partial)
+	{
+	  printf ("parse: Can't copy partial packet.  Aborting.\n");
+	  rc = gpg_error (GPG_ERR_INV_PACKET);
+	  goto leave;
+	}
+
+      rc = iobuf_write (out, hdr, hdrlen);
+      if (!rc)
+	rc = copy_packet (inp, out, pkttype, pktlen, partial);
+      goto leave;
+    }
 
   if (with_uid && pkttype == PKT_USER_ID)
     /* If ONLYKEYPKTS is set to 2, then we never skip user id packets,
        even if DO_SKIP is set.  */
     ;
   else if (do_skip
-           /* type==0 is not allowed.  This is an invalid packet.  */
-           || !pkttype
-           /* When ONLYKEYPKTS is set, we don't skip keys.  */
-           || (onlykeypkts && pkttype != PKT_PUBLIC_SUBKEY && pkttype != PKT_PUBLIC_KEY && pkttype != PKT_SECRET_SUBKEY && pkttype != PKT_SECRET_KEY))
-  {
-    iobuf_skip_rest(inp, pktlen, partial);
-    *skip = 1;
-    rc = 0;
-    goto leave;
-  }
+	   /* type==0 is not allowed.  This is an invalid packet.  */
+	   || !pkttype
+	   /* When ONLYKEYPKTS is set, we don't skip keys.  */
+	   || (onlykeypkts && pkttype != PKT_PUBLIC_SUBKEY
+	       && pkttype != PKT_PUBLIC_KEY
+	       && pkttype != PKT_SECRET_SUBKEY && pkttype != PKT_SECRET_KEY))
+    {
+      iobuf_skip_rest (inp, pktlen, partial);
+      *skip = 1;
+      rc = 0;
+      goto leave;
+    }
 
-  //   if (DBG_PACKET)
-  //     {
-  // #if DEBUG_PARSE_PACKET
-  //       printf ("parse_packet(iob=%d): type=%d length=%lu%s (%s.%s.%d)\n",
-  // 		 iobuf_id (inp), pkttype, pktlen, new_ctb ? " (new_ctb)" : "",
-  // 		 dbg_w, dbg_f, dbg_l);
-  // #else
-  //       printf ("parse_packet(iob=%d): type=%d length=%lu%s\n",
-  // 		 iobuf_id (inp), pkttype, pktlen,
-  // 		 new_ctb ? " (new_ctb)" : "");
-  // #endif
-  //     }
+//   if (DBG_PACKET)
+//     {
+// #if DEBUG_PARSE_PACKET
+//       log_debug ("parse_packet(iob=%d): type=%d length=%lu%s (%s.%s.%d)\n",
+// 		 iobuf_id (inp), pkttype, pktlen, new_ctb ? " (new_ctb)" : "",
+// 		 dbg_w, dbg_f, dbg_l);
+// #else
+//       log_debug ("parse_packet(iob=%d): type=%d length=%lu%s\n",
+// 		 iobuf_id (inp), pkttype, pktlen,
+// 		 new_ctb ? " (new_ctb)" : "");
+// #endif
+//     }
 
-  if (list_mode)
-    printf(listfp, "# off=%lu ctb=%02x tag=%d hlen=%d plen=%lu%s%s\n",
-           (unsigned long)pos, ctb, pkttype, hdrlen, pktlen,
-           partial ? (new_ctb ? " partial" : " indeterminate") : "",
-           new_ctb ? " new-ctb" : "");
+  // if (list_mode)
+  //   es_fprintf (listfp, "# off=%lu ctb=%02x tag=%d hlen=%d plen=%lu%s%s\n",
+  //               (unsigned long)pos, ctb, pkttype, hdrlen, pktlen,
+  //               partial? (new_ctb ? " partial" : " indeterminate") :"",
+  //               new_ctb? " new-ctb":"");
 
   /* Count it.  */
   ctx->n_parsed_packets++;
 
   pkt->pkttype = pkttype;
-  rc = GPG_ERR_UNKNOWN_PACKET; /* default error */
+  rc = GPG_ERR_UNKNOWN_PACKET;	/* default error */
   /* Add this before the switch statement */
-  static const char *pkt_type_str[] = {
-      [PKT_PUBLIC_KEY] = "PUBLIC_KEY",
-      [PKT_PUBLIC_SUBKEY] = "PUBLIC_SUBKEY",
-      [PKT_SECRET_KEY] = "SECRET_KEY",
-      [PKT_SECRET_SUBKEY] = "SECRET_SUBKEY",
-      [PKT_SYMKEY_ENC] = "SYMKEY_ENC",
-      [PKT_PUBKEY_ENC] = "PUBKEY_ENC",
-      [PKT_SIGNATURE] = "SIGNATURE",
-      [PKT_ONEPASS_SIG] = "ONEPASS_SIG",
-      [PKT_USER_ID] = "USER_ID",
-      [PKT_ATTRIBUTE] = "ATTRIBUTE",
-      [PKT_OLD_COMMENT] = "OLD_COMMENT",
-      [PKT_COMMENT] = "COMMENT",
-      [PKT_RING_TRUST] = "RING_TRUST",
-      [PKT_PLAINTEXT] = "PLAINTEXT",
-      [PKT_COMPRESSED] = "COMPRESSED",
-      [PKT_ENCRYPTED] = "ENCRYPTED",
-      [PKT_ENCRYPTED_MDC] = "ENCRYPTED_MDC",
-      [PKT_MDC] = "MDC",
-      [PKT_ENCRYPTED_AEAD] = "ENCRYPTED_AEAD",
-      [PKT_GPG_CONTROL] = "GPG_CONTROL",
-      [PKT_MARKER] = "MARKER"};
+static const char *pkt_type_str[] = {
+    [PKT_PUBLIC_KEY] = "PUBLIC_KEY",
+    [PKT_PUBLIC_SUBKEY] = "PUBLIC_SUBKEY", 
+    [PKT_SECRET_KEY] = "SECRET_KEY",
+    [PKT_SECRET_SUBKEY] = "SECRET_SUBKEY",
+    [PKT_SYMKEY_ENC] = "SYMKEY_ENC",
+    [PKT_PUBKEY_ENC] = "PUBKEY_ENC",
+    [PKT_SIGNATURE] = "SIGNATURE",
+    [PKT_ONEPASS_SIG] = "ONEPASS_SIG",
+    [PKT_USER_ID] = "USER_ID",
+    [PKT_ATTRIBUTE] = "ATTRIBUTE",
+    [PKT_OLD_COMMENT] = "OLD_COMMENT",
+    [PKT_COMMENT] = "COMMENT",
+    [PKT_RING_TRUST] = "RING_TRUST",
+    [PKT_PLAINTEXT] = "PLAINTEXT",
+    [PKT_COMPRESSED] = "COMPRESSED",
+    [PKT_ENCRYPTED] = "ENCRYPTED",
+    [PKT_ENCRYPTED_MDC] = "ENCRYPTED_MDC",
+    [PKT_MDC] = "MDC",
+    [PKT_ENCRYPTED_AEAD] = "ENCRYPTED_AEAD",
+    [PKT_GPG_CONTROL] = "GPG_CONTROL",
+    [PKT_MARKER] = "MARKER"
+};
 
-  /* Add at start of switch statement */
-  printf("Processing packet type: %s (%d)\n",
-         pkttype < sizeof(pkt_type_str) / sizeof(*pkt_type_str) ? pkt_type_str[pkttype] : "UNKNOWN", pkttype);
+// Packet processing
+printf("Begin processing packet (type=%d, len=%lu, partial=%d)\n", pkttype, pktlen, partial);
+printf("Skipping packet type %d\n", pkttype);
+printf("Packet processing complete (rc=%d)\n", rc);
+
+/* Add at start of switch statement */
+printf("Processing packet type: %s (%d)\n", 
+          pkttype < sizeof(pkt_type_str)/sizeof(*pkt_type_str) ? 
+          pkt_type_str[pkttype] : "UNKNOWN", pkttype);
   switch (pkttype)
-  {
-  case PKT_PUBLIC_KEY:
-  case PKT_PUBLIC_SUBKEY:
-  case PKT_SECRET_KEY:
-  case PKT_SECRET_SUBKEY:
-    pkt->pkt.public_key = xmalloc_clear(sizeof *pkt->pkt.public_key);
-    // rc = parse_key (inp, pkttype, pktlen, hdr, hdrlen, pkt);
-    break;
-  case PKT_SYMKEY_ENC:
-    rc = parse_symkeyenc(inp, pkttype, pktlen, pkt);
-    break;
-  case PKT_PUBKEY_ENC:
-    // rc = parse_pubkeyenc (inp, pkttype, pktlen, pkt);
-    break;
-  case PKT_SIGNATURE:
-    pkt->pkt.signature = xmalloc_clear(sizeof *pkt->pkt.signature);
-    // rc = parse_signature (inp, pkttype, pktlen, pkt->pkt.signature);
-    break;
-  case PKT_ONEPASS_SIG:
-    pkt->pkt.onepass_sig = xmalloc_clear(sizeof *pkt->pkt.onepass_sig);
-    // rc = parse_onepass_sig (inp, pkttype, pktlen, pkt->pkt.onepass_sig);
-    break;
-  case PKT_USER_ID:
-    // rc = parse_user_id (inp, pkttype, pktlen, pkt);
-    break;
-  case PKT_ATTRIBUTE:
-    pkt->pkttype = pkttype = PKT_USER_ID; /* we store it in the userID */
-    // rc = parse_attribute (inp, pkttype, pktlen, pkt);
-    break;
-  case PKT_OLD_COMMENT:
-  case PKT_COMMENT:
-    // rc = parse_comment (inp, pkttype, pktlen, pkt);
-    break;
-  case PKT_RING_TRUST:
-  {
-    //        rc = parse_ring_trust (ctx, pktlen);
-    if (!rc)
-      goto again; /* Directly read the next packet.  */
-  }
-  break;
-  case PKT_PLAINTEXT:
-    rc = parse_plaintext(inp, pkttype, pktlen, pkt, new_ctb, partial);
-    break;
-  case PKT_COMPRESSED:
-    // rc = parse_compressed (inp, pkttype, pktlen, pkt, new_ctb);
-    break;
-  case PKT_ENCRYPTED:
-  case PKT_ENCRYPTED_MDC:
-    printf("Parsing encrypted packet - inp: %p, len: %lu\n", (void *)inp, pktlen);
-    rc = parse_encrypted(inp, pkttype, pktlen, pkt, new_ctb, partial);
-    printf("parse_encrypted result: %d\n", rc);
-    if (!rc && pkt->pkt.encrypted)
     {
-      printf("Encrypted packet buf: %p, len: %lu\n",
-             (void *)pkt->pkt.encrypted->buf,
-             pkt->pkt.encrypted->len);
+    // case PKT_PUBLIC_KEY:
+    // case PKT_PUBLIC_SUBKEY:
+    // case PKT_SECRET_KEY:
+    // case PKT_SECRET_SUBKEY:
+    //   pkt->pkt.public_key = xmalloc_clear (sizeof *pkt->pkt.public_key);
+    //   rc = parse_key (inp, pkttype, pktlen, hdr, hdrlen, pkt);
+    //   break;
+    case PKT_SYMKEY_ENC:
+      rc = parse_symkeyenc (inp, pkttype, pktlen, pkt);
+      break;
+    // case PKT_PUBKEY_ENC:
+    //   rc = parse_pubkeyenc (inp, pkttype, pktlen, pkt);
+    //   break;
+    // case PKT_SIGNATURE:
+    //   pkt->pkt.signature = xmalloc_clear (sizeof *pkt->pkt.signature);
+    //   rc = parse_signature (inp, pkttype, pktlen, pkt->pkt.signature);
+    //   break;
+    // case PKT_ONEPASS_SIG:
+    //   pkt->pkt.onepass_sig = xmalloc_clear (sizeof *pkt->pkt.onepass_sig);
+    //   rc = parse_onepass_sig (inp, pkttype, pktlen, pkt->pkt.onepass_sig);
+    //   break;
+    // case PKT_USER_ID:
+    //   rc = parse_user_id (inp, pkttype, pktlen, pkt);
+    //   break;
+    // case PKT_ATTRIBUTE:
+    //   pkt->pkttype = pkttype = PKT_USER_ID;	/* we store it in the userID */
+    //   rc = parse_attribute (inp, pkttype, pktlen, pkt);
+    //   break;
+    case PKT_OLD_COMMENT:
+    // case PKT_COMMENT:
+    //   rc = parse_comment (inp, pkttype, pktlen, pkt);
+      break;
+    case PKT_RING_TRUST:
+      // {
+      //   rc = parse_ring_trust (ctx, pktlen);
+      //   if (!rc)
+      //     goto again; /* Directly read the next packet.  */
+      // }
+      break;
+    case PKT_PLAINTEXT:
+      rc = parse_plaintext (inp, pkttype, pktlen, pkt, new_ctb, partial);
+      break;
+    // case PKT_COMPRESSED:
+    //   rc = parse_compressed (inp, pkttype, pktlen, pkt, new_ctb);
+    //   break;
+    case PKT_ENCRYPTED:
+    case PKT_ENCRYPTED_MDC:
+      rc = parse_encrypted (inp, pkttype, pktlen, pkt, new_ctb, partial);
+      break;
+    case PKT_MDC:
+      rc = parse_mdc (inp, pkttype, pktlen, pkt, new_ctb);
+      break;
+    // case PKT_ENCRYPTED_AEAD:
+    //   rc = parse_encrypted_aead (inp, pkttype, pktlen, pkt, partial);
+    //   break;
+    // case PKT_GPG_CONTROL:
+    //   rc = parse_gpg_control (inp, pkttype, pktlen, pkt, partial);
+    //   break;
+    case PKT_MARKER:
+      rc = parse_marker (inp, pkttype, pktlen);
+      break;
+    default:
+      /* Unknown packet.  Skip it.  */
+      // skip_packet (inp, pkttype, pktlen, partial);
+      break;
     }
-    break;
-  case PKT_MDC:
-    // rc = parse_mdc (inp, pkttype, pktlen, pkt, new_ctb);
-    break;
-  case PKT_ENCRYPTED_AEAD:
-    // rc = parse_encrypted_aead (inp, pkttype, pktlen, pkt, partial);
-    break;
-  case PKT_GPG_CONTROL:
-    // rc = parse_gpg_control (inp, pkttype, pktlen, pkt, partial);
-    break;
-  case PKT_MARKER:
-    // rc = parse_marker (inp, pkttype, pktlen);
-    break;
-  default:
-    /* Unknown packet.  Skip it.  */
-    printf("skip_packet\n");
-    //      skip_packet (inp, pkttype, pktlen, partial);
-    break;
-  }
 
   /* Store a shallow copy of certain packets in the context.  */
-  free_packet(NULL, ctx);
-  if (!rc && (pkttype == PKT_PUBLIC_KEY || pkttype == PKT_SECRET_KEY || pkttype == PKT_USER_ID || pkttype == PKT_ATTRIBUTE || pkttype == PKT_SIGNATURE))
-  {
-    ctx->last_pkt = *pkt;
-  }
+  free_packet (NULL, ctx);
+  if (!rc && (pkttype == PKT_PUBLIC_KEY
+              || pkttype == PKT_SECRET_KEY
+              || pkttype == PKT_USER_ID
+              || pkttype == PKT_ATTRIBUTE
+              || pkttype == PKT_SIGNATURE))
+    {
+      ctx->last_pkt = *pkt;
+    }
 
-leave:
+// // Error conditions
+// printf("Attempted copy of partial packet\n");
+// printf("Invalid length byte at position %lu\n", (unsigned long)iobuf_tell(inp));
+// printf("Possible stream corruption detected (type=63, len=0xFFFFFFFF)\n");
+
+// Context updates
+printf("Storing packet in context (type=%d, rc=%d)\n", pkttype, rc);
+
+// Hex dumps
+printf("Packet header (%d bytes):\n", hdrlen);
+// log_hexdump(hdr, hdrlen);
+ leave:
   /* FIXME: We leak in case of an error (see the xmalloc's above).  */
-  if (!rc && iobuf_error(inp))
+  if (!rc && iobuf_error (inp))
     rc = GPG_ERR_INV_KEYRING;
 
   /* FIXME: We use only the error code for now to avoid problems with
      callers which have not been checked to always use gpg_err_code()
      when comparing error codes.  */
-  return rc == -1 ? -1 : gpg_err_code(rc);
+  return rc == -1? -1 : gpg_err_code (rc);
 }
+
+
 
 // static void
 // dump_hex_line (int c, int *i)
@@ -1409,7 +1442,7 @@ parse_pubkeyenc(IOBUF inp, int pkttype, unsigned long pktlen,
   {
     if (list_mode)
       printf(listfp, "\tunsupported algorithm %d\n", k->pubkey_algo);
-    unknown_pubkey_warning(k->pubkey_algo);
+//    unknown_pubkey_warning(k->pubkey_algo);
     k->data[0] = NULL; /* No need to store the encrypted data.  */
   }
   else

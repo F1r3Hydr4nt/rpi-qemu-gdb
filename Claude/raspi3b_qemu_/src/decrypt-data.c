@@ -1035,14 +1035,16 @@ decode_filter(void *opaque, int control, IOBUF a, byte *buf, size_t *ret_len)
   }
   else if (control == IOBUFCTRL_UNDERFLOW)
   {
-    printf(a);
+    // printf("IOBUFCTRL_UNDERFLOW\n");
 
     n = fill_buffer(fc, a, buf, size, 0);
     if (n)
     {
       if (fc->cipher_hd)
-        // gcry_cipher_decrypt (fc->cipher_hd, buf, n, NULL, 0);
-        printf("cipher_hd is allocated\n");
+          //    printf("cipher_hd is allocated\n");
+
+        _gcry_cipher_decrypt (fc->cipher_hd, buf, n, NULL, 0);
+        // printf("cipher_hd is allocated\n");
     }
     else
     {

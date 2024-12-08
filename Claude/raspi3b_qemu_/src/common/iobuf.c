@@ -2202,8 +2202,8 @@ iobuf_peek (iobuf_t a, byte * buf, unsigned buflen)
 {
   int n = 0;
 
-  printf (buflen > 0);
-  printf (a->use == IOBUF_INPUT || a->use == IOBUF_INPUT_TEMP);
+  // printf (buflen > 0);
+  // printf (a->use == IOBUF_INPUT || a->use == IOBUF_INPUT_TEMP);
 
   if (buflen > a->d.size)
     /* We can't peek more than we can buffer.  */
@@ -2219,7 +2219,7 @@ iobuf_peek (iobuf_t a, byte * buf, unsigned buflen)
 
       /* Underflow consumes the first character (it's the return
 	 value).  unget() it by resetting the "file position".  */
-      printf (a->d.start == 1);
+     // printf (a->d.start == 1);
       a->d.start = 0;
     }
 
@@ -2378,8 +2378,8 @@ iobuf_writestr (iobuf_t a, const char *buf)
 int
 iobuf_write_temp (iobuf_t dest, iobuf_t source)
 {
-  printf (source->use == IOBUF_OUTPUT || source->use == IOBUF_OUTPUT_TEMP);
-  printf (dest->use == IOBUF_OUTPUT || dest->use == IOBUF_OUTPUT_TEMP);
+  // printf (source->use == IOBUF_OUTPUT || source->use == IOBUF_OUTPUT_TEMP);
+  // printf (dest->use == IOBUF_OUTPUT || dest->use == IOBUF_OUTPUT_TEMP);
 
   iobuf_flush_temp (source);
   return iobuf_write (dest, source->d.buf, source->d.len);
@@ -2424,8 +2424,8 @@ iobuf_copy (iobuf_t dest, iobuf_t source)
   size_t max_read = 0;
   int err;
 
-  printf (source->use == IOBUF_INPUT || source->use == IOBUF_INPUT_TEMP);
-  printf (dest->use == IOBUF_OUTPUT || source->use == IOBUF_OUTPUT_TEMP);
+  // printf (source->use == IOBUF_INPUT || source->use == IOBUF_INPUT_TEMP);
+  // printf (dest->use == IOBUF_OUTPUT || source->use == IOBUF_OUTPUT_TEMP);
 
   if (iobuf_error (dest))
     return (size_t)(-1);
@@ -2725,7 +2725,7 @@ iobuf_read_line (iobuf_t a, byte ** addr_of_buffer,
      NUL character in the buffer.  This requires at least 2 bytes.  We
      don't complicate the code by handling the stupid corner case, but
      simply assert that it can't happen.  */
-  printf (!buffer || length >= 2 || maxlen >= 2);
+  // printf (!buffer || length >= 2 || maxlen >= 2);
 
   if (!buffer || length <= 1)
     /* must allocate a new buffer */
@@ -2758,7 +2758,7 @@ iobuf_read_line (iobuf_t a, byte ** addr_of_buffer,
 	      /* p is pointing at the last byte in the buffer.  We
 		 always terminate the line with "\n\0" so overwrite
 		 the previous byte with a \n.  */
-	      printf (p > buffer);
+	      // printf (p > buffer);
 	      p[-1] = '\n';
 
 	      /* Indicate truncation.  */

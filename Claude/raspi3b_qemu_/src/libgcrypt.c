@@ -280,29 +280,29 @@ int
 _gcry_cipher_decrypt (gcry_cipher_hd_t h, void *out, size_t outsize,
                       const void *in, size_t inlen)
 {
-    printf("Caller params - in: %p, inlen: %zu\n", in, inlen);
+    // printf("Caller params - in: %p, inlen: %zu\n", in, inlen);
     printf("_gcry_cipher_decrypt inlen: %d, outSize: %d, unused: %d\n", inlen, outsize, h->unused);
   if (!in) /* Caller requested in-place encryption. */
     {
-      printf("Caller requested in-place encryption.\n");
+      // printf("Caller requested in-place encryption.\n");
       in = out;
       inlen = outsize;
     }
-printf("Before CFB decrypt - inbuf contents: ");
-for(size_t i = 0; i < inlen; i++) {
-    printf("%02x ", ((unsigned char*)in)[i]);
-}
-printf("\n");
-printf("Before CFB decrypt - out contents: ");
-for(size_t i = 0; i < outsize; i++) {
-    printf("%02x ", ((unsigned char*)out)[i]);
-}
-printf("\n");
-printf("After in=out assignment - out contents: ");
-for(size_t i = 0; i < outsize; i++) {
-    printf("%02x ", ((unsigned char*)out)[i]);
-}
-printf("\n");
+// printf("Before CFB decrypt - inbuf contents: ");
+// for(size_t i = 0; i < inlen; i++) {
+//     printf("%02x ", ((unsigned char*)in)[i]);
+// }
+// printf("\n");
+// printf("Before CFB decrypt - out contents: ");
+// for(size_t i = 0; i < outsize; i++) {
+//     printf("%02x ", ((unsigned char*)out)[i]);
+// }
+// printf("\n");
+// printf("After in=out assignment - out contents: ");
+// for(size_t i = 0; i < outsize; i++) {
+//     printf("%02x ", ((unsigned char*)out)[i]);
+// }
+// printf("\n");
 
 // Just before CFB decrypt call
 if (inlen != outsize) {
@@ -406,14 +406,14 @@ size_t _gcry_cipher_cfb_decrypt(gcry_cipher_hd_t c,
                           const unsigned char *inbuf, size_t inbuflen) {
     printf("_gcry_cipher_cfb_decrypt inbuflen %d outbuflen %d cfb_bulk %d\n", 
            inbuflen, outbuflen, 1);
-    printf("inbuf: ");
-    for (size_t i = 0; i < inbuflen; i++) {
-        printf("%02x", inbuf[i]);
-        if ((i + 1) % 16 == 0) printf("\n");
-        else if ((i + 1) % 4 == 0) printf(" ");
-    }
-    printf("\n");
-    printf("Initial iv address: %p\n", (void*)c->u_iv.iv);
+    // printf("inbuf: ");
+    // for (size_t i = 0; i < inbuflen; i++) {
+    //     printf("%02x", inbuf[i]);
+    //     if ((i + 1) % 16 == 0) printf("\n");
+    //     else if ((i + 1) % 4 == 0) printf(" ");
+    // }
+    // printf("\n");
+    // printf("Initial iv address: %p\n", (void*)c->u_iv.iv);
     printf("Initial iv contents: ");
     for (int i = 0; i < 8; i++) printf("%02x", c->u_iv.iv[i]);
     printf("\n");
@@ -537,15 +537,15 @@ int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
                           unsigned char *outbuf, size_t outbuflen,
                           const unsigned char *inbuf, size_t inbuflen) {
     printf("_gcry_cipher_cfb_encrypt inbuflen %d outbuflen %d\n", inbuflen, outbuflen);
-    printf("inbuf: ");
-    for (size_t i = 0; i < inbuflen; i++) {
-        printf("%02x", inbuf[i]);
-        if ((i + 1) % 16 == 0) printf("\n");
-        else if ((i + 1) % 4 == 0) printf(" ");
-    }
-    printf("\n");
-    printf("Initial iv address: %p\n", (void*)c->u_iv.iv);
-    printf("Initial iv contents: ");
+    // printf("inbuf: ");
+    // for (size_t i = 0; i < inbuflen; i++) {
+    //     printf("%02x", inbuf[i]);
+    //     if ((i + 1) % 16 == 0) printf("\n");
+    //     else if ((i + 1) % 4 == 0) printf(" ");
+    // }
+    // printf("\n");
+    // printf("Initial iv address: %p\n", (void*)c->u_iv.iv);
+    // printf("Initial iv contents: ");
     for (int i = 0; i < 8; i++) printf("%02x", c->u_iv.iv[i]);
     printf("\n");
     unsigned char *ivp;
