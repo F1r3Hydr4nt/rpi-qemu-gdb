@@ -139,20 +139,16 @@ int
 cipher_filter_cfb (void *opaque, int control,
                    iobuf_t chain, byte *buf, size_t *len)
 {
+  printf("cipher_filter_cfb\n");
   cipher_filter_context_t *cfx = opaque;
-  printf("cipher_hd address: %p\n", (void*)cfx->cipher_hd);
-  if (cfx->cipher_hd) {
-      printf("cipher_hd is allocated\n");
-  } else {
-      printf("cipher_hd is NULL\n");
-  }
+
   size_t size = *len;
   int rc = 0;
   printf("cipher_filter_cfb %d %d\n",control, cfx->wrote_header);
   // log_hexdump(buf, size);
   if (control == IOBUFCTRL_UNDERFLOW) /* decrypt */
     {
-      printf("IOBUFCTRL_UNDERFLOW\n");
+      // printf("IOBUFCTRL_UNDERFLOW\n");
       rc = -1; /* not used */
     }
   else if (control == IOBUFCTRL_FLUSH) /* encrypt */
