@@ -640,6 +640,7 @@ parse (parse_packet_ctx_t ctx, PACKET *pkt, int onlykeypkts, off_t * retpos,
   if (retpos || list_mode)
     {
       pos = iobuf_tell (inp);
+      printf("Position: %lu\n", (unsigned long)pos);
       if (retpos)
         *retpos = pos;
     }

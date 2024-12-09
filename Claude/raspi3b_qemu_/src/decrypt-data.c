@@ -494,7 +494,7 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
               // printf("Got EOF at iter %d\n", i); 
               break;
           } else {
-              // printf("Got byte: 0x%02x (start=%d)\n", c, ed->buf->d.start);
+              printf("Got byte: 0x%02x (start=%d)\n", c, ed->buf->d.start);
               temp[i] = c;
           }
       }
@@ -607,12 +607,14 @@ static size_t
 fill_buffer(decode_filter_ctx_t dfx, iobuf_t stream,
             byte *buffer, size_t nbytes, size_t offset)
 {
+  printf("fill_buffer\n");
   size_t nread = offset;
   size_t curr;
   int ret;
 
   if (dfx->partial)
   {
+      printf("dfx->partial nread=%zu nbytes=%zu\n", nread, nbytes);
     while (nread < nbytes)
     {
       curr = nbytes - nread;
@@ -1023,6 +1025,7 @@ fill_buffer(decode_filter_ctx_t dfx, iobuf_t stream,
 static int
 decode_filter(void *opaque, int control, IOBUF a, byte *buf, size_t *ret_len)
 {
+  printf("decode_filter control %d, ret_len=%d\n",control,*ret_len);
   decode_filter_ctx_t fc = opaque;
   size_t size = *ret_len;
   size_t n;
@@ -1030,12 +1033,13 @@ decode_filter(void *opaque, int control, IOBUF a, byte *buf, size_t *ret_len)
 
   if (control == IOBUFCTRL_UNDERFLOW && fc->eof_seen)
   {
+    printf("IOBUFCTRL_UNDERFLOW && fc->eof_seen\n");;
     *ret_len = 0;
     rc = -1;
   }
   else if (control == IOBUFCTRL_UNDERFLOW)
   {
-    // printf("IOBUFCTRL_UNDERFLOW\n");
+    printf("control == IOBUFCTRL_UNDERFLOW\n");
 
     n = fill_buffer(fc, a, buf, size, 0);
     if (n)
