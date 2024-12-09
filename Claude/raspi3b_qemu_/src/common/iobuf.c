@@ -1020,7 +1020,7 @@ printf("block_filter %s\n", control_mode_str[control]);
 	{			/* the complicated openpgp scheme */
 	  size_t blen, n, nbytes = size + a->buflen;
 
-	  printf (a->buflen <= OP_MIN_PARTIAL_CHUNK);
+	  // printf (a->buflen <= OP_MIN_PARTIAL_CHUNK);
 	  if (nbytes < OP_MIN_PARTIAL_CHUNK)
 	    {
 	      /* not enough to write a partial block out; so we store it */
@@ -1068,8 +1068,8 @@ printf("block_filter %s\n", control_mode_str[control]);
 		{
       	      printf("store the rest in the buffer" );
 
-		  printf (!a->buflen);
-		  printf (nbytes < OP_MIN_PARTIAL_CHUNK);
+		  // printf (!a->buflen);
+		  // printf (nbytes < OP_MIN_PARTIAL_CHUNK);
 		  if (!a->buffer)
 		    a->buffer = xmalloc (OP_MIN_PARTIAL_CHUNK);
 		  memcpy (a->buffer, p, nbytes);
@@ -1082,10 +1082,10 @@ printf("block_filter %s\n", control_mode_str[control]);
     }
   else if (control == IOBUFCTRL_INIT)
     {
-                  printf ("IOBUFCTRL_INIT %d\n", a->partial);
+                  // printf ("IOBUFCTRL_INIT %d\n", a->partial);
 
-      if (DBG_IOBUF)
-	printf ("init block_filter %p\n", a);
+  //     if (DBG_IOBUF)
+	// printf ("init block_filter %p\n", a);
       if (a->partial)
 	a->count = 0;
       else if (a->use == IOBUF_INPUT)
@@ -1098,12 +1098,12 @@ printf("block_filter %s\n", control_mode_str[control]);
     }
   else if (control == IOBUFCTRL_DESC)
     {
-      printf ("IOBUFCTRL_DESC %d\n", a->partial);
+      // printf ("IOBUFCTRL_DESC %d\n", a->partial);
 //      mem2str (buf, "block_filter", *ret_len);
     }
   else if (control == IOBUFCTRL_FREE)
     {
-            printf ("IOBUFCTRL_FREE %d\n", a->partial);
+            // printf ("IOBUFCTRL_FREE %d\n", a->partial);
 
       if (a->use == IOBUF_OUTPUT)
 	{			/* write the end markers */
@@ -1149,7 +1149,7 @@ printf("block_filter %s\n", control_mode_str[control]);
         }
 	      if (rc)
 		{
-		  printf ("block_filter: write error: %s\n");//,
+		  // printf ("block_filter: write error: %s\n");//,
 			     //strerror (errno));
 		  rc = gpg_error_from_syserror ();
 		}
@@ -1164,8 +1164,8 @@ printf("block_filter %s\n", control_mode_str[control]);
 	{
 	  printf ("block_filter: pending bytes!\n");
 	}
-      if (DBG_IOBUF)
-	printf ("free block_filter %p\n", a);
+  //     if (DBG_IOBUF)
+	// printf ("free block_filter %p\n", a);
       xfree (a);		/* we can free our context now */
     }
 
@@ -1901,23 +1901,23 @@ underflow_target (iobuf_t a, int clear_pending_eof, size_t target)
   size_t len;
   int rc;
 
-  if (DBG_IOBUF)
-    printf ("iobuf-%d.%d: underflow: buffer size: %d; still buffered: %d => space for %d bytes\n",
-	       a->no, a->subno,
-	       (int) a->d.size, (int) (a->d.len - a->d.start),
-	       (int) (a->d.size - (a->d.len - a->d.start)));
+  // if (DBG_IOBUF)
+  //   printf ("iobuf-%d.%d: underflow: buffer size: %d; still buffered: %d => space for %d bytes\n",
+	//        a->no, a->subno,
+	//        (int) a->d.size, (int) (a->d.len - a->d.start),
+	//        (int) (a->d.size - (a->d.len - a->d.start)));
 
   if (a->use == IOBUF_INPUT_TEMP)
     /* By definition, there isn't more data to read into the
        buffer.  */
     return -1;
 
-  printf (a->use == IOBUF_INPUT);
+  // printf (a->use == IOBUF_INPUT);
 
   /* If there is still some buffered data, then move it to the start
      of the buffer and try to fill the end of the buffer.  (This is
      useful if we are called from iobuf_peek().)  */
-  printf (a->d.start <= a->d.len);
+  // printf (a->d.start <= a->d.len);
   a->d.len -= a->d.start;
   memmove (a->d.buf, &a->d.buf[a->d.start], a->d.len);
   a->d.start = 0;
@@ -1928,9 +1928,9 @@ underflow_target (iobuf_t a, int clear_pending_eof, size_t target)
        Since there is no longer any buffered data, return the
        error.  */
     {
-      if (DBG_IOBUF)
-	printf ("iobuf-%d.%d: underflow: eof (pending eof)\n",
-		   a->no, a->subno);
+  //     if (DBG_IOBUF)
+	// printf ("iobuf-%d.%d: underflow: eof (pending eof)\n",
+		   /// a->no, a->subno);
       if (! clear_pending_eof)
 	return -1;
 
@@ -1938,9 +1938,9 @@ underflow_target (iobuf_t a, int clear_pending_eof, size_t target)
 	/* A filter follows this one.  Free this filter.  */
 	{
 	  iobuf_t b = a->chain;
-	  if (DBG_IOBUF)
-	    printf ("iobuf-%d.%d: filter popped (pending EOF returned)\n",
-		       a->no, a->subno);
+	  // if (DBG_IOBUF)
+	  //   printf ("iobuf-%d.%d: filter popped (pending EOF returned)\n",
+		       // a->no, a->subno);
 	  xfree (a->d.buf);
 	  xfree (a->real_fname);
 	  memcpy (a, b, sizeof *a);
@@ -1958,7 +1958,7 @@ underflow_target (iobuf_t a, int clear_pending_eof, size_t target)
        buffered data.  Since there is no longer any buffered data,
        return the error.  */
     {
-      if (DBG_IOBUF)
+    // if (DBG_IOBUF)
 	// printf ("iobuf-%d.%d: pending error (%s) returned\n",
 //		   a->no, a->subno, gpg_strerror (a->error));
       return -1;
@@ -1970,9 +1970,9 @@ underflow_target (iobuf_t a, int clear_pending_eof, size_t target)
     {
       /* Be careful to account for any buffered data.  */
       len = a->d.size - a->d.len;
-      if (DBG_IOBUF)
-	printf ("iobuf-%d.%d: underflow: A->FILTER (%lu bytes)\n",
-		   a->no, a->subno, (ulong) len);
+  //     if (DBG_IOBUF)
+	// printf ("iobuf-%d.%d: underflow: A->FILTER (%lu bytes)\n",
+	// 	   a->no, a->subno, (ulong) len);
       if (len == 0)
 	/* There is no space for more data.  Don't bother calling
 	   A->FILTER.  */
@@ -1982,7 +1982,7 @@ underflow_target (iobuf_t a, int clear_pending_eof, size_t target)
 			&a->d.buf[a->d.len], &len);
       a->d.len += len;
 
-      if (DBG_IOBUF)
+    //  if (DBG_IOBUF)
 	// printf ("iobuf-%d.%d: A->FILTER() returned rc=%d (%s), read %lu bytes\n",
 	// 	   a->no, a->subno,
 	// 	   rc, rc == 0 ? "ok" : rc == -1 ? "EOF" : gpg_strerror (rc),
@@ -2017,9 +2017,9 @@ underflow_target (iobuf_t a, int clear_pending_eof, size_t target)
 	      Unlink this filter.  */
 	    {
 	      iobuf_t b = a->chain;
-	      if (DBG_IOBUF)
-		printf ("iobuf-%d.%d: pop in underflow (nothing buffered, got EOF)\n",
-			   a->no, a->subno);
+	  //     if (DBG_IOBUF)
+		// printf ("iobuf-%d.%d: pop in underflow (nothing buffered, got EOF)\n",
+			   // a->no, a->subno);
 	      xfree (a->d.buf);
 	      xfree (a->real_fname);
 	      memcpy (a, b, sizeof *a);
@@ -2045,7 +2045,7 @@ underflow_target (iobuf_t a, int clear_pending_eof, size_t target)
 	}
     }
 
-  printf (a->d.start <= a->d.len);
+  // printf (a->d.start <= a->d.len);
   if (a->d.start < a->d.len)
     return a->d.buf[a->d.start++];
 
@@ -2127,6 +2127,7 @@ iobuf_readbyte (iobuf_t a)
 int
 iobuf_read (iobuf_t a, void *buffer, unsigned int buflen)
 {
+  printf("iobuf_read %d a->nlimit %d\n",buflen,a->nlimit);
   unsigned char *buf = (unsigned char *)buffer;
   int c, n;
 
