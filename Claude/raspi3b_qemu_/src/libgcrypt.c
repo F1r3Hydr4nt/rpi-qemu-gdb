@@ -317,6 +317,7 @@ if (inlen != outsize) {
   return _gcry_cipher_cfb_decrypt (h, out, outsize, in, inlen);
 }
 
+
 static void _gcry_cast5_cfb_dec(gcry_cipher_hd_t context, unsigned char *iv, void *outbuf_arg,
                               const void *inbuf_arg, size_t nblocks) {
                                 #define CAST5_BLOCKSIZE 8

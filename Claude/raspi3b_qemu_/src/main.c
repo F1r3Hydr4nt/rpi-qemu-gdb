@@ -94,8 +94,8 @@ void main()
     // ctrl->session_key = NULL; // 
     // Add some guard values
     uint32_t guard1 = 0xDEADBEEF;
-    uint32_t guard2 = 0xBEEFDEAD;
-    printf("Guard values before decrypt: 0x%08x 0x%08x\n", guard1, guard2);
+    uint32_t guard2 = 0xBABECAFE;
+    printf("Guard values before decrypt: 0x%08X 0x%08X\n", guard1, guard2);
     
     // Decrypt the data
     int rc = decrypt_memory(ctrl, encrypted_1k_gpg, encrypted_1k_gpg_len);
@@ -104,7 +104,7 @@ void main()
     }
     
     // Check guard values
-    printf("Guard values after decrypt: 0x%08x 0x%08x\n", guard1, guard2);
+    printf("Guard values after decrypt: 0x%08X 0x%08X\n", guard1, guard2);
     
 cleanup:
     while (1) {
