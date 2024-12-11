@@ -1812,7 +1812,8 @@ int proc_packets(ctrl_t ctrl, void *anchor, iobuf_t a)
 
 int proc_encryption_packets(ctrl_t ctrl, void *anchor, iobuf_t a)
 {
-  printf("proc_encryption_packets a->use: %d\n", a->use);
+  printf("proc_encryption_packets a->use: %d, a->filter: %d", a->use, a->filter);
+
   CTX c = xmalloc_clear(sizeof *c);
   int rc;
 
