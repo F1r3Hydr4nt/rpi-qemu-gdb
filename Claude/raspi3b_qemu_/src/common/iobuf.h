@@ -97,6 +97,22 @@
 
 #define DBG_IOBUF   iobuf_debug_mode
 
+
+/* The context used by the file filter.  */
+typedef struct
+{
+  gnupg_fd_t fp;       /* Open file pointer or handle.  */
+  int keep_open;
+  int no_cache;
+  int eof_seen;
+  int print_only_name; /* Flags indicating that fname is not a real file.  */
+  char peeked[32];     /* Read ahead buffer.  */
+  byte npeeked;        /* Number of bytes valid in peeked.  */
+  byte upeeked;        /* Number of bytes used from peeked.  */
+  char fname[1];       /* Name of the file.  */
+} file_filter_ctx_t;
+
+
 /* Filter control modes.  */
 enum
   {
@@ -609,5 +625,11 @@ void iobuf_skip_rest (iobuf_t a, unsigned long n, int partial);
 
 /* Whether the filter uses an in-memory buffer.  */
 #define iobuf_is_temp(a)	 ( (a)->use == IOBUF_OUTPUT_TEMP )
+int
+translate_file_handle (int fd, int for_write);
+gnupg_fd_t
+fd_cache_open (const char *fname, const char *mode);
+int file_filter (void *opaque, int control, iobuf_t chain, byte * buf,
+	     size_t * ret_len);
 
 #endif /*GNUPG_COMMON_IOBUF_H*/

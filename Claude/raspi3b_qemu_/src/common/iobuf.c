@@ -86,20 +86,6 @@
 #endif /*!HAVE_W32_SYSTEM*/
 
 
-/* The context used by the file filter.  */
-typedef struct
-{
-  gnupg_fd_t fp;       /* Open file pointer or handle.  */
-  int keep_open;
-  int no_cache;
-  int eof_seen;
-  int print_only_name; /* Flags indicating that fname is not a real file.  */
-  char peeked[32];     /* Read ahead buffer.  */
-  byte npeeked;        /* Number of bytes valid in peeked.  */
-  byte upeeked;        /* Number of bytes used from peeked.  */
-  char fname[1];       /* Name of the file.  */
-} file_filter_ctx_t;
-
 /* The context used by the estream filter.  */
 typedef struct
 {
@@ -163,7 +149,7 @@ block_filter_ctx_t;
 /* Local prototypes.  */
 static int underflow (iobuf_t a, int clear_pending_eof);
 static int underflow_target (iobuf_t a, int clear_pending_eof, size_t target);
-static int translate_file_handle (int fd, int for_write);
+int translate_file_handle (int fd, int for_write);
 
 /* Sends any pending data to the filter's FILTER function.  Note: this
    works on the filter and not on the whole pipeline.  That is,
@@ -262,103 +248,103 @@ fd_cache_synchronize (const char *fname)
 }
 
 
-// static gnupg_fd_t
-// direct_open (const char *fname, const char *mode, int mode700)
-// {
-// #ifdef HAVE_W32_SYSTEM
-//   unsigned long da, cd, sm;
-//   HANDLE hfile;
+static gnupg_fd_t
+direct_open (const char *fname, const char *mode, int mode700)
+{
+#ifdef HAVE_W32_SYSTEM
+  unsigned long da, cd, sm;
+  HANDLE hfile;
 
-//   (void)mode700;
-//   /* Note, that we do not handle all mode combinations */
+  (void)mode700;
+  /* Note, that we do not handle all mode combinations */
 
-//   /* According to the ReactOS source it seems that open() of the
-//    * standard MSW32 crt does open the file in shared mode which is
-//    * something new for MS applications ;-)
-//    */
-//   if (strchr (mode, '+'))
-//     {
-//       if (fd_cache_invalidate (fname))
-//         return GNUPG_INVALID_FD;
-//       da = GENERIC_READ | GENERIC_WRITE;
-//       cd = OPEN_EXISTING;
-//       sm = FILE_SHARE_READ | FILE_SHARE_WRITE;
-//     }
-//   else if (strchr (mode, 'w'))
-//     {
-//       if (fd_cache_invalidate (fname))
-//         return GNUPG_INVALID_FD;
-//       da = GENERIC_WRITE;
-//       cd = CREATE_ALWAYS;
-//       sm = FILE_SHARE_WRITE;
-//     }
-//   else
-//     {
-//       da = GENERIC_READ;
-//       cd = OPEN_EXISTING;
-//       sm = FILE_SHARE_READ;
-//     }
+  /* According to the ReactOS source it seems that open() of the
+   * standard MSW32 crt does open the file in shared mode which is
+   * something new for MS applications ;-)
+   */
+  if (strchr (mode, '+'))
+    {
+      if (fd_cache_invalidate (fname))
+        return GNUPG_INVALID_FD;
+      da = GENERIC_READ | GENERIC_WRITE;
+      cd = OPEN_EXISTING;
+      sm = FILE_SHARE_READ | FILE_SHARE_WRITE;
+    }
+  else if (strchr (mode, 'w'))
+    {
+      if (fd_cache_invalidate (fname))
+        return GNUPG_INVALID_FD;
+      da = GENERIC_WRITE;
+      cd = CREATE_ALWAYS;
+      sm = FILE_SHARE_WRITE;
+    }
+  else
+    {
+      da = GENERIC_READ;
+      cd = OPEN_EXISTING;
+      sm = FILE_SHARE_READ;
+    }
 
-//   /* We always use the Unicode version because it supports file names
-//    * longer than MAX_PATH.  (requires gpgrt 1.45) */
-//   if (1)
-//     {
-//       wchar_t *wfname = gpgrt_fname_to_wchar (fname);
-//       if (wfname)
-//         {
-//           hfile = CreateFileW (wfname, da, sm, NULL, cd,
-//                                FILE_ATTRIBUTE_NORMAL, NULL);
-//           xfree (wfname);
-//         }
-//       else
-//         hfile = INVALID_HANDLE_VALUE;
-//     }
+  /* We always use the Unicode version because it supports file names
+   * longer than MAX_PATH.  (requires gpgrt 1.45) */
+  if (1)
+    {
+      wchar_t *wfname = gpgrt_fname_to_wchar (fname);
+      if (wfname)
+        {
+          hfile = CreateFileW (wfname, da, sm, NULL, cd,
+                               FILE_ATTRIBUTE_NORMAL, NULL);
+          xfree (wfname);
+        }
+      else
+        hfile = INVALID_HANDLE_VALUE;
+    }
 
-//   return hfile;
+  return hfile;
 
-// #else /*!HAVE_W32_SYSTEM*/
+#else /*!HAVE_W32_SYSTEM*/
 
-//   int oflag;
-//   int cflag = S_IRUSR | S_IWUSR;
+  int oflag;
+  int cflag = S_IRUSR | S_IWUSR;
 
-//   if (!mode700)
-//     cflag |= S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+  if (!mode700)
+    cflag |= S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
 
-//   /* Note, that we do not handle all mode combinations */
-//   if (strchr (mode, '+'))
-//     {
-//       if (fd_cache_invalidate (fname))
-//         return GNUPG_INVALID_FD;
-//       oflag = O_RDWR;
-//     }
-//   else if (strchr (mode, 'w'))
-//     {
-//       if (fd_cache_invalidate (fname))
-//         return GNUPG_INVALID_FD;
-//       oflag = O_WRONLY | O_CREAT | O_TRUNC;
-//     }
-//   else
-//     {
-//       oflag = O_RDONLY;
-//     }
-// #ifdef O_BINARY
-//   if (strchr (mode, 'b'))
-//     oflag |= O_BINARY;
-// #endif
+  /* Note, that we do not handle all mode combinations */
+  if (strchr (mode, '+'))
+    {
+      if (fd_cache_invalidate (fname))
+        return GNUPG_INVALID_FD;
+      oflag = O_RDWR;
+    }
+  else if (strchr (mode, 'w'))
+    {
+      if (fd_cache_invalidate (fname))
+        return GNUPG_INVALID_FD;
+      oflag = O_WRONLY | O_CREAT | O_TRUNC;
+    }
+  else
+    {
+      oflag = O_RDONLY;
+    }
+#ifdef O_BINARY
+  if (strchr (mode, 'b'))
+    oflag |= O_BINARY;
+#endif
 
-// #ifdef __riscos__
-//   {
-//     struct stat buf;
+#ifdef __riscos__
+  {
+    struct stat buf;
 
-//     /* Don't allow iobufs on directories */
-//     if (!stat (fname, &buf) && S_ISDIR (buf.st_mode) && !S_ISREG (buf.st_mode))
-//       return __set_errno (EISDIR);
-//   }
-// #endif
-//   return open (fname, oflag, cflag);
+    /* Don't allow iobufs on directories */
+    if (!stat (fname, &buf) && S_ISDIR (buf.st_mode) && !S_ISREG (buf.st_mode))
+      return __set_errno (EISDIR);
+  }
+#endif
+  return open (fname, oflag, cflag);
 
-// #endif /*!HAVE_W32_SYSTEM*/
-// }
+#endif /*!HAVE_W32_SYSTEM*/
+}
 
 
 // /*
@@ -403,272 +389,43 @@ fd_cache_synchronize (const char *fname)
 //   close_cache = cc;
 // }
 
-// /*
-//  * Do a direct_open on FNAME but first try to reuse one from the fd_cache
-//  */
-// static gnupg_fd_t
-// fd_cache_open (const char *fname, const char *mode)
-// {
-//   close_cache_t cc;
-
-//   printf (fname);
-//   for (cc = close_cache; cc; cc = cc->next)
-//     {
-//       if (cc->fp != GNUPG_INVALID_FD && !fd_cache_strcmp (cc->fname, fname))
-// 	{
-// 	  gnupg_fd_t fp = cc->fp;
-// 	  cc->fp = GNUPG_INVALID_FD;
-// 	  if (DBG_IOBUF)
-// 	    printf ("fd_cache_open (%s) using cached fp\n", fname);
-// #ifdef HAVE_W32_SYSTEM
-// 	  if (SetFilePointer (fp, 0, NULL, FILE_BEGIN) == 0xffffffff)
-// 	    {
-// 	      printf ("rewind file failed on handle %p: ec=%d\n",
-// 			 fp, (int) GetLastError ());
-// 	      fp = GNUPG_INVALID_FD;
-// 	    }
-// #else
-// 	  if (lseek (fp, 0, SEEK_SET) == (off_t) - 1)
-// 	    {
-// 	      printf ("can't rewind fd %d: %s\n", fp, strerror (errno));
-// 	      fp = GNUPG_INVALID_FD;
-// 	    }
-// #endif
-// 	  return fp;
-// 	}
-//     }
-//   if (DBG_IOBUF)
-//     printf ("fd_cache_open (%s) not cached\n", fname);
-//   return direct_open (fname, mode, 0);
-// }
-
-
-static int
-file_filter (void *opaque, int control, iobuf_t chain, byte * buf,
-	     size_t * ret_len)
+/*
+ * Do a direct_open on FNAME but first try to reuse one from the fd_cache
+ */
+gnupg_fd_t
+fd_cache_open (const char *fname, const char *mode)
 {
-  file_filter_ctx_t *a = opaque;
-  gnupg_fd_t f = a->fp;
-  size_t size = *ret_len;
-  size_t nbytes = 0;
-  int rc = 0;
+  close_cache_t cc;
 
-  (void)chain; /* Not used.  */
-
-  if (control == IOBUFCTRL_UNDERFLOW)
+  printf (fname);
+  for (cc = close_cache; cc; cc = cc->next)
     {
-      printf (size); /* We need a buffer.  */
-      if (a->npeeked > a->upeeked)
-        {
-          nbytes = a->npeeked - a->upeeked;
-          if (nbytes > size)
-            nbytes = size;
-          memcpy (buf, a->peeked + a->upeeked, nbytes);
-          a->upeeked += nbytes;
-          *ret_len = nbytes;
-        }
-      else if (a->eof_seen)
+      if (cc->fp != GNUPG_INVALID_FD && !fd_cache_strcmp (cc->fname, fname))
 	{
-	  rc = -1;
-	  *ret_len = 0;
-	}
-      else
-	{
-#ifdef HAVE_W32_SYSTEM
-	  unsigned long nread;
-
-	  nbytes = 0;
-	  if (!ReadFile (f, buf, size, &nread, NULL))
-	    {
-	      int ec = (int) GetLastError ();
-	      if (ec != ERROR_BROKEN_PIPE)
-		{
-		  rc = gpg_error_from_errno (ec);
-		  printf ("%s: read error: %s (ec=%d)\n",
-                             a->fname, gpg_strerror (rc), ec);
-		}
-	    }
-	  else if (!nread)
-	    {
-	      a->eof_seen = 1;
-	      rc = -1;
-	    }
-	  else
-	    {
-	      nbytes = nread;
-	    }
-
-#else
-
-	  int n;
-
-	  nbytes = 0;
-	  // do
-	  //   {
-	  //     n = read (f, buf, size);
-	  //   }
-	  // while (n == -1 && errno == EINTR);
-	  if (n == -1)
-	    {			/* error */
-	  //     if (errno != EPIPE)
-		// {
-		//   rc = gpg_error_from_syserror ();
-		//   // printf ("%s: read error: %s\n",
-		// 	//      a->fname, strerror (errno));
-		// }
-	    }
-	  else if (!n)
-	    {			/* eof */
-	      a->eof_seen = 1;
-	      rc = -1;
-	    }
-	  else
-	    {
-	      nbytes = n;
-	    }
-#endif
-	  *ret_len = nbytes;
-	}
-    }
-  else if (control == IOBUFCTRL_FLUSH)
-    {
-      if (size)
-	{
-#ifdef HAVE_W32_SYSTEM
-	  byte *p = buf;
-	  unsigned long n;
-
-	  nbytes = size;
-	  do
-	    {
-	      if (size && !WriteFile (f, p, nbytes, &n, NULL))
-		{
-		  int ec = gnupg_w32_set_errno (-1);
-		  rc = gpg_error_from_syserror ();
-		  printf ("%s: write error: %s (ec=%d)\n",
-                             a->fname, gpg_strerror (rc), ec);
-		  break;
-		}
-	      p += n;
-	      nbytes -= n;
-	    }
-	  while (nbytes);
-	  nbytes = p - buf;
-#else
-	  byte *p = buf;
-	  int n;
-
-	  nbytes = size;
-	//  do
-// 	    {
-// 	      do
-// 		{
-// //		  n = write (f, p, nbytes);
-// 		}
-// 	      while (n == -1 && errno == EINTR);
-	  //     if (n > 0)
-		// {
-		//   p += n;
-		//   nbytes -= n;
-		// }
-	  //   }
-	  // while (n != -1 && nbytes);
-	  if (n == -1)
-	    {
-	      rc = gpg_error_from_syserror ();
-//	      printf ("%s: write error: %s\n", a->fname, strerror (errno));
-	    }
-	  nbytes = p - buf;
-#endif
-	}
-      *ret_len = nbytes;
-    }
-  else if (control == IOBUFCTRL_INIT)
-    {
-      a->eof_seen = 0;
-      a->keep_open = 0;
-      a->no_cache = 0;
-      a->npeeked = 0;
-      a->upeeked = 0;
-    }
-  else if (control == IOBUFCTRL_PEEK)
-    {
-      /* Peek on the input.  */
-#ifdef HAVE_W32_SYSTEM
-      unsigned long nread;
-
-      nbytes = 0;
-      if (!ReadFile (f, a->peeked, sizeof a->peeked, &nread, NULL))
-        {
-          int ec = (int) GetLastError ();
-          if (ec != ERROR_BROKEN_PIPE)
-            {
-              rc = gpg_error_from_errno (ec);
-              printf ("%s: read error: %s (ec=%d)\n",
-                         a->fname, gpg_strerror (rc), ec);
-            }
-          a->npeeked = 0;
-        }
-      else if (!nread)
-        {
-          a->eof_seen = 1;
-          a->npeeked = 0;
-        }
-      else
-        {
-          a->npeeked = nread;
-        }
-
-#else /* Unix */
-
-      int n;
-
-    peek_more:
-//       do
-//         {
-// //          n = read (f, a->peeked + a->npeeked, sizeof a->peeked - a->npeeked);
-//         }
-//       while (n == -1 && errno == EINTR);
-      if (n > 0)
-        {
-          a->npeeked += n;
-          if (a->npeeked < sizeof a->peeked)
-            goto peek_more;
-        }
-      else if (!n) /* eof */
-        {
-          a->eof_seen = 1;
-        }
-      else /* error */
-        {
-          rc = gpg_error_from_syserror ();
-          // if (gpg_err_code (rc) != GPG_ERR_EPIPE)
-          //   printf ("%s: read error: %s\n", a->fname, gpg_strerror (rc));
-        }
-#endif /* Unix */
-
-      size = a->npeeked < size? a->npeeked : size;
-      memcpy (buf, a->peeked, size);
-      *ret_len = size;
-      rc = 0;  /* Return success - the user needs to check ret_len.  */
-    }
-  else if (control == IOBUFCTRL_DESC)
-    {
-//      mem2str (buf, "file_filter(fd)", *ret_len);
-    }
-  else if (control == IOBUFCTRL_FREE)
-    {
-      if (f != FD_FOR_STDIN && f != FD_FOR_STDOUT)
-	{
+	  gnupg_fd_t fp = cc->fp;
+	  cc->fp = GNUPG_INVALID_FD;
 	  if (DBG_IOBUF)
-	    printf ("%s: close fd/handle %d\n", a->fname, FD2INT (f));
-	  // if (!a->keep_open)
-	  //   fd_cache_close (a->no_cache ? NULL : a->fname, f);
+	    printf ("fd_cache_open (%s) using cached fp\n", fname);
+#ifdef HAVE_W32_SYSTEM
+	  if (SetFilePointer (fp, 0, NULL, FILE_BEGIN) == 0xffffffff)
+	    {
+	      printf ("rewind file failed on handle %p: ec=%d\n",
+			 fp, (int) GetLastError ());
+	      fp = GNUPG_INVALID_FD;
+	    }
+#else
+	  if (lseek (fp, 0, SEEK_SET) == (off_t) - 1)
+	    {
+	      printf ("can't rewind fd %d: %s\n", fp, strerror (errno));
+	      fp = GNUPG_INVALID_FD;
+	    }
+#endif
+	  return fp;
 	}
-      xfree (a); /* We can free our context now. */
     }
-
-  return rc;
+  if (DBG_IOBUF)
+    printf ("fd_cache_open (%s) not cached\n", fname);
+  return direct_open (fname, mode, 0);
 }
 
 
@@ -1360,6 +1117,8 @@ static iobuf_t
 do_open (const char *fname, int special_filenames,
 	 int use, const char *opentype, int mode700)
 {
+
+  printf("do_open %s %d %s", fname, use, opentype);
   iobuf_t a;
   gnupg_fd_t fp;
   file_filter_ctx_t *fcx;
@@ -1438,39 +1197,39 @@ iobuf_openrw (const char *fname)
 }
 
 
-// static iobuf_t
-// do_iobuf_fdopen (int fd, const char *mode, int keep_open)
-// {
-//   iobuf_t a;
-//   gnupg_fd_t fp;
-//   file_filter_ctx_t *fcx;
-//   size_t len;
+static iobuf_t
+do_iobuf_fdopen (int fd, const char *mode, int keep_open)
+{
+  iobuf_t a;
+  gnupg_fd_t fp;
+  file_filter_ctx_t *fcx;
+  size_t len;
 
-//   fp = INT2FD (fd);
+  fp = INT2FD (fd);
 
-//   a = iobuf_alloc (strchr (mode, 'w') ? IOBUF_OUTPUT : IOBUF_INPUT,
-// 		   IOBUF_BUFFER_SIZE);
-//   fcx = xmalloc (sizeof *fcx + 20);
-//   fcx->fp = fp;
-//   fcx->print_only_name = 1;
-//   fcx->keep_open = keep_open;
-//   sprintf (fcx->fname, "[fd %d]", fd);
-//   a->filter = file_filter;
-//   a->filter_ov = fcx;
-//   file_filter (fcx, IOBUFCTRL_INIT, NULL, NULL, &len);
-//   if (DBG_IOBUF)
-//     printf ("iobuf-%d.%d: fdopen%s '%s'\n",
-//                a->no, a->subno, keep_open? "_nc":"", fcx->fname);
-//   iobuf_ioctl (a, IOBUF_IOCTL_NO_CACHE, 1, NULL);
-//   return a;
-// }
+  a = iobuf_alloc (strchr (mode, 'w') ? IOBUF_OUTPUT : IOBUF_INPUT,
+		   IOBUF_BUFFER_SIZE);
+  fcx = xmalloc (sizeof *fcx + 20);
+  fcx->fp = fp;
+  fcx->print_only_name = 1;
+  fcx->keep_open = keep_open;
+  sprintf (fcx->fname, "[fd %d]", fd);
+  a->filter = file_filter;
+  a->filter_ov = fcx;
+  file_filter (fcx, IOBUFCTRL_INIT, NULL, NULL, &len);
+  if (DBG_IOBUF)
+    printf ("iobuf-%d.%d: fdopen%s '%s'\n",
+               a->no, a->subno, keep_open? "_nc":"", fcx->fname);
+  iobuf_ioctl (a, IOBUF_IOCTL_NO_CACHE, 1, NULL);
+  return a;
+}
 
 
-// iobuf_t
-// iobuf_fdopen (int fd, const char *mode)
-// {
-//   return do_iobuf_fdopen (fd, mode, 0);
-// }
+iobuf_t
+iobuf_fdopen (int fd, const char *mode)
+{
+  return do_iobuf_fdopen (fd, mode, 0);
+}
 
 // iobuf_t
 // iobuf_fdopen_nc (int fd, const char *mode)
@@ -1532,7 +1291,7 @@ iobuf_openrw (const char *fname)
 int
 iobuf_ioctl (iobuf_t a, iobuf_ioctl_t cmd, int intval, void *ptrval)
 {
-  printf("iobuf_ioctl %d %d %d",cmd,intval, ptrval);
+  printf("iobuf_ioctl %d %d %d\n",cmd,intval, ptrval);
   byte desc[MAX_IOBUF_DESC];
 
   if (cmd == IOBUF_IOCTL_KEEP_OPEN)
@@ -1581,6 +1340,7 @@ iobuf_ioctl (iobuf_t a, iobuf_ioctl_t cmd, int intval, void *ptrval)
       for (; a; a = a->chain)
 	if (!a->chain && a->filter == file_filter)
 	  {
+      printf("IN HEREEEEEEEEEEEE\n");
 	    file_filter_ctx_t *b = a->filter_ov;
 	    b->no_cache = intval;
 	    return 0;
@@ -2518,6 +2278,7 @@ iobuf_get_filelength (iobuf_t a)
 int
 iobuf_get_fd (iobuf_t a)
 {
+  printf("iobuf_get_fd\n");
   for (; a->chain; a = a->chain)
     ;
 
@@ -2785,7 +2546,7 @@ iobuf_read_line (iobuf_t a, byte ** addr_of_buffer,
   return nbytes;
 }
 
-static int
+int
 translate_file_handle (int fd, int for_write)
 {
 #if defined(HAVE_W32CE_SYSTEM)
@@ -2869,4 +2630,234 @@ iobuf_skip_rest (iobuf_t a, unsigned long n, int partial)
 	    }
 	}
     }
+}
+
+
+
+int
+file_filter (void *opaque, int control, iobuf_t chain, byte * buf,
+	     size_t * ret_len)
+{
+  file_filter_ctx_t *a = opaque;
+  gnupg_fd_t f = a->fp;
+  size_t size = *ret_len;
+  size_t nbytes = 0;
+  int rc = 0;
+
+  (void)chain; /* Not used.  */
+
+  if (control == IOBUFCTRL_UNDERFLOW)
+    {
+      printf (size); /* We need a buffer.  */
+      if (a->npeeked > a->upeeked)
+        {
+          nbytes = a->npeeked - a->upeeked;
+          if (nbytes > size)
+            nbytes = size;
+          memcpy (buf, a->peeked + a->upeeked, nbytes);
+          a->upeeked += nbytes;
+          *ret_len = nbytes;
+        }
+      else if (a->eof_seen)
+	{
+	  rc = -1;
+	  *ret_len = 0;
+	}
+      else
+	{
+#ifdef HAVE_W32_SYSTEM
+	  unsigned long nread;
+
+	  nbytes = 0;
+	  if (!ReadFile (f, buf, size, &nread, NULL))
+	    {
+	      int ec = (int) GetLastError ();
+	      if (ec != ERROR_BROKEN_PIPE)
+		{
+		  rc = gpg_error_from_errno (ec);
+		  printf ("%s: read error: %s (ec=%d)\n",
+                             a->fname, gpg_strerror (rc), ec);
+		}
+	    }
+	  else if (!nread)
+	    {
+	      a->eof_seen = 1;
+	      rc = -1;
+	    }
+	  else
+	    {
+	      nbytes = nread;
+	    }
+
+#else
+
+	  int n;
+
+	  nbytes = 0;
+	  // do
+	  //   {
+	  //     n = read (f, buf, size);
+	  //   }
+	  // while (n == -1 && errno == EINTR);
+	  if (n == -1)
+	    {			/* error */
+	  //     if (errno != EPIPE)
+		// {
+		//   rc = gpg_error_from_syserror ();
+		//   // printf ("%s: read error: %s\n",
+		// 	//      a->fname, strerror (errno));
+		// }
+	    }
+	  else if (!n)
+	    {			/* eof */
+	      a->eof_seen = 1;
+	      rc = -1;
+	    }
+	  else
+	    {
+	      nbytes = n;
+	    }
+#endif
+	  *ret_len = nbytes;
+	}
+    }
+  else if (control == IOBUFCTRL_FLUSH)
+    {
+      if (size)
+	{
+#ifdef HAVE_W32_SYSTEM
+	  byte *p = buf;
+	  unsigned long n;
+
+	  nbytes = size;
+	  do
+	    {
+	      if (size && !WriteFile (f, p, nbytes, &n, NULL))
+		{
+		  int ec = gnupg_w32_set_errno (-1);
+		  rc = gpg_error_from_syserror ();
+		  printf ("%s: write error: %s (ec=%d)\n",
+                             a->fname, gpg_strerror (rc), ec);
+		  break;
+		}
+	      p += n;
+	      nbytes -= n;
+	    }
+	  while (nbytes);
+	  nbytes = p - buf;
+#else
+	  byte *p = buf;
+	  int n;
+
+	  nbytes = size;
+	//  do
+// 	    {
+// 	      do
+// 		{
+// //		  n = write (f, p, nbytes);
+// 		}
+// 	      while (n == -1 && errno == EINTR);
+	  //     if (n > 0)
+		// {
+		//   p += n;
+		//   nbytes -= n;
+		// }
+	  //   }
+	  // while (n != -1 && nbytes);
+	  if (n == -1)
+	    {
+	      rc = gpg_error_from_syserror ();
+//	      printf ("%s: write error: %s\n", a->fname, strerror (errno));
+	    }
+	  nbytes = p - buf;
+#endif
+	}
+      *ret_len = nbytes;
+    }
+  else if (control == IOBUFCTRL_INIT)
+    {
+      a->eof_seen = 0;
+      a->keep_open = 0;
+      a->no_cache = 0;
+      a->npeeked = 0;
+      a->upeeked = 0;
+    }
+  else if (control == IOBUFCTRL_PEEK)
+    {
+      /* Peek on the input.  */
+#ifdef HAVE_W32_SYSTEM
+      unsigned long nread;
+
+      nbytes = 0;
+      if (!ReadFile (f, a->peeked, sizeof a->peeked, &nread, NULL))
+        {
+          int ec = (int) GetLastError ();
+          if (ec != ERROR_BROKEN_PIPE)
+            {
+              rc = gpg_error_from_errno (ec);
+              printf ("%s: read error: %s (ec=%d)\n",
+                         a->fname, gpg_strerror (rc), ec);
+            }
+          a->npeeked = 0;
+        }
+      else if (!nread)
+        {
+          a->eof_seen = 1;
+          a->npeeked = 0;
+        }
+      else
+        {
+          a->npeeked = nread;
+        }
+
+#else /* Unix */
+
+      int n;
+
+    peek_more:
+//       do
+//         {
+// //          n = read (f, a->peeked + a->npeeked, sizeof a->peeked - a->npeeked);
+//         }
+//       while (n == -1 && errno == EINTR);
+      if (n > 0)
+        {
+          a->npeeked += n;
+          if (a->npeeked < sizeof a->peeked)
+            goto peek_more;
+        }
+      else if (!n) /* eof */
+        {
+          a->eof_seen = 1;
+        }
+      else /* error */
+        {
+          rc = gpg_error_from_syserror ();
+          // if (gpg_err_code (rc) != GPG_ERR_EPIPE)
+          //   printf ("%s: read error: %s\n", a->fname, gpg_strerror (rc));
+        }
+#endif /* Unix */
+
+      size = a->npeeked < size? a->npeeked : size;
+      memcpy (buf, a->peeked, size);
+      *ret_len = size;
+      rc = 0;  /* Return success - the user needs to check ret_len.  */
+    }
+  else if (control == IOBUFCTRL_DESC)
+    {
+//      mem2str (buf, "file_filter(fd)", *ret_len);
+    }
+  else if (control == IOBUFCTRL_FREE)
+    {
+      if (f != FD_FOR_STDIN && f != FD_FOR_STDOUT)
+	{
+	  if (DBG_IOBUF)
+	    printf ("%s: close fd/handle %d\n", a->fname, FD2INT (f));
+	  // if (!a->keep_open)
+	  //   fd_cache_close (a->no_cache ? NULL : a->fname, f);
+	}
+      xfree (a); /* We can free our context now. */
+    }
+
+  return rc;
 }
