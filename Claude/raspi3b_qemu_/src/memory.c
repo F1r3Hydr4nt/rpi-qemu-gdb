@@ -229,3 +229,50 @@ void *xtrycalloc(size_t nmemb, size_t size) {
     
     return ptr;
 }
+
+/* Bare metal file operations - these are stub implementations */
+int open(const char *pathname, int flags, ...) {
+    // In bare metal, we might want to return a special file descriptor
+    // for specific known files or devices
+    if (strcmp(pathname, "stdout") == 0) return 1;
+    if (strcmp(pathname, "stdin") == 0) return 0;
+    return -1; // Fail for all other files
+}
+
+/* Find character in string */
+char *strchr(const char *s, int c) {
+    while (*s != (char)c) {
+        if (!*s++)
+            return NULL;
+    }
+    return (char *)s;
+}
+
+/* String comparison */
+int strcmp(const char *s1, const char *s2) {
+    while (*s1 && (*s1 == *s2)) {
+        s1++;
+        s2++;
+    }
+    return *(const unsigned char*)s1 - *(const unsigned char*)s2;
+}
+
+/* String duplication for xstrdup */
+char *strdup(const char *s) {
+    size_t len = strlen(s) + 1;
+    char *new = malloc(len);
+    if (new) {
+        memcpy(new, s, len);
+    }
+    return new;
+}
+
+/* Secure strdup implementation */
+char *xstrdup(const char *string) {
+    char *p = strdup(string);
+    if (!p) {
+        // In bare metal, we can't really recover from out of memory
+        while(1); // Hang
+    }
+    return p;
+}
