@@ -793,14 +793,14 @@ printf("Read CTB: 0x%02x (new_format=%d)\n", ctb, !!(ctb & 0x40));
 // Length parsing - new format
 printf("Parsing new format packet length\n");
 printf("First length byte: 0x%02x\n", c);
-printf("One byte length: %lu\n", pktlen);
-printf("Two byte length: %lu\n", pktlen);
-printf("Four byte length: %lu\n", pktlen);
+// printf("One byte length: %lu\n", pktlen);
+// printf("Two byte length: %lu\n", pktlen);
+// printf("Four byte length: %lu\n", pktlen);
 printf("Partial length encoding: mode=0x%02x\n", c & 0xff);
 
 // Length parsing - old format
-printf("Parsing old format length (lenbytes=%d)\n", lenbytes);
-printf("Old format packet length: %lu\n", pktlen);
+// printf("Parsing old format length (lenbytes=%d)\n", lenbytes);
+// printf("Old format packet length: %lu\n", pktlen);
 
   /* Sometimes the decompressing layer enters an error state in which
      it simply outputs 0xff for every byte read.  If we have a stream
@@ -999,11 +999,11 @@ printf("Processing packet type: %s (%d)\n",
 // printf("Invalid length byte at position %lu\n", (unsigned long)iobuf_tell(inp));
 // printf("Possible stream corruption detected (type=63, len=0xFFFFFFFF)\n");
 
-// Context updates
-printf("Storing packet in context (type=%d, rc=%d)\n", pkttype, rc);
+// // Context updates
+// printf("Storing packet in context (type=%d, rc=%d)\n", pkttype, rc);
 
-// Hex dumps
-printf("Packet header (%d bytes):\n", hdrlen);
+// // Hex dumps
+// printf("Packet header (%d bytes):\n", hdrlen);
 // log_hexdump(hdr, hdrlen);
  leave:
   /* FIXME: We leak in case of an error (see the xmalloc's above).  */

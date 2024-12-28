@@ -487,7 +487,7 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
     }
     else
     {
-     printf("else ed->len: %d\n", ed->len);
+     // printf("else ed->len: %d\n", ed->len);
       for (i = 0; i < (nprefix + 2); i++) {
           // printf("Buffer state: start=%d len=%d\n", ed->buf->d.start, ed->buf->d.len);
           if ((c = iobuf_get(ed->buf)) == -1) {
