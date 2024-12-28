@@ -59,6 +59,7 @@ int decrypt_memory(ctrl_t ctrl, const unsigned char* data, size_t length) {
     int use = 0;
     /* Create input iobuf from memory */
     a = iobuf_temp_with_content((const char*)data, length);
+    
     if (!a) {
         return gpg_error_from_syserror();
     }

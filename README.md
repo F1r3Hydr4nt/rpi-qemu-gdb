@@ -79,3 +79,6 @@ echo "Hello World!" | ./g10/gpg --symmetric --cipher-algo CAST5 --passphrase "pa
 
 00000020: 075f 07ba 605a 615e 8cf8 aa74 7fee bc04
         -- Ciphertext
+
+
+Need more verbosity within _gcry_cast5_cfb_dec
