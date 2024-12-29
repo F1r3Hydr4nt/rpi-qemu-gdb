@@ -1043,6 +1043,7 @@ printf("pkt->pkt.encrypted: %p\n", (void*)pkt->pkt.encrypted);
     if (!result && !compl_error)
       compliance_de_vs |= 2;
   }
+  printf("decrypt_data result: %d\n", result);
 
   /* Trigger the deferred error.  The second condition makes sure that a
    * printf printed in the cry_cipher_checktag never gets ignored.  */

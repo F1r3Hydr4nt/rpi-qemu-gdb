@@ -224,12 +224,12 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
                  int *compliance_error)
 {
   printf("decrypt_data\n");
-  printf("ed pointer: %p\n", (void *)ed);
-  printf("ed->len: %d\n", ed->len);
-  printf("ed->buf pointer: %p\n", (void *)ed->buf);
-  printf("ed->mdc_method: %d\n", ed->mdc_method);
-  printf("ed->is_partial: %d\n", ed->is_partial);
-  printf("ed->aead_algo: %d\n", ed->aead_algo);
+  // printf("ed pointer: %p\n", (void *)ed);
+  // printf("ed->len: %d\n", ed->len);
+  // printf("ed->buf pointer: %p\n", (void *)ed->buf);
+  // printf("ed->mdc_method: %d\n", ed->mdc_method);
+  // printf("ed->is_partial: %d\n", ed->is_partial);
+  // printf("ed->aead_algo: %d\n", ed->aead_algo);
   // printf("ed->buf contents: ");
   // byte buffer[64];
   // size_t bytes = 0;
@@ -1045,7 +1045,7 @@ decode_filter(void *opaque, int control, IOBUF a, byte *buf, size_t *ret_len)
     if (n)
     {
       if (fc->cipher_hd)
-          //    printf("cipher_hd is allocated\n");
+          printf("cipher_hd is allocated\n");
 
         _gcry_cipher_decrypt (fc->cipher_hd, buf, n, NULL, 0);
         // printf("cipher_hd is allocated\n");

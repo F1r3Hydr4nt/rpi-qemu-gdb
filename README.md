@@ -82,3 +82,74 @@ echo "Hello World!" | ./g10/gpg --symmetric --cipher-algo CAST5 --passphrase "pa
 
 
 Need more verbosity within _gcry_cast5_cfb_dec
+static int
+do_plaintext( IOBUF out, int ctb, PKT_plaintext *pt )
+{
+  log_info("do_plaintext pt->buf: %d\n", pt->buf);
+    int rc = 0;
+    size_t nbytes;
+
+    log_assert (ctb_pkttype (ctb) == PKT_PLAINTEXT);
+
+    log_info("Checking packet type\n");
+    log_assert(ctb_pkttype(ctb) == PKT_PLAINTEXT);
+
+    log_info("Writing header\n");
+    
+
+    write_header(out, ctb, calc_plaintext( pt ) );
+    log_info("CTB: %d\n", ctb);
+    log_info("Checking mode validity: mode = %c\n", pt->mode);
+    log_assert(pt->mode == 'b' || pt->mode == 't' || pt->mode == 'u'
+                || pt->mode == 'm' || pt->mode == 'l' || pt->mode == '1');
+
+    log_info("Writing mode: %c\n", pt->mode);
+    iobuf_put(out, pt->mode);
+
+    log_info("Writing namelen: %zu\n", pt->namelen);
+    iobuf_put(out, pt->namelen);
+
+    log_info("Writing name: %.*s\n", (int)pt->namelen, pt->name);
+    iobuf_write(out, pt->name, pt->namelen);
+    pt->timestamp = 1624780800; // 60d83000
+    log_info("Writing timestamp: %u\n", pt->timestamp);
+    rc = write_32(out, pt->timestamp);
+    log_info("rc: %d\n", rc);
+    log_info("pt->buf: %d\n", pt->buf);
+    print_iobuf_info2(pt->buf);
+    if (rc)
+      return rc;
+
+    if (pt->buf)
+      {
+        nbytes = iobuf_copy (out, pt->buf);
+        log_info("!!!!! Wrote buf %d bytes", nbytes);
+        // log_printhex("Writing buf", pt->buf, pt->len);
+        
+        if (nbytes == (size_t)(-1)
+            && (iobuf_error (out) || iobuf_error (pt->buf)))
+            return iobuf_error (out)? iobuf_error (out):iobuf_error (pt->buf);
+        /* Always get the error to catch write errors because
+         * iobuf_copy does not reliable return (-1) in that case.  */
+        rc = iobuf_error (out);
+        if(ctb_new_format_p (ctb) && !pt->len){
+          /* Turn off partial body length mode.  */
+          iobuf_set_partial_body_length_mode (out, 0);
+          log_info("Turned off partial body length mode\n");
+        }
+        if (pt->len && nbytes != pt->len)
+          {
+            log_error ("do_plaintext(): wrote %lu bytes"
+                       " but expected %lu bytes\n",
+                       (ulong)nbytes, (ulong)pt->len );
+            if (!rc) /* Just in case no error was set  */
+              rc = gpg_error (GPG_ERR_EIO);
+          }
+      }
+    log_info("do_plaintext done %d\n", rc);
+    return rc;
+}
+
+echo 4c6f72656d20697
+073756d20646f | xxd -p -r
+Lorem ipsum dofreddie@fre
