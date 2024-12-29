@@ -344,7 +344,10 @@ static void _gcry_cast5_cfb_dec(gcry_cipher_hd_t context, unsigned char *iv, voi
     const unsigned char *inbuf = inbuf_arg;
     unsigned char tmpbuf[CAST5_BLOCKSIZE * 3];
     struct Block ivBlock, tmpBlock;
-
+for (int i = 0; i < 4; i++)
+    {
+        printf("key[%d] = 0x%08x\n", i, context->key[i]);
+    }
     printf("nblocks: %d\n", nblocks);
     // hexdump("Input buffer", inbuf_arg, nblocks * CAST5_BLOCKSIZE);
     hexdump("_gcry_cast5_cfb_dec, IV", iv, CAST5_BLOCKSIZE);
@@ -369,14 +372,14 @@ static void _gcry_cast5_cfb_dec(gcry_cipher_hd_t context, unsigned char *iv, voi
 //         }
 //     }
 // #endif
-    int debugCount = 2;
+    int debugCount = 44;
 // #if !defined(USE_AMD64_ASM) && !defined(USE_ARM_ASM)
     for (; nblocks >= 3; nblocks -= 3) {
-      if(debugCount>=0) hexdump("3 Blocks IN", inbuf, CAST5_BLOCKSIZE * 3);
+      // if(debugCount>=0) hexdump("3 Blocks IN", inbuf, CAST5_BLOCKSIZE * 3);
         // Copy IV and next 2 blocks to temporary buffer
         cipher_block_cpy(tmpbuf + 0, iv, CAST5_BLOCKSIZE);
         cipher_block_cpy(tmpbuf + 8, inbuf + 0, CAST5_BLOCKSIZE * 2);
-      // hexdump("3 Blocks COPY", tmpbuf, CAST5_BLOCKSIZE * 3);
+       // hexdump("3 Block COPY", tmpbuf, CAST5_BLOCKSIZE * 3);
         cipher_block_cpy(iv, inbuf + 16, CAST5_BLOCKSIZE);
 
         // Process three blocks at once using Block structs
@@ -489,7 +492,7 @@ size_t _gcry_cipher_cfb_decrypt(gcry_cipher_hd_t c,
     if (inbuflen >= blocksize_x_2 && 1){//c->bulk.cfb_dec) {
         printf("cfb_decrypt 3 %d %d %d\n", inbuflen, outbuflen, c->unused);
         size_t nblocks = inbuflen >> blocksize_shift;
-        _gcry_cast5_cfb_dec(&c->context.c, c->u_iv.iv, outbuf, inbuf, nblocks);
+        _gcry_cast5_cfb_dec(c, c->u_iv.iv, outbuf, inbuf, nblocks);
 
         outbuf += nblocks << blocksize_shift;
         inbuf  += nblocks << blocksize_shift;
