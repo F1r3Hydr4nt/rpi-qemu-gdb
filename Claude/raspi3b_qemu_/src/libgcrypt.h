@@ -60,7 +60,6 @@ typedef struct gcry_cipher_handle *gcry_cipher_hd_t;
 /* CAST5 function prototypes */
 void bytesFromBlock(struct Block block, uint8_t *bytes);
 struct Block blockFromBytes(uint8_t *bytes);
-struct Block encrypt(const Key key, struct Block data);
 int
 _gcry_cipher_setiv (gcry_cipher_hd_t c, const void *iv, size_t ivlen);
 int
@@ -80,7 +79,7 @@ _gcry_cipher_close (gcry_cipher_hd_t h);
 /* Buffer handling functions */
 u32 buf_get_le32(const void *_buf);
 void buf_put_le32(void *_buf, u32 val);
-void buf_xor(void *_dst, const void *_src1, const void *_src2, size_t len);
+void buf_xor(void *_dst, const void *_src1, const void *_src2, size_t len, int debug);
 void buf_xor_2dst(void *_dst1, void *_dst2, const void *_src, size_t len);
 void buf_xor_n_copy(void *_dst_xor, void *_srcdst_cpy, const void *_src, size_t len);
 void buf_xor_n_copy_2(void *_dst_xor, const void *_src_xor, void *_srcdst_cpy, const void *_src_cpy, size_t len);
@@ -98,7 +97,7 @@ enum
 };
 typedef uint32_t Key[KEY_LEN];
 struct Block blockFromBytes(uint8_t *bytes);
-struct Block encrypt(const Key key, struct Block data);
+struct Block encrypt(const Key key, struct Block data, int debug);
 struct Block decrypt(const Key key, struct Block data);
 static void printBlock(struct Block block);
 

@@ -1,0 +1,19 @@
+2024-12-30 06:37:10 gpg[26820] CAST5.CFB encrypted data
+2024-12-30 06:37:10 gpg[26820] encrypted with 1 passphrase
+2024-12-30 06:37:10 gpg[26820] session key: '3:69092FAE7556BE4A7DEBCFB28B7F6226'
+2024-12-30 06:37:10 gpg[26820] decryption failed: Bad session key
+2024-12-30 06:37:47 gpg[26867] CAST5.CFB encrypted data
+2024-12-30 06:37:47 gpg[26867] encrypted with 1 passphrase
+2024-12-30 06:37:47 gpg[26867] session key: '3:69092FAE7556BE4A7DEBCFB28B7F6226'
+2024-12-30 06:37:47 gpg[26867] decryption failed: Bad session key
+2024-12-30 06:38:02 gpg[26922] CAST5.CFB encrypted data
+2024-12-30 06:38:02 gpg[26922] encrypted with 1 passphrase
+2024-12-30 06:38:02 gpg[26922] session key: '3:69092FAE7556BE4A7DEBCFB28B7F6226'
+2024-12-30 06:38:02 gpg[26922] decryption failed: Bad session key
+2024-12-30 06:39:03 gpg[27069] CAST5.CFB encrypted data
+2024-12-30 06:39:03 gpg[27069] encrypted with 1 passphrase
+2024-12-30 06:39:03 gpg[27069] session key: '3:22258D4825CABF2710CAEA43A520087A'
+2024-12-30 06:39:03 gpg[27069] [don't know]: invalid packet (ctb=70)
+2024-12-30 06:39:03 gpg[27069] WARNING: message was not integrity protected
+2024-12-30 06:39:03 gpg[27069] WARNING: multiple plaintexts seen
+2024-12-30 06:39:03 gpg[27069] handle plaintext failed: Unexpected error

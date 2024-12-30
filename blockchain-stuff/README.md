@@ -50,3 +50,38 @@ node extractGPGFilesAndPasswords.js # Gets the passwords and GPG files from the 
 ```
 
 
+## Bad decrypt
+gpg --show-session-key --batch --no-tty --passphrase "
+password" --decrypt --ignore-mdc-error 7379ab5047b143c0b6cfe
+5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c.gpg
+FUNC: main
+gpg: CAST5.CFB encrypted data
+gpg: encrypted with 1 passphrase
+gpg: session key: '3:69092FAE7556BE4A7DEBCFB28B7F6226'
+DBG: _gcry_set_log_handler called
+gcry_cipher_open
+_gcry_cipher_open
+_gcry_cipher_open_internal
+_gcry_cipher_setup_mode_ops
+_gcry_cipher_cfb_decrypt inbuflen 10 outbuflen 10 cfb_bulk 1306189472
+DBG: Start IV: 0000000000000000
+cfb_decrypt 4 10 10 0
+DBG: IV: 0000000000000000
+cfb_decrypt 5 10 10 0
+DBG: IV: 0000000000000000
+DBG: IV enc: b97703613ed03518
+DBG: IV: 77a8c4db7d3e310f
+cfb_decrypt 6 2 10 0
+DBG: IV enc: 0ab1b07b914929f7
+DBG: IV: c874b07b914929f7
+cipher_sync 6
+gpg: decryption failed: Bad session key
+
+## Password: diagarl8
+ CAST5.CFB encrypted data
+2024-12-30 06:39:03 gpg[27069] encrypted with 1 passphrase
+2024-12-30 06:39:03 gpg[27069] session key: '3:22258D4825CABF2710CAEA43A520087A'
+2024-12-30 06:39:03 gpg[27069] [don't know]: invalid packet (ctb=70)
+2024-12-30 06:39:03 gpg[27069] WARNING: message was not integrity protected
+2024-12-30 06:39:03 gpg[27069] WARNING: multiple plaintexts seen
+2024-12-30 06:39:03 gpg[27069] handle plaintext failed: Unexpected error
