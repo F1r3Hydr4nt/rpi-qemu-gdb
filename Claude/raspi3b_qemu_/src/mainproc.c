@@ -83,7 +83,7 @@ struct mainproc_context
      detached signature.  This is currently only used to deduce the
      file name of the data file if that has not been given. */
   const char *sigfilename;
-
+  size_t enc_len;
   /* A structure to describe the signed data in case of a detached
      signature. */
   struct
@@ -583,6 +583,7 @@ DEK *passphrase_to_dek(int cipher_algo, STRING2KEY *s2k,
   printf("DEK Information:\n");
   printf("Algorithm: %d\n", dek->algo);
   printf("Key Length: %d bytes\n", dek->keylen);
+  printf("Iterations: %d bytes\n", iterations);
   // printf("Algorithm Info Printed: %s\n", dek->algo_info_printed ? "Yes" : "No");
   // printf("Use AEAD: %d\n", dek->use_aead);
   // printf("Use MDC: %s\n", dek->use_mdc ? "Yes" : "No");
@@ -1856,7 +1857,7 @@ check_nesting(CTX c)
 static int
 do_proc_packets(ctrl_t ctrl, CTX c, iobuf_t a)
 {
-  printf("do_proc_packets\n");// %s\n", ctrl->passphrase);
+  // printf("do_proc_packets\n");// %s\n", ctrl->passphrase);
   // Copy across any main ctx passphrase or session_key
   if (ctrl->passphrase != NULL)
   {
@@ -1868,6 +1869,9 @@ do_proc_packets(ctrl_t ctrl, CTX c, iobuf_t a)
     c->session_key = malloc(strlen(ctrl->session_key) + 1);
     my_strcpy(c->session_key, ctrl->session_key);
   }
+  c->enc_len = ctrl->enc_length;
+  printf("do_proc_packets %d\n", c->enc_len);// %s\n", ctrl->passphrase);
+
   // log_printhex(c->iobuf->d.buf,c->iobuf->d.len,"do_proc_packets");
   PACKET *pkt;
   struct parse_packet_ctx_s parsectx;
@@ -1891,7 +1895,8 @@ do_proc_packets(ctrl_t ctrl, CTX c, iobuf_t a)
       free_packet(pkt, &parsectx);
       /* Stop processing when an invalid packet has been encountered
        * but don't do so when we are doing a --list-packets.  */
-      if (gpg_err_code(rc) == GPG_ERR_INV_PACKET && 1) // opt.list_packets == 0)
+      //if (gpg_err_code(rc) == GPG_ERR_INV_PACKET && 1) // opt.list_packets == 0)
+      goto leave;
         break;
       continue;
     }
