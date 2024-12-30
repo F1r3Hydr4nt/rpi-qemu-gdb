@@ -280,11 +280,11 @@ int
 _gcry_cipher_decrypt (gcry_cipher_hd_t h, void *out, size_t outsize,
                       const void *in, size_t inlen)
 {
-    // printf("Caller params - in: %p, inlen: %zu\n", in, inlen);
+    printf("Caller params - in: %p, inlen: %zu\n", in, inlen);
     printf("_gcry_cipher_decrypt inlen: %d, outSize: %d, unused: %d\n", inlen, outsize, h->unused);
   if (!in) /* Caller requested in-place encryption. */
     {
-      // printf("Caller requested in-place encryption.\n");
+      printf("Caller requested in-place encryption.\n");
       in = out;
       inlen = outsize;
     }
@@ -327,13 +327,11 @@ static void hexdump(const char *desc, const void *data, size_t len) {
     printf("\n");
 }
 
-static void ascii_dump(const char *desc, const unsigned char *data, size_t len) {
-    printf("%s: ", desc);
+static void ascii_dump(const unsigned char *data, size_t len) {
+    // Print the data directly, allowing special characters to be interpreted
     for (size_t i = 0; i < len; i++) {
-        unsigned char c = data[i];
-        printf("%c", (c >= 32 && c <= 126) ? c : '.');
+        printf("%c", data[i]);
     }
-    printf("\n");
 }
 
 static void _gcry_cast5_cfb_dec(gcry_cipher_hd_t context, unsigned char *iv, void *outbuf_arg,
@@ -393,10 +391,10 @@ for (int i = 0; i < 4; i++)
         buf_xor(outbuf, inbuf, tmpbuf, CAST5_BLOCKSIZE * 3);
         
         // Add this line to see the decrypted output
-        if(debugCount>=0){
-            hexdump("3 Blocks Decry", outbuf, CAST5_BLOCKSIZE * 3);
-        ascii_dump("3 Block OUT", outbuf, CAST5_BLOCKSIZE * 3);
-        }
+        // if(debugCount>=0){
+            // hexdump("3 Blocks Decry", outbuf, CAST5_BLOCKSIZE * 3);
+        ascii_dump(outbuf, CAST5_BLOCKSIZE * 3);
+       // }
         outbuf += CAST5_BLOCKSIZE * 3;
         inbuf += CAST5_BLOCKSIZE * 3;
         debugCount--;
