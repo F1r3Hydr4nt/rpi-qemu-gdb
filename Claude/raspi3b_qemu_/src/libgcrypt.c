@@ -391,7 +391,7 @@ static void _gcry_cast5_cfb_dec(gcry_cipher_hd_t context, unsigned char *iv, voi
         for (int i = 0; i < 3; i++) {
             struct Block block = blockFromBytes(tmpbuf + (i * CAST5_BLOCKSIZE));
             if(debugCount>0 && i==0){ printf("%d in :",i); printBlock(block);}
-            block = encrypt(context->key, block, debugCount>0 && i==0);
+            block = encrypt(context->key, block, 0);//debugCount>0 && i==0);
             if(debugCount>0 && i==0){ printf("%d enc:",i); printBlock(block);}
             bytesFromBlock(block, tmpbuf + (i * CAST5_BLOCKSIZE));
         }

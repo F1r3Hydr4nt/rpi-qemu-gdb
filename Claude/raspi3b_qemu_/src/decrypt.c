@@ -45,7 +45,8 @@ int decrypt_memory(ctrl_t ctrl, const unsigned char* data, size_t length) {
     // printf("Decrypt params:\n");
     // printf("Data ptr: %p\n", (void*)data);
     // printf("Session key: %s\n", ctrl->session_key);
-    
+    ctrl->enc_length=length;
+    printf("Decrypt params: %d\n",ctrl->enc_length);
     iobuf_t a;
     int rc;
     gnupg_fd_t fp;
@@ -91,7 +92,7 @@ int decrypt_memory(ctrl_t ctrl, const unsigned char* data, size_t length) {
     rc = proc_encryption_packets(ctrl, NULL, a);
 
     /* Clean up */
-    iobuf_close(a);
+    // iobuf_close(a);
     return rc;
 }
 

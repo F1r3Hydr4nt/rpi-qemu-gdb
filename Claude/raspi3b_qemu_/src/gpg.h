@@ -108,6 +108,7 @@ struct server_control_s
 
   char *passphrase;
   char *session_key;
+  size_t enc_length;
 };
 
 

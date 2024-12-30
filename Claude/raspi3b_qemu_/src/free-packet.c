@@ -431,7 +431,7 @@ free_packet (PACKET *pkt, parse_packet_ctx_t parsectx)
 
   //if (DBG_MEMORY)
     printf ("free_packet() type=%d\n", pkt->pkttype);
-
+  return;
   /* If we have a parser context holding PKT then do not free the
    * packet but set a flag that the packet in the parser context is
    * now a deep copy.  */
