@@ -1,5 +1,5 @@
-
 #include "memory.h"
+#include "printf.h"
 
 // Memory allocator definitions
 #define HEAP_SIZE (64 * 1024)  // 64KB heap
@@ -91,11 +91,23 @@ void free(void* ptr) {
 
 // x* memory functions implementation
 void* xmalloc(size_t n) {
-    void* ptr = malloc(n);
-    if (!ptr && n != 0) {
-        // Handle allocation failure - in bare metal we just return NULL
-        // In a full system we might want to panic/reset
+    void* ptr;
+
+    /* Handle zero allocation */
+    if (n == 0)
+        n = 1;  /* Always allocate at least 1 byte */
+        
+    ptr = malloc(n);
+    
+    /* Check for allocation failure */
+    if (!ptr) {
+        printf("xmalloc failed to allocate %zu bytes\n", n);
+        return NULL;// abort(); /* In GnuPG we abort on allocation failure */
     }
+    
+    /* Zero out allocated memory */
+    memset(ptr, 0, n);
+    
     return ptr;
 }
 

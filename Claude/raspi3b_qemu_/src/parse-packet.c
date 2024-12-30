@@ -793,14 +793,14 @@ printf("Read CTB: 0x%02x (new_format=%d)\n", ctb, !!(ctb & 0x40));
 // Length parsing - new format
 printf("Parsing new format packet length\n");
 printf("First length byte: 0x%02x\n", c);
-// printf("One byte length: %lu\n", pktlen);
-// printf("Two byte length: %lu\n", pktlen);
-// printf("Four byte length: %lu\n", pktlen);
+printf("One byte length: %lu\n", pktlen);
+printf("Two byte length: %lu\n", pktlen);
+printf("Four byte length: %lu\n", pktlen);
 printf("Partial length encoding: mode=0x%02x\n", c & 0xff);
 
 // Length parsing - old format
-// printf("Parsing old format length (lenbytes=%d)\n", lenbytes);
-// printf("Old format packet length: %lu\n", pktlen);
+printf("Parsing old format length (lenbytes=%d)\n", lenbytes);
+printf("Old format packet length: %lu\n", pktlen);
 
   /* Sometimes the decompressing layer enters an error state in which
      it simply outputs 0xff for every byte read.  If we have a stream
@@ -916,13 +916,13 @@ printf("Processing packet type: %s (%d)\n",
           pkt_type_str[pkttype] : "UNKNOWN", pkttype);
   switch (pkttype)
     {
-    // case PKT_PUBLIC_KEY:
-    // case PKT_PUBLIC_SUBKEY:
-    // case PKT_SECRET_KEY:
-    // case PKT_SECRET_SUBKEY:
-    //   pkt->pkt.public_key = xmalloc_clear (sizeof *pkt->pkt.public_key);
-    //   rc = parse_key (inp, pkttype, pktlen, hdr, hdrlen, pkt);
-    //   break;
+    case PKT_PUBLIC_KEY:
+    case PKT_PUBLIC_SUBKEY:
+    case PKT_SECRET_KEY:
+    case PKT_SECRET_SUBKEY:
+      // pkt->pkt.public_key = xmalloc_clear (sizeof *pkt->pkt.public_key);
+      // rc = parse_key (inp, pkttype, pktlen, hdr, hdrlen, pkt);
+    break;
     case PKT_SYMKEY_ENC:
       rc = parse_symkeyenc (inp, pkttype, pktlen, pkt);
       break;
@@ -960,7 +960,7 @@ printf("Processing packet type: %s (%d)\n",
       break;
     // case PKT_COMPRESSED:
     //   rc = parse_compressed (inp, pkttype, pktlen, pkt, new_ctb);
-    //   break;
+    //  break;
     case PKT_ENCRYPTED:
     case PKT_ENCRYPTED_MDC:
       rc = parse_encrypted (inp, pkttype, pktlen, pkt, new_ctb, partial);
@@ -1003,8 +1003,8 @@ printf("Processing packet type: %s (%d)\n",
 // printf("Storing packet in context (type=%d, rc=%d)\n", pkttype, rc);
 
 // // Hex dumps
-// printf("Packet header (%d bytes):\n", hdrlen);
-// log_hexdump(hdr, hdrlen);
+printf("Packet header (%d bytes):\n", hdrlen);
+log_hexdump(hdr, hdrlen);
  leave:
   /* FIXME: We leak in case of an error (see the xmalloc's above).  */
   if (!rc && iobuf_error (inp))
