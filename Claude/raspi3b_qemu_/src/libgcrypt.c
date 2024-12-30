@@ -374,7 +374,7 @@ static void _gcry_cast5_cfb_dec(gcry_cipher_hd_t context, unsigned char *iv, voi
 //         }
 //     }
 // #endif
-    int debugCount = 2;
+    int debugCount = 1;
 // #if !defined(USE_AMD64_ASM) && !defined(USE_ARM_ASM)
     for (; nblocks >= 3; nblocks -= 3) {
         if(debugCount>0) 
@@ -382,15 +382,17 @@ static void _gcry_cast5_cfb_dec(gcry_cipher_hd_t context, unsigned char *iv, voi
         // Copy IV and next 2 blocks to temporary buffer
         cipher_block_cpy(tmpbuf + 0, iv, CAST5_BLOCKSIZE);
         cipher_block_cpy(tmpbuf + 8, inbuf + 0, CAST5_BLOCKSIZE * 2);
+        if(debugCount>0) 
+            hexdump("TMP", tmpbuf, CAST5_BLOCKSIZE * 3);
        // hexdump("3 Block COPY", tmpbuf, CAST5_BLOCKSIZE * 3);
         cipher_block_cpy(iv, inbuf + 16, CAST5_BLOCKSIZE);
 
         // Process three blocks at once using Block structs
         for (int i = 0; i < 3; i++) {
             struct Block block = blockFromBytes(tmpbuf + (i * CAST5_BLOCKSIZE));
-            if(debugCount>0){ printf("%d in :",i); printBlock(block);}
-            block = encrypt(context->key, block, debugCount>0);
-            if(debugCount>0){ printf("%d enc:",i); printBlock(block);}
+            if(debugCount>0 && i==0){ printf("%d in :",i); printBlock(block);}
+            block = encrypt(context->key, block, debugCount>0 && i==0);
+            if(debugCount>0 && i==0){ printf("%d enc:",i); printBlock(block);}
             bytesFromBlock(block, tmpbuf + (i * CAST5_BLOCKSIZE));
         }
 
@@ -761,127 +763,230 @@ static uint32_t cyclicShift(uint32_t x, uint8_t shift)
     uint8_t s = shift % 32;
     return (x << s) | (x >> (32 - s));
 }
-
 static struct Block run(const Key key, struct Block data, int reverse, int debug)
 {
     Key x = {0};
     memcpy(x, key, sizeof(Key));
     Key z = {0};
-    if(debug){
-        printf("Key: ");
-        for (int i = 0; i < 4; i++)
-        {
-            printf("%08X", x[i]);
+    
+    if(debug) {
+        printf("\n=== Starting run() ===\n");
+        printf("Input Key: ");
+        for (int i = 0; i < 4; i++) {
+            printf("%08X", key[i]);
         }
-        printf("\n");
+        printf("\nInput Block - MSB: %08X LSB: %08X\n", data.msb, data.lsb);
+        printf("Reverse mode: %d\n", reverse);
     }
-        uint32_t K[32] = {0};
 
-    for (int i = 0; i < 2; ++i)
-    {
+    uint32_t K[32] = {0};
+
+    for (int i = 0; i < 2; ++i) {
+        if(debug) printf("\n-- Key Schedule Round %d --\n", i);
+        
+        // First z transformation
+        if(debug) {
+            printf("Pre-transform x: ");
+            for(int j = 0; j < 4; j++) printf("%08X ", x[j]);
+            printf("\n");
+            
+            printf("g(x) values: ");
+            for(int j = 0x8; j <= 0xF; j++) printf("%02X ", g(x, j));
+            printf("\n");
+        }
+        
         z[0] = x[0] ^ S5[g(x, 0xD)] ^ S6[g(x, 0xF)] ^ S7[g(x, 0xC)] ^ S8[g(x, 0xE)] ^ S7[g(x, 0x8)];
         z[1] = x[2] ^ S5[g(z, 0x0)] ^ S6[g(z, 0x2)] ^ S7[g(z, 0x1)] ^ S8[g(z, 0x3)] ^ S8[g(x, 0xA)];
         z[2] = x[3] ^ S5[g(z, 0x7)] ^ S6[g(z, 0x6)] ^ S7[g(z, 0x5)] ^ S8[g(z, 0x4)] ^ S5[g(x, 0x9)];
         z[3] = x[1] ^ S5[g(z, 0xA)] ^ S6[g(z, 0x9)] ^ S7[g(z, 0xB)] ^ S8[g(z, 0x8)] ^ S6[g(x, 0xB)];
 
+        if(debug) {
+            printf("Post z-transform: ");
+            for(int j = 0; j < 4; j++) printf("%08X ", z[j]);
+            printf("\n");
+        }
+
+        // First set of K values
         K[0 + i * 16] = S5[g(z, 0x8)] ^ S6[g(z, 0x9)] ^ S7[g(z, 0x7)] ^ S8[g(z, 0x6)] ^ S5[g(z, 0x2)];
         K[1 + i * 16] = S5[g(z, 0xA)] ^ S6[g(z, 0xB)] ^ S7[g(z, 0x5)] ^ S8[g(z, 0x4)] ^ S6[g(z, 0x6)];
         K[2 + i * 16] = S5[g(z, 0xC)] ^ S6[g(z, 0xD)] ^ S7[g(z, 0x3)] ^ S8[g(z, 0x2)] ^ S7[g(z, 0x9)];
         K[3 + i * 16] = S5[g(z, 0xE)] ^ S6[g(z, 0xF)] ^ S7[g(z, 0x1)] ^ S8[g(z, 0x0)] ^ S8[g(z, 0xC)];
 
+        if(debug) {
+            printf("K[%d-%d]: ", i*16, i*16+3);
+            for(int j = 0; j < 4; j++) printf("%08X ", K[j + i*16]);
+            printf("\n");
+        }
+
+        // Second x transformation
+        if(debug) {
+            printf("Pre-second-x g(z) values: ");
+            for(int j = 0x0; j <= 0x7; j++) printf("%02X ", g(z, j));
+            printf("\n");
+        }
+
         x[0] = z[2] ^ S5[g(z, 0x5)] ^ S6[g(z, 0x7)] ^ S7[g(z, 0x4)] ^ S8[g(z, 0x6)] ^ S7[g(z, 0x0)];
         x[1] = z[0] ^ S5[g(x, 0x0)] ^ S6[g(x, 0x2)] ^ S7[g(x, 0x1)] ^ S8[g(x, 0x3)] ^ S8[g(z, 0x2)];
         x[2] = z[1] ^ S5[g(x, 0x7)] ^ S6[g(x, 0x6)] ^ S7[g(x, 0x5)] ^ S8[g(x, 0x4)] ^ S5[g(z, 0x1)];
         x[3] = z[3] ^ S5[g(x, 0xA)] ^ S6[g(x, 0x9)] ^ S7[g(x, 0xB)] ^ S8[g(x, 0x8)] ^ S6[g(z, 0x3)];
+
+        if(debug) {
+            printf("Second x-transform: ");
+            for(int j = 0; j < 4; j++) printf("%08X ", x[j]);
+            printf("\n");
+        }
 
         K[4 + i * 16] = S5[g(x, 0x3)] ^ S6[g(x, 0x2)] ^ S7[g(x, 0xC)] ^ S8[g(x, 0xD)] ^ S5[g(x, 0x8)];
         K[5 + i * 16] = S5[g(x, 0x1)] ^ S6[g(x, 0x0)] ^ S7[g(x, 0xE)] ^ S8[g(x, 0xF)] ^ S6[g(x, 0xD)];
         K[6 + i * 16] = S5[g(x, 0x7)] ^ S6[g(x, 0x6)] ^ S7[g(x, 0x8)] ^ S8[g(x, 0x9)] ^ S7[g(x, 0x3)];
         K[7 + i * 16] = S5[g(x, 0x5)] ^ S6[g(x, 0x4)] ^ S7[g(x, 0xA)] ^ S8[g(x, 0xB)] ^ S8[g(x, 0x7)];
 
+        if(debug) {
+            printf("K[%d-%d]: ", i*16+4, i*16+7);
+            for(int j = 4; j < 8; j++) printf("%08X ", K[j + i*16]);
+            printf("\n");
+        }
+
+        // Third z transformation
         z[0] = x[0] ^ S5[g(x, 0xD)] ^ S6[g(x, 0xF)] ^ S7[g(x, 0xC)] ^ S8[g(x, 0xE)] ^ S7[g(x, 0x8)];
         z[1] = x[2] ^ S5[g(z, 0x0)] ^ S6[g(z, 0x2)] ^ S7[g(z, 0x1)] ^ S8[g(z, 0x3)] ^ S8[g(x, 0xA)];
         z[2] = x[3] ^ S5[g(z, 0x7)] ^ S6[g(z, 0x6)] ^ S7[g(z, 0x5)] ^ S8[g(z, 0x4)] ^ S5[g(x, 0x9)];
         z[3] = x[1] ^ S5[g(z, 0xA)] ^ S6[g(z, 0x9)] ^ S7[g(z, 0xB)] ^ S8[g(z, 0x8)] ^ S6[g(x, 0xB)];
+
+        if(debug) {
+            printf("Third z-transform: ");
+            for(int j = 0; j < 4; j++) printf("%08X ", z[j]);
+            printf("\n");
+        }
 
         K[8 + i * 16] = S5[g(z, 0x3)] ^ S6[g(z, 0x2)] ^ S7[g(z, 0xC)] ^ S8[g(z, 0xD)] ^ S5[g(z, 0x9)];
         K[9 + i * 16] = S5[g(z, 0x1)] ^ S6[g(z, 0x0)] ^ S7[g(z, 0xE)] ^ S8[g(z, 0xF)] ^ S6[g(z, 0xC)];
         K[10 + i * 16] = S5[g(z, 0x7)] ^ S6[g(z, 0x6)] ^ S7[g(z, 0x8)] ^ S8[g(z, 0x9)] ^ S7[g(z, 0x2)];
         K[11 + i * 16] = S5[g(z, 0x5)] ^ S6[g(z, 0x4)] ^ S7[g(z, 0xA)] ^ S8[g(z, 0xB)] ^ S8[g(z, 0x6)];
 
+        if(debug) {
+            printf("K[%d-%d]: ", i*16+8, i*16+11);
+            for(int j = 8; j < 12; j++) printf("%08X ", K[j + i*16]);
+            printf("\n");
+        }
+
+        // Fourth x transformation
         x[0] = z[2] ^ S5[g(z, 0x5)] ^ S6[g(z, 0x7)] ^ S7[g(z, 0x4)] ^ S8[g(z, 0x6)] ^ S7[g(z, 0x0)];
         x[1] = z[0] ^ S5[g(x, 0x0)] ^ S6[g(x, 0x2)] ^ S7[g(x, 0x1)] ^ S8[g(x, 0x3)] ^ S8[g(z, 0x2)];
         x[2] = z[1] ^ S5[g(x, 0x7)] ^ S6[g(x, 0x6)] ^ S7[g(x, 0x5)] ^ S8[g(x, 0x4)] ^ S5[g(z, 0x1)];
         x[3] = z[3] ^ S5[g(x, 0xA)] ^ S6[g(x, 0x9)] ^ S7[g(x, 0xB)] ^ S8[g(x, 0x8)] ^ S6[g(z, 0x3)];
 
+        if(debug) {
+            printf("Fourth x-transform: ");
+            for(int j = 0; j < 4; j++) printf("%08X ", x[j]);
+            printf("\n");
+        }
+
         K[12 + i * 16] = S5[g(x, 0x8)] ^ S6[g(x, 0x9)] ^ S7[g(x, 0x7)] ^ S8[g(x, 0x6)] ^ S5[g(x, 0x3)];
         K[13 + i * 16] = S5[g(x, 0xA)] ^ S6[g(x, 0xB)] ^ S7[g(x, 0x5)] ^ S8[g(x, 0x4)] ^ S6[g(x, 0x7)];
         K[14 + i * 16] = S5[g(x, 0xC)] ^ S6[g(x, 0xD)] ^ S7[g(x, 0x3)] ^ S8[g(x, 0x2)] ^ S7[g(x, 0x8)];
         K[15 + i * 16] = S5[g(x, 0xE)] ^ S6[g(x, 0xF)] ^ S7[g(x, 0x1)] ^ S8[g(x, 0x0)] ^ S8[g(x, 0xD)];
+
+        if(debug) {
+            printf("K[%d-%d]: ", i*16+12, i*16+15);
+            for(int j = 12; j < 16; j++) printf("%08X ", K[j + i*16]);
+            printf("\n");
+        }
     }
-if(debug){
-    printf("z: ");
-    for (int i = 0; i < 4; i++)
-    {
-        printf("%08x", z[i]);
-    }
-    printf("\n");
-    printf("K: ");
-    for (int i = 0; i < 32; i++)
-    {
-        printf("%08x", K[i]);
-    }
-    printf("\n");
-}
+
+    // if(debug) {
+    //     printf("\n=== Generated Key Schedule ===\n");
+    //     for(int i = 0; i < 32; i++) {
+    //         printf("K[%2d]: %08X\n", i, K[i]);
+    //     }
+    // }
+
     uint32_t L[ROUND_COUNT + 1] = {0};
     L[0] = data.msb;
-
     uint32_t R[ROUND_COUNT + 1] = {0};
     R[0] = data.lsb;
 
-    for (int i = 0; i < ROUND_COUNT; ++i)
-    {
+    if(debug) printf("\n=== Starting Rounds ===\n");
+
+    for (int i = 0; i < ROUND_COUNT; ++i) {
         int rIndex = reverse ? (ROUND_COUNT - 1 - i) : i;
         uint32_t Kmi = K[rIndex];
         uint8_t Kri = K[16 + rIndex] & 0x1F;
 
+        if(debug) {
+            printf("\nRound %2d:\n", i);
+            printf("Using K[%2d] = %08X, K[%2d] = %08X (shift: %d)\n", 
+                   rIndex, Kmi, 16+rIndex, K[16 + rIndex], Kri);
+            printf("Input L: %08X R: %08X\n", L[i], R[i]);
+        }
+
         uint32_t I = 0;
         uint32_t f = 0;
-
         uint8_t Ia, Ib, Ic, Id;
 
-        switch (rIndex % 3)
-        {
-        case 0:
-            I = cyclicShift(sumMod2_32b(Kmi, R[i]), Kri);
-            splitI(I, &Ia, &Ib, &Ic, &Id);
-            f = sumMod2_32b(subtractMod2_32b(S1[Ia] ^ S2[Ib], S3[Ic]), S4[Id]);
-            break;
+        switch (rIndex % 3) {
+            case 0:
+                I = cyclicShift(sumMod2_32b(Kmi, R[i]), Kri);
+                if(debug) printf("Case 0: I = cyclicShift(sumMod2_32b(%08X, %08X), %d) = %08X\n", 
+                               Kmi, R[i], Kri, I);
+                splitI(I, &Ia, &Ib, &Ic, &Id);
+                if(debug) printf("Split I: %02X %02X %02X %02X\n", Ia, Ib, Ic, Id);
+                f = sumMod2_32b(subtractMod2_32b(S1[Ia] ^ S2[Ib], S3[Ic]), S4[Id]);
+                if(debug) {
+                    printf("S-box lookups: S1[%02X]=%08X S2[%02X]=%08X S3[%02X]=%08X S4[%02X]=%08X\n",
+                           Ia, S1[Ia], Ib, S2[Ib], Ic, S3[Ic], Id, S4[Id]);
+                    printf("f calculation: %08X\n", f);
+                }
+                break;
 
-        case 1:
-            I = cyclicShift(Kmi ^ R[i], Kri);
-            splitI(I, &Ia, &Ib, &Ic, &Id);
-            f = sumMod2_32b(subtractMod2_32b(S1[Ia], S2[Ib]), S3[Ic]) ^ S4[Id];
-            break;
+            case 1:
+                I = cyclicShift(Kmi ^ R[i], Kri);
+                if(debug) printf("Case 1: I = cyclicShift(%08X ^ %08X, %d) = %08X\n", 
+                               Kmi, R[i], Kri, I);
+                splitI(I, &Ia, &Ib, &Ic, &Id);
+                if(debug) printf("Split I: %02X %02X %02X %02X\n", Ia, Ib, Ic, Id);
+                f = sumMod2_32b(subtractMod2_32b(S1[Ia], S2[Ib]), S3[Ic]) ^ S4[Id];
+                if(debug) {
+                    printf("S-box lookups: S1[%02X]=%08X S2[%02X]=%08X S3[%02X]=%08X S4[%02X]=%08X\n",
+                           Ia, S1[Ia], Ib, S2[Ib], Ic, S3[Ic], Id, S4[Id]);
+                    printf("f calculation: %08X\n", f);
+                }
+                break;
 
-        case 2:
-            I = cyclicShift(subtractMod2_32b(Kmi, R[i]), Kri);
-            splitI(I, &Ia, &Ib, &Ic, &Id);
-            f = subtractMod2_32b(sumMod2_32b(S1[Ia], S2[Ib]) ^ S3[Ic], S4[Id]);
-            break;
+            case 2:
+                I = cyclicShift(subtractMod2_32b(Kmi, R[i]), Kri);
+                if(debug) printf("Case 2: I = cyclicShift(subtractMod2_32b(%08X, %08X), %d) = %08X\n", 
+                               Kmi, R[i], Kri, I);
+                splitI(I, &Ia, &Ib, &Ic, &Id);
+                if(debug) printf("Split I: %02X %02X %02X %02X\n", Ia, Ib, Ic, Id);
+                f = subtractMod2_32b(sumMod2_32b(S1[Ia], S2[Ib]) ^ S3[Ic], S4[Id]);
+                if(debug) {
+                    printf("S-box lookups: S1[%02X]=%08X S2[%02X]=%08X S3[%02X]=%08X S4[%02X]=%08X\n",
+                           Ia, S1[Ia], Ib, S2[Ib], Ic, S3[Ic], Id, S4[Id]);
+                    printf("f calculation: %08X\n", f);
+                }
+                break;
         }
 
         L[i + 1] = R[i];
         R[i + 1] = L[i] ^ f;
-        if(debug) printf(" L[i + 1]: %08X  R[i + 1]: %08X\n", L[i + 1], R[i + 1]);
+        
+        if(debug) {
+            printf("Round %2d output:\n", i);
+            printf("L[%2d] = R[%2d] = %08X\n", i+1, i, L[i+1]);
+            printf("R[%2d] = L[%2d] ^ f = %08X ^ %08X = %08X\n", 
+                   i+1, i, L[i], f, R[i+1]);
+        }
     }
 
     data.msb = R[ROUND_COUNT];
     data.lsb = L[ROUND_COUNT];
-// if(debug){
-//     printf("Returning: ");
-//     printBlock(data);
-// }
+
+    if(debug) {
+        printf("\n=== Final Output ===\n");
+        printf("MSB: %08X LSB: %08X\n", data.msb, data.lsb);
+    }
+
     return data;
 }
 

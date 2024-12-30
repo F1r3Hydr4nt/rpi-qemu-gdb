@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@elas_co/bitcoints": "^1.0.2-b4",
+    "bsv": "^2.0.10",
+    "crc32": "^0.2.2"
+  }
+}

@@ -4,6 +4,7 @@
 #include <string.h>
 #include "7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c.gpg.h"
 #include "encrypted.1k.h"
+#include "file4.gpg.h"
 #include "fwddecl.h"
 #include "gpg.h"
 // QEMU Versatile PB UART0 address
@@ -80,7 +81,7 @@ PW: 60ddbd0df3246dd5542a1076b2b9ed7db35e388e7e8bf6bd83250a2117dd6c75
 }
 PW: df1aea260a0f85d24b5ee0cd0e09af73321401731dfa78865a7929bc61d2e539*/
     // Set up passphrase with length verification
-    const char *test_passphrase = "2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945"; //"2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945";
+    const char *test_passphrase = "60ddbd0df3246dd5542a1076b2b9ed7db35e388e7e8bf6bd83250a2117dd6c75"; //"2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945";
     size_t pass_len = strlen(test_passphrase);
     printf("Passphrase length before malloc: %d\n", pass_len);
     
@@ -116,7 +117,7 @@ PW: df1aea260a0f85d24b5ee0cd0e09af73321401731dfa78865a7929bc61d2e539*/
     
     // Decrypt the data
     // int rc = decrypt_memory(ctrl, encrypted_1k_gpg, encrypted_1k_gpg_len);
-    int rc = decrypt_memory(ctrl, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len);
+    int rc = decrypt_memory(ctrl, file4_gpg, file4_gpg_len);
     if (rc) {
         printf("Decryption failed with code: %d\n", rc);
     }
