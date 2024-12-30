@@ -506,9 +506,11 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
     /* log_hexdump( "prefix", temp, nprefix+2 ); */
     if (dek->symmetric && (p[nprefix - 2] != p[nprefix] || p[nprefix - 1] != p[nprefix + 1]))
     {
+      printf("\n\nBAD KEY!\n\n");
       rc = gpg_error(GPG_ERR_BAD_KEY);
       goto leave;
-    }
+    }else printf("\n\nGOOD KEY!\n\n");
+
 
     // if ( dfx->mdc_hash )
     //   gcry_md_write (dfx->mdc_hash, temp, nprefix+2);

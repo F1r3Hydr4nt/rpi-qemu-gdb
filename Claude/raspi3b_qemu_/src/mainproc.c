@@ -568,7 +568,7 @@ DEK *passphrase_to_dek(int cipher_algo, STRING2KEY *s2k,
   //   memcpy (dek->s2k_cacheid, s2k_cacheid, sizeof dek->s2k_cacheid);
   // xfree(last_pw);
   // last_pw = pw;
-  uint32_t iterations = ((uint32_t)16 + (0xFF & 15)) << ((0xFF >> 4) + 6);
+  uint32_t iterations = ((uint32_t)16 + (s2k->count & 15)) << ((s2k->count >> 4) + 6);
   if (derivedKey != NULL)
   {
     printf("OVERRIDDEN: %s\n", derivedKey);
@@ -587,11 +587,16 @@ DEK *passphrase_to_dek(int cipher_algo, STRING2KEY *s2k,
   // printf("Use AEAD: %d\n", dek->use_aead);
   // printf("Use MDC: %s\n", dek->use_mdc ? "Yes" : "No");
   // printf("Symmetric: %s\n", dek->symmetric ? "Yes" : "No");
-  // log_hexdump( dek->key, dek->keylen);
   printf("Key: ");
   for (int i = 0; i < dek->keylen; i++)
   {
     printf("%02x", dek->key[i]);
+  }
+  printf("\n");
+  printf("SALT: ");
+  for (int i = 0; i < 8; i++)
+  {
+    printf("%02x", s2k->salt[i]);
   }
   printf("\n");
   // printf("S2K Cache ID: %s\n", dek->s2k_cacheid);

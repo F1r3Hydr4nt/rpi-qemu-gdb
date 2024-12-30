@@ -179,12 +179,13 @@ void cipher_block_xor_n_copy(void *_dst_xor, void *_srcdst_cpy,
     cipher_block_xor_n_copy_2(_dst_xor, _src, _srcdst_cpy, _src, blocksize);
 }
 
-void buf_xor(void *_dst, const void *_src1, const void *_src2, size_t len) {
+void buf_xor(void *_dst, const void *_src1, const void *_src2, size_t len, int debug) {
     unsigned char *dst = (unsigned char *)_dst;
     const unsigned char *src1 = (const unsigned char *)_src1;
     const unsigned char *src2 = (const unsigned char *)_src2;
 
     while (len >= sizeof(uint32_t)) {
+        if(debug) printf("%08X =? %08X ^ %08X\n", buf_get_he32(src1) ^ buf_get_he32(src2),  buf_get_he32(src1), buf_get_he32(src2));
         buf_put_he32(dst, buf_get_he32(src1) ^ buf_get_he32(src2));
         dst += sizeof(uint32_t);
         src1 += sizeof(uint32_t);
@@ -192,8 +193,10 @@ void buf_xor(void *_dst, const void *_src1, const void *_src2, size_t len) {
         len -= sizeof(uint32_t);
     }
 
-    for (; len; len--)
+    for (; len; len--){
+        if(debug) printf("%02X =? %02X ^ %02X\n", *src1 ^ *src2,  *src1,*src2);
         *dst++ = *src1++ ^ *src2++;
+    }
 }
 
 void printUint32Hex(uint32_t data)
@@ -322,7 +325,7 @@ static void hexdump(const char *desc, const void *data, size_t len) {
     const unsigned char *buf = (const unsigned char*)data;
     printf("%s: ", desc);
     for (size_t i = 0; i < len; i++) {
-        printf("%02x", buf[i]);
+        printf("%02X", buf[i]);
     }
     printf("\n");
 }
@@ -338,17 +341,18 @@ static void _gcry_cast5_cfb_dec(gcry_cipher_hd_t context, unsigned char *iv, voi
                               const void *inbuf_arg, size_t nblocks) {
                                 #define CAST5_BLOCKSIZE 8
     // CAST5_context *ctx = context;
+    printf("_gcry_cast5_cfb_dec\n");
     unsigned char *outbuf = outbuf_arg;
     const unsigned char *inbuf = inbuf_arg;
     unsigned char tmpbuf[CAST5_BLOCKSIZE * 3];
     struct Block ivBlock, tmpBlock;
-for (int i = 0; i < 4; i++)
-    {
-        printf("key[%d] = 0x%08x\n", i, context->key[i]);
-    }
+// for (int i = 0; i < 4; i++)
+//     {
+//         printf("key[%d] = 0x%08x\n", i, context->key[i]);
+//     }
     printf("nblocks: %d\n", nblocks);
     // hexdump("Input buffer", inbuf_arg, nblocks * CAST5_BLOCKSIZE);
-    hexdump("_gcry_cast5_cfb_dec, IV", iv, CAST5_BLOCKSIZE);
+    hexdump("IV", iv, CAST5_BLOCKSIZE);
 // #ifdef USE_AMD64_ASM
 //     {
 //         if (nblocks >= 4) {
@@ -370,10 +374,11 @@ for (int i = 0; i < 4; i++)
 //         }
 //     }
 // #endif
-    int debugCount = 44;
+    int debugCount = 2;
 // #if !defined(USE_AMD64_ASM) && !defined(USE_ARM_ASM)
     for (; nblocks >= 3; nblocks -= 3) {
-      // if(debugCount>=0) hexdump("3 Blocks IN", inbuf, CAST5_BLOCKSIZE * 3);
+        if(debugCount>0) 
+            hexdump("\nIN ", inbuf, CAST5_BLOCKSIZE * 3);
         // Copy IV and next 2 blocks to temporary buffer
         cipher_block_cpy(tmpbuf + 0, iv, CAST5_BLOCKSIZE);
         cipher_block_cpy(tmpbuf + 8, inbuf + 0, CAST5_BLOCKSIZE * 2);
@@ -383,18 +388,20 @@ for (int i = 0; i < 4; i++)
         // Process three blocks at once using Block structs
         for (int i = 0; i < 3; i++) {
             struct Block block = blockFromBytes(tmpbuf + (i * CAST5_BLOCKSIZE));
-            block = encrypt(context->key, block);
+            if(debugCount>0){ printf("%d in :",i); printBlock(block);}
+            block = encrypt(context->key, block, debugCount>0);
+            if(debugCount>0){ printf("%d enc:",i); printBlock(block);}
             bytesFromBlock(block, tmpbuf + (i * CAST5_BLOCKSIZE));
         }
 
         // XOR the results with input to get plaintext
-        buf_xor(outbuf, inbuf, tmpbuf, CAST5_BLOCKSIZE * 3);
+        buf_xor(outbuf, inbuf, tmpbuf, CAST5_BLOCKSIZE * 3, debugCount>0);
         
         // Add this line to see the decrypted output
-        // if(debugCount>=0){
-            // hexdump("3 Blocks Decry", outbuf, CAST5_BLOCKSIZE * 3);
-        ascii_dump(outbuf, CAST5_BLOCKSIZE * 3);
-       // }
+        if(debugCount>0){
+            hexdump("OUT", outbuf, CAST5_BLOCKSIZE * 3);
+            ascii_dump(outbuf, CAST5_BLOCKSIZE * 3);
+       }
         outbuf += CAST5_BLOCKSIZE * 3;
         inbuf += CAST5_BLOCKSIZE * 3;
         debugCount--;
@@ -403,17 +410,23 @@ for (int i = 0; i < 4; i++)
 
     // Handle remaining blocks individually
     for (; nblocks; nblocks--) {
-      // hexdump("Block", inbuf, CAST5_BLOCKSIZE);
+        if(debugCount>0) 
+            hexdump("\nIN ", inbuf, CAST5_BLOCKSIZE);
         // Convert IV to Block struct, encrypt, and convert back
         ivBlock = blockFromBytes(iv);
-        ivBlock = encrypt(context->key, ivBlock);
+        ivBlock = encrypt(context->key, ivBlock, debugCount>0);
         bytesFromBlock(ivBlock, iv);
 
         // XOR the encrypted IV with input and copy to output
         cipher_block_xor_n_copy(outbuf, iv, inbuf, CAST5_BLOCKSIZE);
-        
+        if(debugCount>0) 
+        {
+            hexdump("OUT", outbuf, CAST5_BLOCKSIZE);
+            ascii_dump(outbuf, CAST5_BLOCKSIZE);
+        }
         outbuf += CAST5_BLOCKSIZE;
         inbuf += CAST5_BLOCKSIZE;
+        debugCount--;
     }
 
     // Clear sensitive data
@@ -436,6 +449,7 @@ static inline unsigned int _gcry_blocksize_shift(gcry_cipher_hd_t c)
 size_t _gcry_cipher_cfb_decrypt(gcry_cipher_hd_t c,
                           unsigned char *outbuf, size_t outbuflen,
                           const unsigned char *inbuf, size_t inbuflen) {
+                            // if(inbuflen!=10) inbuflen  = 64;
     printf("_gcry_cipher_cfb_decrypt inbuflen %d outbuflen %d cfb_bulk %d\n", 
            inbuflen, outbuflen, 1);
     // printf("inbuf: ");
@@ -447,7 +461,7 @@ size_t _gcry_cipher_cfb_decrypt(gcry_cipher_hd_t c,
     // printf("\n");
     // printf("Initial iv address: %p\n", (void*)c->u_iv.iv);
     printf("Initial iv contents: ");
-    for (int i = 0; i < 8; i++) printf("%02x", c->u_iv.iv[i]);
+    for (int i = 0; i < 8; i++) printf("%02X", c->u_iv.iv[i]);
     printf("\n");
 
     unsigned char *ivp;
@@ -455,9 +469,6 @@ size_t _gcry_cipher_cfb_decrypt(gcry_cipher_hd_t c,
     size_t blocksize = 8;//1 << blocksize_shift;
     size_t blocksize_x_2 = blocksize + blocksize;
     unsigned int burn, nburn;
-
-    struct Block ivBlock1 = blockFromBytes(c->u_iv.iv);
-    printBlock(ivBlock1);
 
     if (outbuflen < inbuflen)
         return -1;//GPG_ERR_BUFFER_TOO_SHORT;
@@ -502,7 +513,7 @@ size_t _gcry_cipher_cfb_decrypt(gcry_cipher_hd_t c,
             struct Block ivBlock = blockFromBytes(c->u_iv.iv);
             printBlock(ivBlock);
             
-            ivBlock = encrypt(c->key, ivBlock);
+            ivBlock = encrypt(c->key, ivBlock, 0);
             bytesFromBlock(ivBlock, c->u_iv.iv);
             printBlock(ivBlock);
             
@@ -523,7 +534,7 @@ size_t _gcry_cipher_cfb_decrypt(gcry_cipher_hd_t c,
         struct Block ivBlock = blockFromBytes(c->u_iv.iv);
         printBlock(ivBlock);
         
-        ivBlock = encrypt(c->key, ivBlock);
+        ivBlock = encrypt(c->key, ivBlock, 0);
         bytesFromBlock(ivBlock, c->u_iv.iv);
         printBlock(ivBlock);
 
@@ -543,7 +554,7 @@ size_t _gcry_cipher_cfb_decrypt(gcry_cipher_hd_t c,
         struct Block ivBlock = blockFromBytes(c->u_iv.iv);
         printBlock(ivBlock);
 
-        ivBlock = encrypt(c->key, ivBlock);
+        ivBlock = encrypt(c->key, ivBlock, 0);
         bytesFromBlock(ivBlock, c->u_iv.iv);
         printBlock(ivBlock);
 
@@ -585,10 +596,7 @@ int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
     size_t blocksize_x_2 = blocksize + blocksize;
     unsigned int burn = 0;
     (void)burn; // Suppress unused variable warning
-            struct Block ivBlock1 = blockFromBytes(c->u_iv.iv);
-
-        printBlock(ivBlock1);
-
+          
     if (outbuflen < inbuflen)
         return -1; /* Buffer too short */
 
@@ -619,7 +627,7 @@ int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
     while (inbuflen >= blocksize_x_2) {
         /* Encrypt the IV. */
         struct Block ivBlock = blockFromBytes(c->u_iv.iv);
-        ivBlock = encrypt(c->key, ivBlock);
+        ivBlock = encrypt(c->key, ivBlock, 0);
         bytesFromBlock(ivBlock, c->u_iv.iv);
         printBlock(ivBlock);
         /* XOR the input with the IV and store input into IV. */
@@ -638,7 +646,7 @@ int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
         struct Block ivBlock = blockFromBytes(c->u_iv.iv);
                 printBlock(ivBlock);
 
-        ivBlock = encrypt(c->key, ivBlock);
+        ivBlock = encrypt(c->key, ivBlock, 0);
         bytesFromBlock(ivBlock, c->u_iv.iv);
         printBlock(ivBlock);
 
@@ -658,7 +666,7 @@ int _gcry_cipher_cfb_encrypt(gcry_cipher_hd_t c,
         struct Block ivBlock = blockFromBytes(c->u_iv.iv);
                 printBlock(ivBlock);
 
-        ivBlock = encrypt(c->key, ivBlock);
+        ivBlock = encrypt(c->key, ivBlock, 0);
         bytesFromBlock(ivBlock, c->u_iv.iv);
         printBlock(ivBlock);
 
@@ -754,13 +762,20 @@ static uint32_t cyclicShift(uint32_t x, uint8_t shift)
     return (x << s) | (x >> (32 - s));
 }
 
-static struct Block run(const Key key, struct Block data, int reverse)
+static struct Block run(const Key key, struct Block data, int reverse, int debug)
 {
     Key x = {0};
     memcpy(x, key, sizeof(Key));
     Key z = {0};
-
-    uint32_t K[32] = {0};
+    if(debug){
+        printf("Key: ");
+        for (int i = 0; i < 4; i++)
+        {
+            printf("%08X", x[i]);
+        }
+        printf("\n");
+    }
+        uint32_t K[32] = {0};
 
     for (int i = 0; i < 2; ++i)
     {
@@ -804,7 +819,20 @@ static struct Block run(const Key key, struct Block data, int reverse)
         K[14 + i * 16] = S5[g(x, 0xC)] ^ S6[g(x, 0xD)] ^ S7[g(x, 0x3)] ^ S8[g(x, 0x2)] ^ S7[g(x, 0x8)];
         K[15 + i * 16] = S5[g(x, 0xE)] ^ S6[g(x, 0xF)] ^ S7[g(x, 0x1)] ^ S8[g(x, 0x0)] ^ S8[g(x, 0xD)];
     }
-
+if(debug){
+    printf("z: ");
+    for (int i = 0; i < 4; i++)
+    {
+        printf("%08x", z[i]);
+    }
+    printf("\n");
+    printf("K: ");
+    for (int i = 0; i < 32; i++)
+    {
+        printf("%08x", K[i]);
+    }
+    printf("\n");
+}
     uint32_t L[ROUND_COUNT + 1] = {0};
     L[0] = data.msb;
 
@@ -845,22 +873,26 @@ static struct Block run(const Key key, struct Block data, int reverse)
 
         L[i + 1] = R[i];
         R[i + 1] = L[i] ^ f;
-        // printf(" L[i + 1]: %02X  R[i + 1]: %02X\n", L[i + 1], R[i + 1]);
+        if(debug) printf(" L[i + 1]: %08X  R[i + 1]: %08X\n", L[i + 1], R[i + 1]);
     }
 
     data.msb = R[ROUND_COUNT];
     data.lsb = L[ROUND_COUNT];
+// if(debug){
+//     printf("Returning: ");
+//     printBlock(data);
+// }
     return data;
 }
 
-struct Block encrypt(const Key key, struct Block data)
+struct Block encrypt(const Key key, struct Block data, int debug)
 {
-    return run(key, data, FALSE);
+    return run(key, data, FALSE, debug);
 }
 
 struct Block decrypt(const Key key, struct Block data)
 {
-    return run(key, data, TRUE);
+    return run(key, data, TRUE,0);
 }
 
 struct Block xorBlock(struct Block block, struct Block val)
