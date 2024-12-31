@@ -66,7 +66,10 @@ run: $(TARGET)
 	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel $(TARGET) -nographic -serial mon:stdio
 
 log: $(TARGET)
-	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel $(TARGET) -d int,guest_errors,mmu,strace,in_asm,cpu,out_asm -D qemu.log -nographic -serial mon:stdio
+	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel $(TARGET) -d int,guest_errors,mmu,in_asm -D qemu.in_asm.good.log -nographic -serial mon:stdio
+
+log2: $(TARGET)
+	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel $(TARGET) -d int,guest_errors,mmu,in_asm -D qemu.in_asm.bad.log -nographic -serial mon:stdio
 
 debug: $(TARGET)
 	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel $(TARGET) -nographic -serial mon:stdio -s -S

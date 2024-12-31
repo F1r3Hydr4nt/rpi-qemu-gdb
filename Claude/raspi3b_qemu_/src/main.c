@@ -42,8 +42,8 @@ void uart_putc(char c)
 
 void putc_uart(void *p, char c)
 {
-    (void)p;
-    uart_putc(c);
+    // (void)p;
+    // uart_putc(c);
 }
 void putc_uart2(void *p, char c)
 {
@@ -86,7 +86,7 @@ PW: 60ddbd0df3246dd5542a1076b2b9ed7db35e388e7e8bf6bd83250a2117dd6c75
 }
 PW: df1aea260a0f85d24b5ee0cd0e09af73321401731dfa78865a7929bc61d2e539*/
     // Set up passphrase with length verification
-    const char *test_passphrase = "password";//"60ddbd0df3246dd5542a1076b2b9ed7db35e388e7e8bf6bd83250a2117dd6c75"; //"2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945";
+    const char *test_passphrase = "2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945";//"60ddbd0df3246dd5542a1076b2b9ed7db35e388e7e8bf6bd83250a2117dd6c75"; //"2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945";
     size_t pass_len = strlen(test_passphrase);
     printf("Passphrase length before malloc: %d\n", pass_len);
     
@@ -108,7 +108,7 @@ PW: df1aea260a0f85d24b5ee0cd0e09af73321401731dfa78865a7929bc61d2e539*/
     printf("\n");
     
     // Set up and verify session key
-    const char *key = "693B7847FA44CDC6E1C403F5E44E95C1";
+    const char *key = "427c028e28eeb15464c376d7dcca6ca2";
     size_t key_len = strlen(key);
     printf("Setting up session key at address: %p\n", (void*)&ctrl->session_key);
     ctrl->session_key = malloc(key_len + 1);
@@ -121,8 +121,8 @@ PW: df1aea260a0f85d24b5ee0cd0e09af73321401731dfa78865a7929bc61d2e539*/
     printf("Guard values before decrypt: 0x%08X 0x%08X\n", guard1, guard2);
     
     // Decrypt the data
-    int rc = decrypt_memory(ctrl, encrypted_1k_gpg, encrypted_1k_gpg_len);
-    // int rc = decrypt_memory(ctrl, file4_gpg, file4_gpg_len);
+    // int rc = decrypt_memory(ctrl, encrypted_1k_gpg, encrypted_1k_gpg_len);
+    int rc = decrypt_memory(ctrl, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len);
     if (rc) {
         printf("Decryption failed with code: %d\n", rc);
     }
