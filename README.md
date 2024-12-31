@@ -153,3 +153,10 @@ do_plaintext( IOBUF out, int ctb, PKT_plaintext *pt )
 echo 4c6f72656d20697
 073756d20646f | xxd -p -r
 Lorem ipsum dofreddie@fre
+
+
+https://claude.site/artifacts/d7dd8907-3399-4a2b-9816-7f1ec51fb08c
+
+https://claude.site/artifacts/caed6f03-3caa-4090-8412-5c64261a5537
+
+https://claude.site/artifacts/d653b23c-7ccd-4d48-9ba2-04f957a76285
