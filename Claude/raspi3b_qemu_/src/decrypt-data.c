@@ -497,7 +497,7 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
               // printf("Got EOF at iter %d\n", i); 
               break;
           } else {
-              printf("Got byte: 0x%02x (start=%d)\n", c, ed->buf->d.start);
+              // printf("Got byte: 0x%02x (start=%d)\n", c, ed->buf->d.start);
               temp[i] = c;
           }
       }
