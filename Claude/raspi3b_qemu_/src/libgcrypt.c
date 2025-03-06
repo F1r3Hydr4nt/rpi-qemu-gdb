@@ -432,9 +432,9 @@ static void _gcry_cast5_cfb_dec(gcry_cipher_hd_t context, unsigned char *iv, voi
         debugCount--;
     }
 
+    printf("\n\n_gcry_cast5_cfb_dec END\n");
     // Clear sensitive data
     wipememory(tmpbuf, sizeof(tmpbuf));
-    
     return 0;
 }
 
