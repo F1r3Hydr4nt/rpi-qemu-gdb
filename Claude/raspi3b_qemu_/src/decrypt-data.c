@@ -519,6 +519,8 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
     //   gcry_md_write (dfx->mdc_hash, temp, nprefix+2);
   }
 
+      goto leave; // to inspect why no DEK derivation between binaries
+
   dfx->refcount++;
   dfx->partial = !!ed->is_partial;
   dfx->length = ed->len;
