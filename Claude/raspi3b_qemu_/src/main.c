@@ -42,8 +42,8 @@ void uart_putc(char c)
 
 void putc_uart(void *p, char c)
 {
-    (void)p;
-    uart_putc(c);
+    // (void)p;
+    // uart_putc(c);
 }
 void putc_uart2(void *p, char c)
 {
@@ -123,8 +123,8 @@ void main()
     printf("Guard values before decrypt: 0x%08X 0x%08X\n", guard1, guard2);
     
     // Decrypt the data
-    // int rc = decrypt_memory(ctrl, encrypted_1k_gpg, encrypted_1k_gpg_len);
-    int rc = decrypt_memory(ctrl, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg,__7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len);
+    // int rc = decrypt_memory(ctrl, encrypted_1k_gpg, 32);//encrypted_1k_gpg_len);
+    int rc = decrypt_memory(ctrl, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg, 32);//__7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len);
     if (rc) {
         printf("Decryption failed with code: %d\n", rc);
     }
