@@ -42,8 +42,8 @@ void uart_putc(char c)
 
 void putc_uart(void *p, char c)
 {
-    // (void)p;
-    // uart_putc(c);
+    (void)p;
+    uart_putc(c);
 }
 void putc_uart2(void *p, char c)
 {
@@ -51,6 +51,22 @@ void putc_uart2(void *p, char c)
     uart_putc(c);
 }
 
+/*{
+  txid: 'ee7881862ceb30d9f957bc6edcae96e27099b126e275ff040672a76c8a6ee1b9'
+}
+PW: 2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945 // 427c028e28eeb15464c376d7dcca6ca2
+{
+  txid: 'ce81de6360502c6bc603fb77806b07eb52b796914a805196fe83f15cf7b8ff06'
+}
+PW: 8120ac3368532126d4a86b17eb094569f4ef11703e5147d234af78d72503d960
+{
+  txid: 'aa353913b68ed3448cbd83ec942067eb4862b34bf88a1cc5d4ccbb10354f94a4'
+}
+PW: 60ddbd0df3246dd5542a1076b2b9ed7db35e388e7e8bf6bd83250a2117dd6c75
+{
+  txid: '57065d22d9d6b26fe05d58d627fb1472baf6d2e3b494f13e7e781252a3c94e8d'
+}
+PW: df1aea260a0f85d24b5ee0cd0e09af73321401731dfa78865a7929bc61d2e539*/
 void main()
 {
     init_printf(0, putc_uart);
@@ -68,25 +84,9 @@ void main()
     // Initialize with debug output
     memset(ctrl, 0, sizeof(struct server_control_s));
     printf("Zeroed ctrl structure of size: %d bytes\n", sizeof(struct server_control_s));
-    /*Transaction file .hex not found.
-{
-  txid: 'ee7881862ceb30d9f957bc6edcae96e27099b126e275ff040672a76c8a6ee1b9'
-}
-PW: 2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945 // 427c028e28eeb15464c376d7dcca6ca2
-{
-  txid: 'ce81de6360502c6bc603fb77806b07eb52b796914a805196fe83f15cf7b8ff06'
-}
-PW: 8120ac3368532126d4a86b17eb094569f4ef11703e5147d234af78d72503d960
-{
-  txid: 'aa353913b68ed3448cbd83ec942067eb4862b34bf88a1cc5d4ccbb10354f94a4'
-}
-PW: 60ddbd0df3246dd5542a1076b2b9ed7db35e388e7e8bf6bd83250a2117dd6c75
-{
-  txid: '57065d22d9d6b26fe05d58d627fb1472baf6d2e3b494f13e7e781252a3c94e8d'
-}
-PW: df1aea260a0f85d24b5ee0cd0e09af73321401731dfa78865a7929bc61d2e539*/
     // Set up passphrase with length verification
-    const char *test_passphrase = "password";//2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945";//"60ddbd0df3246dd5542a1076b2b9ed7db35e388e7e8bf6bd83250a2117dd6c75"; //"2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945";
+    const char *test_passphrase = "password";
+    // const char *test_passphrase = "2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945";
     size_t pass_len = strlen(test_passphrase);
     printf("Passphrase length before malloc: %d\n", pass_len);
     
@@ -108,12 +108,14 @@ PW: df1aea260a0f85d24b5ee0cd0e09af73321401731dfa78865a7929bc61d2e539*/
     printf("\n");
     
     // Set up and verify session key
-    const char *key = "693B7847FA44CDC6E1C403F5E44E95C1"; // 
+    /*const char *key = "693B7847FA44CDC6E1C403F5E44E95C1";
+    // const char *key = "427c028e28eeb15464c376d7dcca6ca2";
     size_t key_len = strlen(key);
     printf("Setting up session key at address: %p\n", (void*)&ctrl->session_key);
     ctrl->session_key = malloc(key_len + 1);
     my_strcpy(ctrl->session_key, key);
-    printf("Copied session key: %s\n", ctrl->session_key);
+    printf("Copied session key: %s\n", ctrl->session_key);*/
+
     // ctrl->session_key = NULL; // 
     // Add some guard values
     uint32_t guard1 = 0xDEADBEEF;

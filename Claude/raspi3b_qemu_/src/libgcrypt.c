@@ -377,33 +377,33 @@ static void _gcry_cast5_cfb_dec(gcry_cipher_hd_t context, unsigned char *iv, voi
     int debugCount = 1;
 // #if !defined(USE_AMD64_ASM) && !defined(USE_ARM_ASM)
     for (; nblocks >= 3; nblocks -= 3) {
-        if(debugCount>0) 
-            hexdump("\nIN ", inbuf, CAST5_BLOCKSIZE * 3);
+        // if(debugCount>0) hexdump("\nIN ", inbuf, CAST5_BLOCKSIZE * 3);
         // Copy IV and next 2 blocks to temporary buffer
         cipher_block_cpy(tmpbuf + 0, iv, CAST5_BLOCKSIZE);
         cipher_block_cpy(tmpbuf + 8, inbuf + 0, CAST5_BLOCKSIZE * 2);
-        if(debugCount>0) 
-            hexdump("TMP", tmpbuf, CAST5_BLOCKSIZE * 3);
+        // if(debugCount>0)  hexdump("TMP", tmpbuf, CAST5_BLOCKSIZE * 3);
        // hexdump("3 Block COPY", tmpbuf, CAST5_BLOCKSIZE * 3);
         cipher_block_cpy(iv, inbuf + 16, CAST5_BLOCKSIZE);
 
         // Process three blocks at once using Block structs
         for (int i = 0; i < 3; i++) {
             struct Block block = blockFromBytes(tmpbuf + (i * CAST5_BLOCKSIZE));
-            if(debugCount>0 && i==0){ printf("%d in :",i); printBlock(block);}
+            // if(debugCount>0 && i==0){ printf("%d in :",i); printBlock(block);}
             block = encrypt(context->key, block, 0);//debugCount>0 && i==0);
-            if(debugCount>0 && i==0){ printf("%d enc:",i); printBlock(block);}
+            // if(debugCount>0 && i==0){ printf("%d enc:",i); printBlock(block);}
             bytesFromBlock(block, tmpbuf + (i * CAST5_BLOCKSIZE));
         }
 
         // XOR the results with input to get plaintext
-        buf_xor(outbuf, inbuf, tmpbuf, CAST5_BLOCKSIZE * 3, debugCount>0);
+        buf_xor(outbuf, inbuf, tmpbuf, CAST5_BLOCKSIZE * 3, FALSE);//debugCount>0);
         
         // Add this line to see the decrypted output
         if(debugCount>0){
-            hexdump("OUT", outbuf, CAST5_BLOCKSIZE * 3);
-            ascii_dump(outbuf, CAST5_BLOCKSIZE * 3);
+            // hexdump("OUT", outbuf, CAST5_BLOCKSIZE * 3);
+//            ascii_dump(outbuf, CAST5_BLOCKSIZE * 3);
        }
+        ascii_dump(outbuf, CAST5_BLOCKSIZE * 3);
+
         outbuf += CAST5_BLOCKSIZE * 3;
         inbuf += CAST5_BLOCKSIZE * 3;
         debugCount--;
@@ -412,8 +412,7 @@ static void _gcry_cast5_cfb_dec(gcry_cipher_hd_t context, unsigned char *iv, voi
 
     // Handle remaining blocks individually
     for (; nblocks; nblocks--) {
-        if(debugCount>0) 
-            hexdump("\nIN ", inbuf, CAST5_BLOCKSIZE);
+        // if(debugCount>0) hexdump("\nIN ", inbuf, CAST5_BLOCKSIZE);
         // Convert IV to Block struct, encrypt, and convert back
         ivBlock = blockFromBytes(iv);
         ivBlock = encrypt(context->key, ivBlock, debugCount>0);
@@ -421,11 +420,13 @@ static void _gcry_cast5_cfb_dec(gcry_cipher_hd_t context, unsigned char *iv, voi
 
         // XOR the encrypted IV with input and copy to output
         cipher_block_xor_n_copy(outbuf, iv, inbuf, CAST5_BLOCKSIZE);
-        if(debugCount>0) 
+        /*if(debugCount>0) 
         {
             hexdump("OUT", outbuf, CAST5_BLOCKSIZE);
             ascii_dump(outbuf, CAST5_BLOCKSIZE);
-        }
+        }*/
+                    ascii_dump(outbuf, CAST5_BLOCKSIZE);
+
         outbuf += CAST5_BLOCKSIZE;
         inbuf += CAST5_BLOCKSIZE;
         debugCount--;
