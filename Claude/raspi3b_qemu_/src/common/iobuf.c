@@ -670,7 +670,7 @@ printf("block_filter %s\n", control_mode_str[control]);
 		{
 		  /* These OpenPGP introduced huffman like encoded length
 		   * bytes are really a mess :-( */
-      ///printf("These OpenPGP introduced huffman like encoded length bytes are really a mess :-(" );
+      printf("These OpenPGP introduced huffman like encoded length bytes are really a mess :-(\n" );
 		  if (a->first_c)
 		    {
 		      c = a->first_c;
