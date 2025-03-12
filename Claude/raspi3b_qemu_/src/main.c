@@ -42,8 +42,8 @@ void uart_putc(char c)
 
 void putc_uart(void *p, char c)
 {
-    // (void)p;
-    // uart_putc(c);
+    (void)p;
+    uart_putc(c);
 }
 void putc_uart2(void *p, char c)
 {
@@ -67,6 +67,7 @@ PW: 60ddbd0df3246dd5542a1076b2b9ed7db35e388e7e8bf6bd83250a2117dd6c75
   txid: '57065d22d9d6b26fe05d58d627fb1472baf6d2e3b494f13e7e781252a3c94e8d'
 }
 PW: df1aea260a0f85d24b5ee0cd0e09af73321401731dfa78865a7929bc61d2e539*/
+
 void main()
 {
     init_printf(0, putc_uart);
