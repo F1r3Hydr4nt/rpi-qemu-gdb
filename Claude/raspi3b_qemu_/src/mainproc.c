@@ -427,6 +427,7 @@ DEK *passphrase_to_dek(int cipher_algo, STRING2KEY *s2k,
                        const char *tryagain_text, unsigned int flags,
                        int *canceled, const char *passphrase, const char *derivedKey)
 {
+  printf("passphrase_to_dek\n");
   char *pw = NULL;
   DEK *dek;
   STRING2KEY help_s2k;
@@ -714,7 +715,7 @@ proc_symkey_enc(CTX c, PACKET *pkt)
         // else
         c->dek->algo_info_printed = 1;
       }
-    }
+    } 
   }
 
 leave:
@@ -1863,12 +1864,14 @@ do_proc_packets(ctrl_t ctrl, CTX c, iobuf_t a)
   {
     c->passphrase = malloc(strlen(ctrl->passphrase) + 1);
     my_strcpy(c->passphrase, ctrl->passphrase);
+    printf("Copied passphrase: %s\n", c->passphrase);
   }
   if (ctrl->session_key != NULL)
   {
     c->session_key = malloc(strlen(ctrl->session_key) + 1);
     my_strcpy(c->session_key, ctrl->session_key);
-  }
+    printf("Overriding passphrase DEK with session key\n");//, c->passphrase);
+  }else printf("Will derive keyh from passphrase\n");
   c->enc_len = ctrl->enc_length;
   printf("do_proc_packets %d\n", c->enc_len);// %s\n", ctrl->passphrase);
 

@@ -46,7 +46,7 @@ int decrypt_memory(ctrl_t ctrl, const unsigned char* data, size_t length) {
     // printf("Data ptr: %p\n", (void*)data);
     // printf("Session key: %s\n", ctrl->session_key);
     ctrl->enc_length=length;
-    printf("Decrypt params: %d\n",ctrl->enc_length);
+    // printf("Decrypt params: %d\n",ctrl->enc_length);
     iobuf_t a;
     int rc;
     gnupg_fd_t fp;
@@ -76,7 +76,7 @@ int decrypt_memory(ctrl_t ctrl, const unsigned char* data, size_t length) {
     a->filter = file_filter;
     fcx->no_cache = 1;
     a->filter_ov = fcx;
-    printf("Added\n");
+    // printf("Added\n");
     file_filter (fcx, IOBUFCTRL_INIT, NULL, NULL, &len);
     /* Add block filter for OpenPGP format */
     // block_filter_ctx_t *bfx = xcalloc(1, sizeof *bfx);
