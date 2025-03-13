@@ -374,35 +374,74 @@ void reset_literals_seen(void)
 // }
 
 #define GETPASSWORD_FLAG_SYMDECRYPT 1
-
 void derive_key(const uint8_t *salt, const char *password, unsigned int pass_len, uint32_t iterations, uint8_t *key)
 {
-  SHA1_CTX ctx;
-  SHA1Init(&ctx);
-  unsigned int bytesProcessed = 0;
-  unsigned int index = 0;
-  while (bytesProcessed < iterations)
-  {
-    uint8_t byte;
-    if (index < 8)
-    {
-      byte = salt[index];
+    printf("Deriving key...\n");
+    printf("Parameters: salt=%p, password=%p, pass_len=%u, iterations=%lu\n", 
+           (void*)salt, (void*)password, pass_len, iterations);
+    
+    // Print salt value
+    printf("Salt: ");
+    for (int i = 0; i < 8; i++) {
+        printf("%02x ", salt[i]);
     }
-    else
+    printf("\n");
+    
+    // Print first few chars of password (be careful with security)
+    printf("Password: %.*s%s\n", pass_len > 3 ? 3 : pass_len, 
+           password, pass_len > 3 ? "..." : "");
+    
+    SHA1_CTX ctx;
+    SHA1Init(&ctx);
+    printf("SHA1 context initialized\n");
+    
+    unsigned int bytesProcessed = 0;
+    unsigned int index = 0;
+    unsigned int progress_milestone = iterations / 10; // Report at 10% intervals
+    unsigned int next_milestone = progress_milestone;
+    
+    while (bytesProcessed < iterations)
     {
-      byte = password[(index - 8) % pass_len];
+        uint8_t byte;
+        if (index < 8)
+        {
+            byte = salt[index];
+        }
+        else
+        {
+            byte = password[(index - 8) % pass_len];
+        }
+        
+        SHA1Update(&ctx, &byte, 1);
+        bytesProcessed++;
+        index++;
+        
+        if (index >= 8 + pass_len)
+        {
+            index = 0;
+        }
+        
+        // Report progress at milestones without using timer
+        if (bytesProcessed >= next_milestone) {
+            // printf("Progress: %u/%lu bytes (%d%%)\n",  bytesProcessed, iterations,  (int)((bytesProcessed * 100) / iterations));
+            
+            next_milestone += progress_milestone;
+        }
     }
-    SHA1Update(&ctx, &byte, 1);
-    bytesProcessed++;
-    index++;
-    if (index >= 8 + pass_len)
-    {
-      index = 0;
+    
+    printf("SHA1 update complete after processing %u bytes\n", bytesProcessed);
+    
+    SHA1Final(key, &ctx);
+    
+    // Print derived key
+    printf("Derived key: ");
+    for (int i = 0; i < 20; i++) { // SHA1 produces 20-byte output
+        printf("%02x", key[i]);
     }
-  }
-  SHA1Final(key, &ctx);
+    printf("\n");
+    
+    printf("Key derivation completed\n");
 }
-
 static uint8_t hex_digit(char h)
 {
   if (h >= '0' && h <= '9')
@@ -584,7 +623,8 @@ DEK *passphrase_to_dek(int cipher_algo, STRING2KEY *s2k,
   printf("DEK Information:\n");
   printf("Algorithm: %d\n", dek->algo);
   printf("Key Length: %d bytes\n", dek->keylen);
-  printf("Iterations: %d bytes\n", iterations);
+  printf("Iterations: %d\n", iterations);
+  
   // printf("Algorithm Info Printed: %s\n", dek->algo_info_printed ? "Yes" : "No");
   // printf("Use AEAD: %d\n", dek->use_aead);
   // printf("Use MDC: %s\n", dek->use_mdc ? "Yes" : "No");
@@ -1820,7 +1860,7 @@ int proc_packets(ctrl_t ctrl, void *anchor, iobuf_t a)
 
 int proc_encryption_packets(ctrl_t ctrl, void *anchor, iobuf_t a)
 {
-  printf("proc_encryption_packets a->use: %d, a->filter: %d", a->use, a->filter);
+  printf("proc_encryption_packets a->use: %d, a->filter: %d\n", a->use, a->filter);
 
   CTX c = xmalloc_clear(sizeof *c);
   int rc;
@@ -1858,22 +1898,23 @@ check_nesting(CTX c)
 static int
 do_proc_packets(ctrl_t ctrl, CTX c, iobuf_t a)
 {
+  printf("do_proc_packets %d\n", ctrl->enc_length);// %s\n", ctrl->passphrase);
+
   // printf("do_proc_packets\n");// %s\n", ctrl->passphrase);
   // Copy across any main ctx passphrase or session_key
   if (ctrl->passphrase != NULL)
   {
     c->passphrase = malloc(strlen(ctrl->passphrase) + 1);
     my_strcpy(c->passphrase, ctrl->passphrase);
-    printf("Copied passphrase: %s\n", c->passphrase);
+    // printf("Copied passphrase: %s\n", c->passphrase);
   }
   if (ctrl->session_key != NULL)
   {
     c->session_key = malloc(strlen(ctrl->session_key) + 1);
     my_strcpy(c->session_key, ctrl->session_key);
-    printf("Overriding passphrase DEK with session key\n");//, c->passphrase);
-  }else printf("Will derive keyh from passphrase\n");
+    // printf("Overriding passphrase DEK with session key\n");//, c->passphrase);
+  }else printf("Will derive key from passphrase\n");
   c->enc_len = ctrl->enc_length;
-  printf("do_proc_packets %d\n", c->enc_len);// %s\n", ctrl->passphrase);
 
   // log_printhex(c->iobuf->d.buf,c->iobuf->d.len,"do_proc_packets");
   PACKET *pkt;
@@ -1943,6 +1984,7 @@ do_proc_packets(ctrl_t ctrl, CTX c, iobuf_t a)
     // }
     if (c->encrypt_only)
     {
+      printf("Encrypt only\n");
       switch (pkt->pkttype)
       {
       case PKT_PUBLIC_KEY:

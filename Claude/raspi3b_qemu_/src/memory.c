@@ -2,7 +2,8 @@
 #include "printf.h"
 
 // Memory allocator definitions
-#define HEAP_SIZE (64 * 1024)  // 64KB heap
+// #define HEAP_SIZE (64 * 1024)  // 64KB heap
+#define HEAP_SIZE (128 * 1024)  // Increase to 128KB or larger
 #define BLOCK_SIZE 16          // Minimum block size
 #define MAX_BLOCKS (HEAP_SIZE / BLOCK_SIZE)
 

@@ -215,7 +215,7 @@ int _gcry_cipher_setkey(gcry_cipher_hd_t hd, const byte *key, size_t keylen)
     for (int i = 0; i < 4; i++)
     {
         hd->key[i] = (key[j] << 24) + (key[j + 1] << 16) + (key[j + 2] << 8) + key[j + 3];
-        printf("key[%d] = 0x%08x\n", i, hd->key[i]);
+        // printf("key[%d] = 0x%08x\n", i, hd->key[i]);
         j += 4;
     }
     
