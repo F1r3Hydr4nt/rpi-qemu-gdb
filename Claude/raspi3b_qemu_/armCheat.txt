@@ -1,0 +1,108 @@
+# ARM Instructions
+
+## Arithmetic
+ADDcdS†    reg, reg, arg       add
+SUBcdS     reg, reg, arg       subtract
+RSBcdS     reg, reg, arg       subtract reversed operands
+ADCcdS     reg, reg, arg       add both operands and carry flag
+SBCcdS     reg, reg, arg       subtract both operands and adds carry flag − 1
+RSCcdS     reg, reg, arg       reverse subtract both operands and adds carry flag − 1
+MULcdS     regd, regm, regs    multiply regm and regs, places lower 32 bits into regd
+MLAcdS     regd, regm, regs, regn  places lower 32 bits of regm · regs + regn into regd
+UMULLcdS   reglo, reghi, regm, regs  multiply regm and regs place 64-bit unsigned result into {reghi, reglo}
+UMLALcdS   reglo, reghi, regm, regs  place unsigned regm · regs + {reghi, reglo} into {reghi, reglo}
+SMULLcdS   reglo, reghi, regm, regs  multiply regm and regs, place 64-bit signed result into {reghi, reglo}
+SMLALcdS   reglo, reghi, regm, regs  place signed regm · regs + {reghi, reglo} into {reghi, reglo}
+
+## Bitwise logic
+ANDcdS     reg, reg, arg       bitwise AND
+ORRcdS     reg, reg, arg       bitwise OR
+EORcdS     reg, reg, arg       bitwise exclusive-OR
+BICcdS     reg, rega, argb     bitwise rega AND (NOT argb)
+
+## Comparison
+CMPcd      reg, arg            update flags based on subtraction
+CMNcd      reg, arg            update flags based on addition
+TSTcd      reg, arg            update flags based on bitwise AND
+TEQcd      reg, arg            update flags based on bitwise exclusive-OR
+
+## Data movement
+MOVcdS     reg, arg            copy argument
+MVNcdS     reg, arg            copy bitwise NOT of argument
+
+## Memory access
+LDRcdB‡    reg, mem            loads word/byte/half from memory into a register
+STRcdB     reg, mem            stores word/byte/half to memory from a register
+LDMcdum    reg!, mreg          loads into multiple registers
+STMcdum    reg!, mreg          stores multiple registers
+SWPcdB     regd, regm, [regn]  copies regm to memory at regn, old value at address regn to regd
+
+## Branching
+Bcd        imm24               branch to imm24 words away
+BLcd       imm24               copy PC to LR, then branch
+BXcd       reg                 copy reg to PC, and exchange instruction sets (T flag := reg[0])
+SWIcd      imm24               software interrupt
+
+† S = set condition flags
+‡ B = byte, can be replaced by H for half word(2 bytes)
+
+## cd: condition code
+AL or omitted  always           (ignored)
+EQ             equal            Z = 1
+NE             not equal        Z = 0
+CS             carry set (same as HS)  C = 1
+CC             carry clear (same as LO)  C = 0
+MI             minus            N = 1
+PL             positive or zero  N = 0
+VS             overflow         V = 1
+VC             no overflow      V = 0
+HS             unsigned higher or same  C = 1
+LO             unsigned lower   C = 0
+HI             unsigned higher  C = 1 ∧ Z = 0
+LS             unsigned lower or same  C = 0 ∨ Z = 1
+GE             signed greater than or equal  N = V
+LT             signed less than  N ≠ V
+GT             signed greater than  Z = 0 ∧ N = V
+LE             signed less than or equal  Z = 1 ∨ N ≠ V
+
+## um: update mode
+FA / IA        ascending, starting from reg
+EA / IB        ascending, starting from reg + 4
+FD / DB        descending, starting from reg
+ED / DA        descending, starting from reg − 4
+
+## reg: register
+R0 to R15      register according to number
+SP             register 13
+LR             register 14
+PC             register 15
+
+## arg: right-hand argument
+#imm8          immediate on 8 bits, possibly rotated right
+reg            register
+reg, shift     register shifted by distance
+
+## shift: shift register value
+LSL #imm5      shift left 0 to 31
+LSR #imm5      logical shift right 1 to 32
+ASR #imm5      arithmetic shift right 1 to 32
+ROR #imm5      rotate right 1 to 31
+RRX            rotate carry bit into top bit
+LSL reg        shift left by register
+LSR reg        logical shift right by register
+ASR reg        arithmetic shift right by register
+ROR reg        rotate right by register
+
+## mem: memory address
+[reg,#±imm12]  reg offset by constant
+[reg,±reg]     reg offset by variable bytes
+[rega,±regb,shift]  rega offset by shifted variable regb†
+[reg,#±imm12]!  update reg by constant, then access memory
+[reg,±reg]!     update reg by variable bytes, then access memory
+[reg,±reg,shift]!  update reg by shifted variable, then access memory†
+[reg],#±imm12   access address reg, then update reg by offset
+[reg],±reg      access address reg, then update reg by variable
+[reg],±reg,shift  access address reg, then update reg by shifted variable†
+
+† shift distance must be by constant
+

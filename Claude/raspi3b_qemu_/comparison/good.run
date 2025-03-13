@@ -1,0 +1,157 @@
+make run
+qemu-system-arm -M versatilepb -cpu cortex-a7 -kernel build/kernel.img -nographic -serial mon:stdio
+pulseaudio: set_sink_input_volume() failed
+pulseaudio: Reason: Invalid argument
+pulseaudio: set_sink_input_mute() failed
+pulseaudio: Reason: Invalid argument
+Guard values before decrypt: 0xDEADBEEF 0xBABECAFE
+decrypt_memory
+iobuf_alloc use:1 1
+iobuf_temp_with_content: 1044 bytes
+iobuf_alloc use:0 1
+iobuf_ioctl 3 1 0
+fd_cache_open (ELF) not cached
+proc_encryption_packets a->use: 1, a->filter: 32976
+do_proc_packets 1044
+Will derive key from passphrase
+dbg_parse_packet
+
+Processing packet type: SYMKEY_ENC (3)
+
+:symkey enc packet: version 4, cipher 3, aead 0,s2k 3, hash 2
+, count 65011712 (255)
+Packet header (2 bytes):
+2 bytes:
+8d   8c0d                                      ..
+Encrypt only
+proc_symkey_enc
+no DEK
+CAST5 CFB encrypted data
+passphrase len: 8
+DO DEK HERE password
+passphrase_to_dek
+Deriving key...
+Parameters: salt=0x3E90D, password=0x3E8C4, pass_len=8, iterations=65011712
+Salt: 0a 0b 0c 0d 0e 0f 10 11 
+Password: *sF
+SHA1 context initialized
+SHA1 update complete after processing 65011712 bytes
+Derived key: 693b7847fa44cdc6e1c403f5e44e95c11f492b54
+Key derivation completed
+DEK Information:
+Algorithm: 3
+Key Length: 16 bytes
+Iterations: 65011712
+Key: 693b7847fa44cdc6e1c403f5e44e95c1
+SALT: 0a0b0c0d0e0f1011
+dbg_parse_packet
+iobuf_set_partial_body_length_mode 234
+pushing partial block filter 1
+block_filter IOBUFCTRL_INIT
+
+Processing packet type: ENCRYPTED (9)
+
+parse_encrypted
+Packet length: 0
+=== parse_encrypted start ===
+Input buffer: 0x3C294
+Packet type: 9 (MDC: 0)
+Partial: 1
+Buffer use: 0
+Encrypted data length: 0
+Allocated encrypted packet at: 0x40A44
+Setting buf to input stream: 0x3C294
+=== parse_encrypted end (rc=0) ===
+Packet header (2 bytes):
+2 bytes:
+8d   c9ea                                      ..
+Encrypt only
+processing encrypted packet
+encrypted with 1 passphrase
+pkt->pkt.encrypted: 0x40A44
+decrypt_data
+decrypt_data 0
+block_filter IOBUFCTRL_UNDERFLOW
+IOBUFCTRL_UNDERFLOW 8192
+These OpenPGP introduced huffman like encoded length bytes are really a mess :-(
+iobuf_read 1024 a->nlimit 0
+These OpenPGP introduced huffman like encoded length bytes are really a mess :-(
+iobuf_read 2 a->nlimit 0
+Caller params - in: 0x0, inlen: 0
+_gcry_cipher_decrypt inlen: 0, outSize: 10, unused: 0
+Caller requested in-place encryption.
+_gcry_cipher_cfb_decrypt inbuflen 10 outbuflen 10 cfb_bulk 1
+Initial iv contents: 0000000000000000
+cfb_decrypt 4 10 10 0
+cfb_decrypt 5 10 10 0
+0000000000000000
+B3E55D4E25090582
+cfb_decrypt 6 2 10 0
+B2C61829ACA2C86D
+0F056AEEF440FCE6
+C2EA6AEEF440FCE6
+
+
+GOOD KEY!
+
+decode_filter control 1, ret_len=0 len=0
+proc_packets
+do_proc_packets 1044
+Will derive key from passphrase
+dbg_parse_packet
+decode_filter control 3, ret_len=8192 len=0
+control == IOBUFCTRL_UNDERFLOW
+fill_buffer
+dfx->partial nread=0 nbytes=8192
+iobuf_read 8192 a->nlimit 0
+cipher_hd is allocated
+Caller params - in: 0x0, inlen: 0
+_gcry_cipher_decrypt inlen: 0, outSize: 8192, unused: 0
+Caller requested in-place encryption.
+_gcry_cipher_cfb_decrypt inbuflen 8192 outbuflen 8192 cfb_bulk 1
+Initial iv contents: 1829ACA2C86DC2EA
+cfb_decrypt 3 8192 8192 0
+_gcry_cast5_cfb_dec
+nblocks: 1024
+IV: 1829ACA2C86DC2EA
+��b`�0
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum, felis nec ultricies placerat, ante sapien aliquam massa, sit amet sagittis tortor magna tincidunt diam. Cras in tempus ex. Sed vel eros at erat consectetur consequat non nec dolor. Maecenas nunc nibh, accumsan aliquet commodo sit amet, dignissim sit amet felis. Quisque porttitor, dolor pharetra aliquam semper, orci nunc tristique tellus, eu mollis ipsum ligula ac mi. Fusce mollis malesuada mi non feugiat. Nulla tellus n�4ulla, convallis non orci sit amet, sollicitudin fringilla tellus. Donec vitae elit a dolor ultrices condimentum eget sed urna. Quisque aliquet urna elementum mi mattis, sed rhoncus nisi consequat. Fusce varius tempus justo quis congue.
+
+Maecenas eget felis eu eros pulvinar fermentum. Aliquam id faucibus eros. Phasellus nec rutrum massa. Vivamus sit amet ligula id magna placerat pharetra. Sed elementum orci et feugiat laoreet. Donec lacinia euismod leo, ac rhoncus ante posuere a. Sed porttitor. 
+ր��e��]N%       ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%   ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  ���]N%  �
+
+_gcry_cast5_cfb_dec END
+iobuf_set_partial_body_length_mode 233
+pushing partial block filter 0
+block_filter IOBUFCTRL_INIT
+
+Processing packet type: PLAINTEXT (11)
+
+block_filter IOBUFCTRL_UNDERFLOW
+IOBUFCTRL_UNDERFLOW 8192
+These OpenPGP introduced huffman like encoded length bytes are really a mess :-(
+iobuf_read 512 a->nlimit 0
+These OpenPGP introduced huffman like encoded length bytes are really a mess :-(
+iobuf_read 500 a->nlimit 0
+Packet header (2 bytes):
+2 bytes:
+8d   cbe9                                      ..
+dbg_parse_packet
+[don't know]: invalid packet (ctb=0a)
+free_packet() type=11
+free_packet() type=11
+decrypt_data result: 0
+�decryption okay
+WARNING: message was not integrity protected
+free_packet() type=9
+ dbg_parse_packet
+[don't know]: invalid packet (ctb=0a)
+free_packet() type=9
+free_packet() type=9
+
+
+END decrypt_memory
+
+Decryption failed with code: 14
+Guard values after decrypt: 0xDEADBEEF 0xBABECAFE

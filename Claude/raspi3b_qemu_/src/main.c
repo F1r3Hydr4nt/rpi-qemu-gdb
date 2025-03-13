@@ -85,7 +85,6 @@ void main()
 {
     init_printf(0, putc_uart);
     // print_memory_map();
-
     // Properly allocate control structure with debug output
     ctrl_t ctrl = malloc(sizeof(struct server_control_s));
     if (!ctrl) {
@@ -96,8 +95,13 @@ void main()
     // Initialize with debug output
     memset(ctrl, 0, sizeof(struct server_control_s));
 
-    // const char *test_passphrase = "password"; // Test 1. Good PW
-    const char *test_passphrase = "2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945"; // Test 2. Good PW
+    int testNumber = 2;
+    const char *test_passphrase;
+    if(testNumber==1){
+        test_passphrase = "password"; // Test 1. Good PW
+    }else{
+        test_passphrase = "2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945"; // Test 2. Good PW
+    }
     size_t pass_len = strlen(test_passphrase);
     
     ctrl->passphrase = malloc(pass_len + 1);
@@ -109,11 +113,11 @@ void main()
     my_strcpy(ctrl->passphrase, test_passphrase);
     
     // Set up and verify session key
-    const char *key = "693B7847FA44CDC6E1C403F5E44E95C1"; // Test 1. Good Derived Key
+    // const char *key = "693B7847FA44CDC6E1C403F5E44E95C1"; // Test 1. Good Derived Key
     // const char *key = "427c028e28eeb15464c376d7dcca6ca2"; // Test 2. Good/Bad Derived Key???
-    size_t key_len = strlen(key);
-    ctrl->session_key = malloc(key_len + 1);
-    my_strcpy(ctrl->session_key, key);
+    // size_t key_len = strlen(key);
+    // ctrl->session_key = malloc(key_len + 1);
+    // my_strcpy(ctrl->session_key, key);
 
     ctrl->session_key = NULL; // Force KDF
 
@@ -123,8 +127,9 @@ void main()
     printf("Guard values before decrypt: 0x%08X 0x%08X\n", guard1, guard2);
     
     // Decrypt the data
-    // int rc = decrypt_memory(ctrl, encrypted_1k_gpg, encrypted_1k_gpg_len); // Test 1. Good Decrypt
-    int rc = decrypt_memory(ctrl, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len); // Test 2. BAD DECRYPT !!!!
+    int rc = -1;
+    if(testNumber==1) rc = decrypt_memory(ctrl, encrypted_1k_gpg, encrypted_1k_gpg_len); // Test 1. Good Decrypt
+    else rc = decrypt_memory(ctrl, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len); // Test 2. BAD DECRYPT !!!!
     if (rc) {
         printf("Decryption failed with code: %d\n", rc);
     }
