@@ -1,0 +1,250 @@
+make run
+qemu-system-arm -M versatilepb -cpu cortex-a7 -kernel build/kernel.img -nographic -serial mon:stdio
+pulseaudio: set_sink_input_volume() failed
+pulseaudio: Reason: Invalid argument
+pulseaudio: set_sink_input_mute() failed
+pulseaudio: Reason: Invalid argument
+Guard values before decrypt: 0xDEADBEEF 0xBABECAFE
+decrypt_memory
+iobuf_alloc use:1 1
+iobuf_temp_with_content: 87282 bytes
+iobuf_alloc use:0 1
+iobuf_ioctl 3 1 0
+fd_cache_open (ELF) not cached
+proc_encryption_packets a->use: 1, a->filter: 32976
+do_proc_packets 87282
+Will derive key from passphrase
+dbg_parse_packet
+
+Processing packet type: SYMKEY_ENC (3)
+
+:symkey enc packet: version 4, cipher 3, aead 0,s2k 3, hash 2
+, count 65536 (96)
+Packet header (2 bytes):
+2 bytes:
+8d   8c0d                                      ..
+Encrypt only
+proc_symkey_enc
+no DEK
+CAST5 CFB encrypted data
+passphrase len: 64
+DO DEK HERE 2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945
+passphrase_to_dek
+Deriving key...
+Parameters: salt=0x53A4D, password=0x539D4, pass_len=64, iterations=65536
+Salt: 43 b7 a2 56 d8 47 6b 18 
+Password: *sF
+SHA1 context initialized
+SHA1 update complete after processing 65536 bytes
+Derived key: 427c028e28eeb15464c376d7dcca6ca2581c9f8c
+Key derivation completed
+DEK Information:
+Algorithm: 3
+Key Length: 16 bytes
+Iterations: 65536
+Key: 427c028e28eeb15464c376d7dcca6ca2
+SALT: 43b7a256d8476b18
+dbg_parse_packet
+iobuf_set_partial_body_length_mode 237
+pushing partial block filter 1
+block_filter IOBUFCTRL_INIT
+
+Processing packet type: ENCRYPTED (9)
+
+parse_encrypted
+Packet length: 0
+=== parse_encrypted start ===
+Input buffer: 0x3C2C4
+Packet type: 9 (MDC: 0)
+Partial: 1
+Buffer use: 0
+Encrypted data length: 0
+Allocated encrypted packet at: 0x55B84
+Setting buf to input stream: 0x3C2C4
+=== parse_encrypted end (rc=0) ===
+Packet header (2 bytes):
+2 bytes:
+8d   c9ed                                      ..
+Encrypt only
+processing encrypted packet
+encrypted with 1 passphrase
+pkt->pkt.encrypted: 0x55B84
+decrypt_data
+decrypt_data 0
+block_filter IOBUFCTRL_UNDERFLOW
+IOBUFCTRL_UNDERFLOW 8192
+These OpenPGP introduced huffman like encoded length bytes are really a mess :-(
+iobuf_read 8192 a->nlimit 0
+Caller params - in: 0x0, inlen: 0
+_gcry_cipher_decrypt inlen: 0, outSize: 10, unused: 0
+Caller requested in-place encryption.
+_gcry_cipher_cfb_decrypt inbuflen 10 outbuflen 10 cfb_bulk 1
+Initial iv contents: 0000000000000000
+cfb_decrypt 4 10 10 0
+cfb_decrypt 5 10 10 0
+0000000000000000
+03D35D6A7A6202CA
+cfb_decrypt 6 2 10 0
+77A8C4DB7D3E310F
+FBB1B555CFDF89DE
+C874B555CFDF89DE
+
+
+GOOD KEY!
+
+decode_filter control 1, ret_len=0 len=0
+proc_packets
+do_proc_packets 87282
+Will derive key from passphrase
+dbg_parse_packet
+decode_filter control 3, ret_len=8192 len=0
+control == IOBUFCTRL_UNDERFLOW
+fill_buffer
+dfx->partial nread=0 nbytes=8192
+iobuf_read 8192 a->nlimit 0
+cipher_hd is allocated
+Caller params - in: 0x0, inlen: 0
+_gcry_cipher_decrypt inlen: 0, outSize: 8192, unused: 0
+Caller requested in-place encryption.
+_gcry_cipher_cfb_decrypt inbuflen 8192 outbuflen 8192 cfb_bulk 1
+Initial iv contents: C4DB7D3E310FC874
+cfb_decrypt 3 8192 8192 0
+_gcry_cast5_cfb_dec
+nblocks: 1024
+IV: C4DB7D3E310FC874
+���ݥ�nxae��,9�V+W��&��3�Ĝ=I��׻h�<��h��@�^��"�b�,�"���LW;��a;t'-��}�kw��77gT����a"�Ź���w��$?�ޯ���2��l�]��ī���/m|��uϽR�g`0m!z���W|Ę�鿑.+���M=�,�/X�5�[����Eh��h
+                                                                       �7�      D���R�`:��
+;�BV@����T'�A��V+�A{�HrE�ZJ���;`��
+          ��R�DTm[u��BX��),b?��OU�(��m�V8l;V_�=�[G��ɚ���J�%����4��cp,��W�v�r��
+�b���1�~���V~T4D0��
+          �h��;����2�eo���u����'��V��N��3��.��1!��>ˈdB��rSR�H�H�u<q�Z4J��fh
+
+�Ұ��x��-gx,V���,�
+��ۘ_�iz�,O�NR8�����E��Y>�z���"ۓfLGɕ�W��F��s���k%���_���
+                                                      �����o�}ܦ�!u�-kE `O�ǆ
+4pC؝X���O�Rj�٧�������$5F5Aq�-�E/�-p��I-��a*�0E�X�qq��Gj
+!ְ{.�'�l�D�$�L_�]�$�j�ίO�]wz�<݅`��#�S:jxv5�yk�sf�~�ſ|Ao��)�����2U񠮾�]c�����-�,�����*ŝ�4�I�jl��g=�@�S�)�H�Zp6G�>x?K*��N|��P5�>
+��)���O����hu�J�Ҙ�������k�.�s?7�o"W�!��L�V��M��>zÈ�̏�*B�ZG�����L�d����s�R���-����z�ꠟ�&Bb8��I
+  �B���h���>fD,a��/�`e�C��hM�'2WNW��=�����}c�Y*��2�_dF��)]-Qy�,��|���
+                                                                     N���\k�#����_�]鵩�7Y�C�j��:t$�HV�Sh��x��;H�V�i����_;Z�nY��D�G��ә-�z�
+/�$@��h�N��$1A��֤��T�ON>�V:�O��a�                     �T���m�ډ���C���Ih�r
+                                <Q>;rf!BT���vg�� �E����^�Ṗ'5�Uߐ�;��D���m��nQ1 M��ݰ�����
+c��Nj�S��}�m��^҄�Vsn��I?�����#��l�ըuj0B1 ��Pb�o^߀E����yW��3���o�]a��߿UQ�n��5�ݛ�������D�O(�[�`4a6T�2W�B�A��nA�W�ݭ[�c�k�)��m\#��
+�}:
+   �u)M��\4X���u�=L�%]JU��U��b�̬.�Ѵ��`<F���Y�-�Y�������\��d��\��{��;�Q�Z#&~"
+S\��^�q.l�>׼�G�&���YI�3
+                       ���Tؒ�H�h }L�J���Θ���1P0�C�\����UZ�;!�mXTK�~6��T�5kf�e�b�μt?'�����'0��.�����Qg8!�DSX��x�=0
+                        �����FuTYٚ��T������"��?����K�6����n�˾��􈧪a��d�}��f��񁦱
+                                                                           �٤�(
+                                                                               �~޸�MH��m�����x�#�ͻ
+ɜy�z��ި|�Z�D�l<b0~�z���<�"s��G��?�i^#��Y��5�j�5]�h+��
+                                                     ^
+                                                      �Ĭ��5pC|�ug������7 �N2�
+                                                                             %u>g愜ρ�>5��j��^3[,�LϷ�+t�����'�ƂV�@&Ob��y��raHH��Uy�7��ҥ��!�nX.t����r���*����8$pWbٮ���m�
+CM:�E��оyZ�:��_.0Q@�
+                    ���G
+4ն�v�"��BՀ�             ��V��0�1�T+
+�t���,��8�M��X6i��qy�Gu�>��ZX��f��Ĵ�!�e1a���F��j�Ix+u6��W�r�����[s���RW�c�JJ\�t\�Ff�ikF�&��km�(;uʵq.W�����LqKv��GP
+                              p1�D/�FX���xS�������ў���lj�%�rB��b�����S��
+zU�.X��tBx����{=��ph�20�m�f��ȣ^o���
+                                   T٨�Z��'��?���$
+�t#�]�i���'b�Ïܼ=��9�v�fw�1^
+���Ebw�|E��S޽��/�8|
+�S�&x0Y
+:$��OB&*E�2�\��c�!d��P��Mm��I��r��5d�6���9���i���4λ8p�l/�ϙ�-U�S����*�ٵЃP~P>���{���SS�ҕqe���~U�ٌ��Br�w�*��x��d��Ith&$��F�C*�q���u�?��@?�U��9�r��[�)���!��|�t�dӫΤ��r�1���6F��HܾQaI|�`&k1��{
+L�I�b�����0d
+            _��=L�����v���7ϫD{͇�R�"-��BkȦ#>�z�?��M�R
+                                                   R8��pVf�l%�s�0�)S�X��wdc�Գ��G���g@�,Y*3�^�Z��,��O�Q[+5���29�-���zz�3m����H�W�uQ��G����B�U�lQ:��frA�Lw�]UVL�XbU%
+Y[�)ۏ1[�O��13הe�-��숚<����
+
+          Ot��n�
+[��p1o��P9���Z{qA��Q��c������7����m�O@�;2,8{
+?\��,3�N/��N�es�c ��B��r�3�7[��&$$��h��&��v'eMi��:u�2E���N�4uB/ W���3%���'�T�b
+���uq��AX�I�cI�wD_�H���n{�/�������!��\���6J��>3s��Z��I��E�
++���r)_�%�,�깗ߣ&>'5�9���R�R��W�)��4b��rWi����.m�7�ADgk�Tr��[&\-'�'��m�`@x3�m������;V���ׅ��V�[:�G����5�U��[�@O ڥ�2�q'����ʅ<oR��ڱ6a9�����I+˴c٤��v�t!��Y�� �h q��)��J�ѓ�a��N���h�!�a�셙��9�:��c�����5����T����5����v�HR��3.&�c���Z �h��:��,E�Hw~�e��=`����H�b����<p,h�x'��"Fzq�^@e�V>�oф����sv���q���?�zm� �n�a�./jn�� ��<�;����j#��o�@؏k�>�;�È^��B��)��K�݇�lʣ,0Ox�����-V����:~k���D��~��9둳"�Oy���Jt�)]����Ƈ����w�k��
++
+�]H��n��}�d2F��;���-���
+                       �.��gK�#R�B�^�����4A
+D�}�v�۷)�B��w�}:[��{ՀjO ���)�
+                         M�ltٴ��ϟ�"��K�l6Ƞb"�F����;.�   �&i�ijJ���MX0���
+                                                                        �jF5;�Z�|@�N{h����A������PG��)��n�� IW�Dw�³:��۳YH�M���j�T%���%�1�F�������+
+                                                             ��LK�����6��qR�_A9Iv~�3��CX     �v���m�Og]������R��$���������z$'j��*���L�xw�>���gNA���l,GR;��y'b�I����΍4��A�r��e����{sW�p����_��%�~���F����%i�bx���T�XB�w�K9#2i���S��&[+H�? N�1e�Sbs��Д_��I��-%�ဥu���E���g"�+ݪ������e��S�t{�
+                          �ڼjCc��t��2<�yRCg�O�-`>.�YP���~jPO��(2�CC�=���f\PW���b�
+                                                                                 ܑrH|��M_��ͤ���
+;6��+D���\>���s����)���NG�
+                          ����F�奴i��Ǘe�'MYrk���zxh��^Jp�0яa�.�pxÿ��="�[;���Fl\Q�G����\
+  ��u񘝥16d\��a���.�޷���/A�B�yQ��I�Te4
+��.{�r���4�c@�] {0�11JI�]t+����NJ�bPэ��/kF��oc$���e�޾3UW�Cf]�_���8M��K��c�)�D{+�>�R�Cj�OWފ�;�
+        v�|i�P�����ƒ���cw��J�sY}�\h�)p/��tP��r�.0��f��h���
+F�H�s��V7^L�j���\���#�]_�o�Բ,FH�Գ�r)�q9�.������ŵ��d� 4q�X���xMFHh��~~r�-���Kɝx�{�]�D��h�V�,nޚ3��
+           �H�to��lI'�=F�b`J{M^��k5A\��N�`�<���9P2�̰
+��h��)kG��6!V&t�T.���NZ�S:|�!
+&A�)����� 
+          ������)l4�F1B�����M(��������!�V-�(�ήD���LGI���,�$u�iҦ��.��3 YO~}�܎������"�)ق'�
+   ���X�s�u,���͎�;;���U��J�G��<QdV�\����P�}���M�
+                                               �f��3�|��
+r��V�٢�"�#������ڷ����ݽ2"�
+�[���   ��Բ��FeK��       wW1���Ĥ{�=�l[���h�i�:�o�I�>���i��9"���!D?�ʤ���C
+                  $�����*�F�l�PU���N.��GaT�B�������x��+�#��Id�i�9��I���*�]k�i�Ő��-���8�Y�p枩��e��<���䰃
+                  ��z�.���/X�gǁ+����\q��7%%���`�`�>��d4�xgp�=�B �{M���s~i��mi̲��m����ލ������/㹉�C���
+ຎѧi����ds��M"��e<=?�׼"L)l2�2�y��#�@��j���#_:m+��
+�J0A���3����'.'i���*"�N���_d�z��2�b1)�,>�6�ZO�B�^q��ZP�4�P���^����
+                                                                  ΢��ż~�~>Cj$5��M��x��م�g������+a�_�wl�\hZ��{�
+           8�lҢ�f��$��o�I)�����r����o�-�dnp?oN�83
+                                                 k�:C��F'�MQ�E������Sa0�}�z�;yh(�$�<��z
+��tp� �|*B�d��،���w/�F��%���K   Q��F    L>�I�W�A.�[��
+                                                     R����}J�#�
+                                                               �������*z��]�y�턬����Dt+LŢA����&8FQz��/h�:^~�[m�
+                           G�$3:���G��|��(��^�֔�´���Z�h.�
+,��mqٖ
+l�?���(O 
+N��L*1u�ߌ�B��������TXcN�ۇc��>���aE�L�r�>�����+�pM�uP
+��o]l'�E;�y
+           ��A�
+               FI%=tN�R�Y /����79N����e/��5�z̳cK�WVOAAY�rtV���"}u`?w�՟t��=���tB��,@�f��+��+�V�M��9}ʏ�W9��ˌg�t���Q�K^�<��^���|��NEW��
+                                                �Z�s��)
+�dp��#��Y�'��ɏ�\R����E����]�;�+��%i:�� g��b���f��Ļ��b��d^��Ki"���z]��9���s�O5 v�+�g?��O�3���k
+        *ZءDP�<|腢�5.�`ށ1���&Z���W�r�̌���a�
+��$0�+��}�C�I�v+����_�X 
+                        �1��E'�Z�c��(VsC�.&��=�mE�B=Doi�өTԀ�q�q����M��h�{]SC��=D�J ���q$����睷�_a�&_�S\׈ہ�v�����             ��X�����~.ӏ�vJP�͉i"J�ڼ�7n�Lr��x;
+                                                                       �]b-"x��t��3��J���Ur����3�I[�-4�
+                  ��t�mj�O�%1��G�����o=�8��q�W�?        �W9��R��y#>�/���Li�G�s%���П^r�#
+  �;��5��k�(��{zp����2;-1�M��T��gv⇁���P'�r����������5���Fx��%l���,�A��x}��x3���Ve���#�$�c-�7P����y�y@�k��ے.��t���7j�^�#�Q�V��&y���tq�qXc�n�8E�����Bݗ��/q�R���ۑG7����\�(�%�������W5U�قl5p��K�&��u���EI��t��N\�J�`;�N��G�j�
+���~ʲ3c�8�l� k���箸u�O�t`�O��P�ԻSV�Jy�]#�U�tX����q�եql�M�
+��64�����N�}A�w4�NC��^.D�ûٕF���m{��a�=QW�n10�,n��&@~aYSͻV�%����������&o����"����������h����7Ilk5��G��}snt�Gc[�l���y�p���      @:�R1�C�q�`g'ʛ/,V����zB��       YH��rK:�
+                                                                                �ăn*E<�
+  ,ڸS����TP��V
+              �%��B�[��ʀYw&q>cT�%?cq{ӏL�A�2��K�"<�q�Z�`���̿s���?>���C�l�rxj�]t�(<Uy�۰ɵ&�g�1� �
+         �\�̋��Q�D����1�cR�]�z'��h��wB%��.�A<5�J����R+�o���1��������]h>Im>RҞ�P�~���R�[�U����J�|$:U1�N_%�nE��__cZ��YYbu7J�0]�&�V<�nߘvЙ��^-e��  :I����&��� �h�\����:�Нi�ʤ�]��5�X��V��^�ץ63��yN��N�W��Y47/7�,���>���0�%��>�'g��W��^B��Fa�]�dQ�UK��y�ɰ��!��5�a�D����4����--]{���-8<m(�-H�4!��;�)��!A����*�
+        ��Q�9<$1S�c�Cy�+�,�t��r�`d�_��b.�����1�h��0�@�ub�{
+Vhr������&q��i{                                           ��U�k�T�_����#�
+t���%#C?��:�'��œ
+:�Y&
+    %���|��w�
+
+_gcry_cast5_cfb_dec END
+
+Processing packet type: PUBLIC_SUBKEY (14)
+
+Packet header (5 bytes):
+5 bytes:
+8d   baa1 8fdd a5                              .....
+decrypt_data result: 0
+�decryption okay
+WARNING: message was not integrity protected
+free_packet() type=9
+ dbg_parse_packet
+
+Processing packet type: COMPRESSED (8)
+
+Packet header (2 bytes):
+2 bytes:
+8d   c86e                                      .n
+free_packet() type=8
+free_packet() type=8
+
+
+END decrypt_memory
+
+Decryption failed with code: 2
+Guard values after decrypt: 0xDEADBEEF 0xBABECAFE
