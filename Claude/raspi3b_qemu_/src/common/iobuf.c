@@ -397,7 +397,7 @@ fd_cache_open (const char *fname, const char *mode)
 {
   close_cache_t cc;
 
-  printf (fname);
+  // printf (fname);
   for (cc = close_cache; cc; cc = cc->next)
     {
       if (cc->fp != GNUPG_INVALID_FD && !fd_cache_strcmp (cc->fname, fname))
@@ -423,8 +423,8 @@ fd_cache_open (const char *fname, const char *mode)
 	  return fp;
 	}
     }
-  if (DBG_IOBUF)
-    printf ("fd_cache_open (%s) not cached\n", fname);
+  // if (DBG_IOBUF)
+  printf ("fd_cache_open (%s) not cached\n", fname);
   return direct_open (fname, mode, 0);
 }
 
