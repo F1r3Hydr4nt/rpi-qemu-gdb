@@ -130,7 +130,7 @@ void main()
     my_strcpy(ctrl->session_key, key);
     // printf("Copied session key: %s\n", ctrl->session_key);
 
-    ctrl->session_key = NULL; // Force KDF
+    // ctrl->session_key = NULL; // Force KDF
 
     // Add some guard values
     uint32_t guard1 = 0xDEADBEEF;
@@ -138,8 +138,8 @@ void main()
     printf("Guard values before decrypt: 0x%08X 0x%08X\n", guard1, guard2);
     
     // Decrypt the data
-    // int rc = decrypt_memory(ctrl, encrypted_1k_gpg, encrypted_1k_gpg_len);
-    int rc = decrypt_memory(ctrl, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len);
+    int rc = decrypt_memory(ctrl, encrypted_1k_gpg, encrypted_1k_gpg_len);
+    // int rc = decrypt_memory(ctrl, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len);
     if (rc) {
         printf("Decryption failed with code: %d\n", rc);
     }
