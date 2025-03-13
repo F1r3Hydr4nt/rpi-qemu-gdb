@@ -1,0 +1,55 @@
+Here's the diffs between the asm runs:
+
+Looking at the assembly differences between the two runs, I can see some significant divergence in code paths. Let me analyze what I'm seeing:
+Key Differences in Execution Paths
+
+    Key Derivation Function (KDF) Execution
+        There are differences in the derive_key function execution paths
+        In the "bad" case, there appears to be a different branch taken during key derivation
+    Block Filter Differences
+        The "good" run shows extensive execution through block_filter function (multiple instruction blocks)
+        These block filter operations are completely missing in the "bad" run
+    Parse Function Differences
+        The "good" run has extensive execution through parse.constprop.0 function with many branches and memory operations
+        The "bad" run takes a much shorter path through this function, jumping to 0x105bc instead of executing the detailed parsing
+    Different Memory Handling
+        The "good" run has multiple memory load/store operations and buffer handling
+        The "bad" run appears to bail out early from several functions
+
+Root Cause Analysis
+
+The most significant pattern I'm seeing is that the second test with the longer passphrase is triggering an early exit condition in the parsing code. Here's what I believe is happening:
+
+    The longer passphrase (64 characters) is likely exceeding a buffer size or expected length in the KDF
+    When the KDF attempts to derive a key from this long passphrase, it's either:
+        Taking a different code path designed for longer passphrases
+        Encountering a validation check that fails
+        Causing memory corruption that affects later execution
+    The parse function in the second case is taking a completely different branch - in particular, I notice this sequence in the "bad" run:
+
+    0x000103ec:  ea000072      b	0x105bc
+    0x000105bc:  e3a00000      mov	r0, #0	; 0x0
+    0x000105c0:  e1a01006      mov	r1, r6
+    0x000105c4:  ebffeffd      bl	0xc5c0
+
+    This shows it's immediately jumping to an error handling path instead of processing the data.
+    The most telling sign is the complete absence of the block filtering code in the second run, which suggests the decryption process isn't even getting to the point of processing the encrypted data blocks.
+
+Likely Scenarios
+
+    Buffer Size Issue: The KDF may have a fixed-size buffer for the passphrase that's being exceeded by the 64-character passphrase in Test 2.
+    Memory Corruption: The longer passphrase might be causing a buffer overflow in the KDF, corrupting adjacent memory which affects later execution.
+    Early Validation Failure: There might be a validity check early in the KDF or decrypt process that's failing with the longer passphrase.
+    Different Algorithm Path: The implementation might have different code paths for different passphrase lengths, and the longer one is triggering a path with a bug.
+
+Recommendations
+
+Based on this analysis, I recommend:
+
+    Check if there are any hard-coded buffer size limits in the KDF function that might be exceeded by the 64-character passphrase.
+    Add instrumentation before and after the KDF to check if the session key is being generated correctly.
+    Look for any length validation checks in the decrypt_memory function that might be rejecting the longer passphrase.
+    Try an intermediate-length passphrase (e.g., 32 characters) to see if that works or fails, which might help isolate if it's exactly at a buffer boundary.
+    Check for any conditional branches in the KDF that depend on passphrase length or characteristics.
+
+The core issue appears to be in how the longer passphrase is processed, causing the program to take an early exit path rather than proceeding with normal decryption.
