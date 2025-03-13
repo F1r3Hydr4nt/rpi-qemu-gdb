@@ -911,7 +911,7 @@ printf("Skipping packet type %d\n", pkttype);
 printf("Packet processing complete (rc=%d)\n", rc);
 
 /* Add at start of switch statement */
-printf("Processing packet type: %s (%d)\n", 
+printf("\nProcessing packet type: %s (%d)\n\n", 
           pkttype < sizeof(pkt_type_str)/sizeof(*pkt_type_str) ? 
           pkt_type_str[pkttype] : "UNKNOWN", pkttype);
   switch (pkttype)

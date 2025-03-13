@@ -266,8 +266,10 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
   if (!dfx)
     return gpg_error_from_syserror();
   dfx->refcount = 1;
-  dfx->partial = FALSE;
-  dfx->length = ctrl->enc_length;
+  // TO BACKDOOR/OVERWRITE
+  // dfx->partial = FALSE;
+  // dfx->length = ctrl->enc_length;
+  
   printf("decrypt_data %d\n",dfx->length);
   // printf("dek->algo_info_printed: %d\n", dek->algo_info_printed);
   // if ( opt.verbose && !dek->algo_info_printed )
@@ -531,7 +533,7 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
   // else
 
   // OVERWITING HERE:
-dfx->length = ctrl->enc_length;
+  // dfx->length = ctrl->enc_length;
 
   iobuf_push_filter(ed->buf, decode_filter, dfx);
 
@@ -1039,7 +1041,8 @@ decode_filter(void *opaque, int control, IOBUF a, byte *buf, size_t *ret_len)
     decode_filter_ctx_t fc = opaque;
 
   printf("decode_filter control %d, ret_len=%d len=%d\n",control,*ret_len, fc->length);
-  size_t size = fc->length;//*ret_len;
+  size_t size = *ret_len;
+  // size_t size = fc->length;//*ret_len;
   size_t n;
   int rc = 0;
 
@@ -1058,8 +1061,8 @@ decode_filter(void *opaque, int control, IOBUF a, byte *buf, size_t *ret_len)
     {
       if (fc->cipher_hd)
           printf("cipher_hd is allocated\n");
-
-        _gcry_cipher_decrypt (fc->cipher_hd, buf, n, NULL, size);
+        gcry_cipher_decrypt (fc->cipher_hd, buf, n, NULL, 0);
+        // _gcry_cipher_decrypt (fc->cipher_hd, buf, n, NULL, size);
         // printf("cipher_hd is allocated\n");
     }
     else

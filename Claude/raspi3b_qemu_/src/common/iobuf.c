@@ -976,8 +976,7 @@ iobuf_alloc (int use, size_t bufsize)
   iobuf_t a;
   static int number = 0;
 
-  printf ("iobuf_alloc %d \n",use == IOBUF_INPUT || use == IOBUF_INPUT_TEMP
-              || use == IOBUF_OUTPUT || use == IOBUF_OUTPUT_TEMP);
+  printf ("iobuf_alloc use:%d %d\n",use, use == IOBUF_INPUT || use == IOBUF_INPUT_TEMP || use == IOBUF_OUTPUT || use == IOBUF_OUTPUT_TEMP);
   if (bufsize == 0)
     {
       printf ("iobuf_alloc() passed a bufsize of 0!\n");
@@ -986,6 +985,11 @@ iobuf_alloc (int use, size_t bufsize)
 
   a = xcalloc (1, sizeof *a);
   a->use = use;
+  printf ("iobuf_alloc() passed a bufsize of %d\n", bufsize);
+  // if (bufsize > 64000) {  // Or some other reasonable limit
+  //   printf("Warning: reducing bufsize from %zu to 64000\n", bufsize);
+  //   bufsize = 64000;
+  // }
   a->d.buf = xmalloc (bufsize);
   a->d.size = bufsize;
   a->no = ++number;
@@ -2176,6 +2180,7 @@ iobuf_temp_to_buffer (iobuf_t a, byte * buffer, size_t buflen)
 size_t
 iobuf_copy (iobuf_t dest, iobuf_t source)
 {
+  printf("iobuf_copy\n");
   char *temp;
   /* Use a 32 KB buffer.  */
   const size_t temp_size = 32 * 1024;

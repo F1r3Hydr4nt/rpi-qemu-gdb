@@ -67,16 +67,29 @@ PW: 60ddbd0df3246dd5542a1076b2b9ed7db35e388e7e8bf6bd83250a2117dd6c75
   txid: '57065d22d9d6b26fe05d58d627fb1472baf6d2e3b494f13e7e781252a3c94e8d'
 }
 PW: df1aea260a0f85d24b5ee0cd0e09af73321401731dfa78865a7929bc61d2e539*/
+/* file -b gpgFiles/7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c.gpg 
+GPG symmetrically encrypted data (CAST5 cipher)
+freddie@freddie-Precision-7510:~/rpiPT/blockchain-stuff$ pgpdump gpgFiles/
+7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c.gpg 
+Old: Symmetric-Key Encrypted Session Key Packet(tag 3)(13 bytes)
+        New version(4)
+        Sym alg - CAST5(sym 3)
+        Iterated and salted string-to-key(s2k 3):
+                Hash alg - SHA1(hash 2)
+                Salt - 43 b7 a2 56 d8 47 6b 18 
+                Count - 65536(coded count 96)
+New: Symmetrically Encrypted Data Packet(tag 9)(8192 bytes) partial start
+        Encrypted data [sym alg is specified in sym-key encrypted session key]*/
 
 void main()
 {
     init_printf(0, putc_uart);
-    printf("Printf initialised!\n");
-    print_memory_map();
+    // printf("Printf initialised!\n");
+    // print_memory_map();
 
     // Properly allocate control structure with debug output
     ctrl_t ctrl = malloc(sizeof(struct server_control_s));
-    printf("Allocated ctrl at address: %p\n", (void*)ctrl);
+    // printf("Allocated ctrl at address: %p\n", (void*)ctrl);
     if (!ctrl) {
         printf("Failed to allocate control structure\n");
         goto cleanup;
@@ -84,54 +97,55 @@ void main()
     
     // Initialize with debug output
     memset(ctrl, 0, sizeof(struct server_control_s));
-    printf("Zeroed ctrl structure of size: %d bytes\n", sizeof(struct server_control_s));
+    // printf("Zeroed ctrl structure of size: %d bytes\n", sizeof(struct server_control_s));
     // Set up passphrase with length verification
-    // const char *test_passphrase = "password";
-    const char *test_passphrase = "2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945";
+    const char *test_passphrase = "password";
+    // const char *test_passphrase = "2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945";
     size_t pass_len = strlen(test_passphrase);
-    printf("Passphrase length before malloc: %d\n", pass_len);
+    // printf("Passphrase length before malloc: %d\n", pass_len);
     
     ctrl->passphrase = malloc(pass_len + 1);
-    printf("Allocated passphrase at address: %p\n", (void*)ctrl->passphrase);
+    // printf("Allocated passphrase at address: %p\n", (void*)ctrl->passphrase);
     if (!ctrl->passphrase) {
         printf("Failed to allocate passphrase\n");
         goto cleanup;
     }
     
     my_strcpy(ctrl->passphrase, test_passphrase);
-    printf("Copied passphrase. Length after copy: %d\n", strlen(ctrl->passphrase));
+    // printf("Copied passphrase. Length after copy: %d\n", strlen(ctrl->passphrase));
     
-    // Debug print the passphrase bytes
-    printf("Passphrase bytes: ");
-    for(size_t i = 0; i <= pass_len; i++) {
-        printf("%02x ", (unsigned char)ctrl->passphrase[i]);
-    }
-    printf("\n");
+    // // Debug print the passphrase bytes
+    // printf("Passphrase bytes: ");
+    // for(size_t i = 0; i <= pass_len; i++) {
+    //     printf("%02x ", (unsigned char)ctrl->passphrase[i]);
+    // }
+    // printf("\n");
     
     // Set up and verify session key
-    /*const char *key = "693B7847FA44CDC6E1C403F5E44E95C1";
+    const char *key = "693B7847FA44CDC6E1C403F5E44E95C1";
     // const char *key = "427c028e28eeb15464c376d7dcca6ca2";
     size_t key_len = strlen(key);
     printf("Setting up session key at address: %p\n", (void*)&ctrl->session_key);
     ctrl->session_key = malloc(key_len + 1);
     my_strcpy(ctrl->session_key, key);
-    printf("Copied session key: %s\n", ctrl->session_key);*/
+    printf("Copied session key: %s\n", ctrl->session_key);
 
-    // ctrl->session_key = NULL; // 
+    // ctrl->session_key = NULL; // Force KDF
+
     // Add some guard values
     uint32_t guard1 = 0xDEADBEEF;
     uint32_t guard2 = 0xBABECAFE;
     printf("Guard values before decrypt: 0x%08X 0x%08X\n", guard1, guard2);
     
     // Decrypt the data
-    // int rc = decrypt_memory(ctrl, encrypted_1k_gpg, 32);//encrypted_1k_gpg_len);
-    int rc = decrypt_memory(ctrl, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg, 32);//__7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len);
+    int rc = decrypt_memory(ctrl, encrypted_1k_gpg, encrypted_1k_gpg_len);
+    // int rc = decrypt_memory(ctrl, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len);
     if (rc) {
         printf("Decryption failed with code: %d\n", rc);
     }
-    init_printf(0, putc_uart2);
+    // init_printf(0, putc_uart2);
 
-    printf("Printf initialised!\n");
+    // printf("Printf initialised!\n");
     // Check guard values
     printf("Guard values after decrypt: 0x%08X 0x%08X\n", guard1, guard2);
     
