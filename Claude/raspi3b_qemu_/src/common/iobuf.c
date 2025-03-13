@@ -985,7 +985,7 @@ iobuf_alloc (int use, size_t bufsize)
 
   a = xcalloc (1, sizeof *a);
   a->use = use;
-  printf ("iobuf_alloc() passed a bufsize of %d\n", bufsize);
+  // printf ("iobuf_alloc() passed a bufsize of %d\n", bufsize);
   // if (bufsize > 64000) {  // Or some other reasonable limit
   //   printf("Warning: reducing bufsize from %zu to 64000\n", bufsize);
   //   bufsize = 64000;
@@ -1001,7 +1001,7 @@ iobuf_alloc (int use, size_t bufsize)
 int
 iobuf_close (iobuf_t a)
 {
-  printf("iobuf_close\n");
+  // printf("iobuf_close\n");
   iobuf_t a_chain;
   size_t dummy_len = 0;
   int rc = 0;
@@ -1406,7 +1406,7 @@ iobuf_push_filter (iobuf_t a,
 			     iobuf_t chain, byte * buf, size_t * len),
                    void *ov)
 {
-   printf("iobuf_push_filter %d\n",a->use);
+   // printf("iobuf_push_filter %d\n",a->use);
   return iobuf_push_filter2 (a, f, ov, 0);
 }
 

@@ -125,10 +125,10 @@ void main()
     const char *key = "693B7847FA44CDC6E1C403F5E44E95C1";
     // const char *key = "427c028e28eeb15464c376d7dcca6ca2";
     size_t key_len = strlen(key);
-    printf("Setting up session key at address: %p\n", (void*)&ctrl->session_key);
+    // printf("Setting up session key at address: %p\n", (void*)&ctrl->session_key);
     ctrl->session_key = malloc(key_len + 1);
     my_strcpy(ctrl->session_key, key);
-    printf("Copied session key: %s\n", ctrl->session_key);
+    // printf("Copied session key: %s\n", ctrl->session_key);
 
     // ctrl->session_key = NULL; // Force KDF
 

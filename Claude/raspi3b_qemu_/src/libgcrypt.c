@@ -206,7 +206,7 @@ void printUint32Hex(uint32_t data)
 
 int _gcry_cipher_setkey(gcry_cipher_hd_t hd, const byte *key, size_t keylen)
 {
-    printf("_gcry_cipher_setkey\n");
+    // printf("_gcry_cipher_setkey\n");
     uint32_t *keywords;
     int i;
         
@@ -250,7 +250,7 @@ _gcry_cipher_close (gcry_cipher_hd_t h)
 }
 
 int _gcry_cipher_setiv(gcry_cipher_hd_t c, const void *iv, size_t ivlen) {
-    printf("_gcry_cipher_setiv %d\n", ivlen);
+    //printf("_gcry_cipher_setiv %d\n", ivlen);
     c->unused = 0;
     if (iv) {
         memcpy(c->u_iv.iv, iv, ivlen);
@@ -261,7 +261,7 @@ int _gcry_cipher_setiv(gcry_cipher_hd_t c, const void *iv, size_t ivlen) {
 }
 
 void cipher_sync(gcry_cipher_hd_t c) {
-    printf("cipher_sync %d\n", c->unused);
+    // printf("cipher_sync %d\n", c->unused);
     if (c->unused) {
         memmove(c->u_iv.iv + c->unused,
                 c->u_iv.iv,

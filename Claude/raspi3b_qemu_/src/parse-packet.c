@@ -621,7 +621,7 @@ parse (parse_packet_ctx_t ctx, PACKET *pkt, int onlykeypkts, off_t * retpos,
 #endif
        )
 {
-  printf ("parse\n");
+  // printf ("parse\n");
   int rc = 0;
   iobuf_t inp;
   int c, ctb, pkttype, lenbytes;
@@ -657,8 +657,8 @@ parse (parse_packet_ctx_t ctx, PACKET *pkt, int onlykeypkts, off_t * retpos,
   hdrlen = 0;
   hdr[hdrlen++] = ctb;
 // Initial packet parsing
-printf("Starting packet parse at position: %lu\n", (unsigned long)iobuf_tell(inp));
-printf("Read CTB: 0x%02x (new_format=%d)\n", ctb, !!(ctb & 0x40));
+// printf("Starting packet parse at position: %lu\n", (unsigned long)iobuf_tell(inp));
+// printf("Read CTB: 0x%02x (new_format=%d)\n", ctb, !!(ctb & 0x40));
 
   if (!(ctb & 0x80))
     {
@@ -790,17 +790,17 @@ printf("Read CTB: 0x%02x (new_format=%d)\n", ctb, !!(ctb & 0x40));
 	}
     }
 
-// Length parsing - new format
-printf("Parsing new format packet length\n");
-printf("First length byte: 0x%02x\n", c);
-printf("One byte length: %lu\n", pktlen);
-printf("Two byte length: %lu\n", pktlen);
-printf("Four byte length: %lu\n", pktlen);
-printf("Partial length encoding: mode=0x%02x\n", c & 0xff);
+// // Length parsing - new format
+// printf("Parsing new format packet length\n");
+// printf("First length byte: 0x%02x\n", c);
+// printf("One byte length: %lu\n", pktlen);
+// printf("Two byte length: %lu\n", pktlen);
+// printf("Four byte length: %lu\n", pktlen);
+// printf("Partial length encoding: mode=0x%02x\n", c & 0xff);
 
-// Length parsing - old format
-printf("Parsing old format length (lenbytes=%d)\n", lenbytes);
-printf("Old format packet length: %lu\n", pktlen);
+// // Length parsing - old format
+// printf("Parsing old format length (lenbytes=%d)\n", lenbytes);
+// printf("Old format packet length: %lu\n", pktlen);
 
   /* Sometimes the decompressing layer enters an error state in which
      it simply outputs 0xff for every byte read.  If we have a stream
@@ -905,10 +905,10 @@ static const char *pkt_type_str[] = {
     [PKT_MARKER] = "MARKER"
 };
 
-// Packet processing
-printf("Begin processing packet (type=%d, len=%lu, partial=%d)\n", pkttype, pktlen, partial);
-printf("Skipping packet type %d\n", pkttype);
-printf("Packet processing complete (rc=%d)\n", rc);
+// // Packet processing
+// printf("Begin processing packet (type=%d, len=%lu, partial=%d)\n", pkttype, pktlen, partial);
+// printf("Skipping packet type %d\n", pkttype);
+// printf("Packet processing complete (rc=%d)\n", rc);
 
 /* Add at start of switch statement */
 printf("\nProcessing packet type: %s (%d)\n\n", 
