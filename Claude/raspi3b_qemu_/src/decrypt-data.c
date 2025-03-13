@@ -521,7 +521,7 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
     //   gcry_md_write (dfx->mdc_hash, temp, nprefix+2);
   }
 
-      goto leave; // to inspect why no DEK derivation between binaries
+      // goto leave; // to inspect why no DEK derivation between binaries
 
   dfx->refcount++;
   dfx->partial = !!ed->is_partial;
@@ -1061,7 +1061,7 @@ decode_filter(void *opaque, int control, IOBUF a, byte *buf, size_t *ret_len)
     {
       if (fc->cipher_hd)
           printf("cipher_hd is allocated\n");
-        gcry_cipher_decrypt (fc->cipher_hd, buf, n, NULL, 0);
+        _gcry_cipher_decrypt (fc->cipher_hd, buf, n, NULL, 0);
         // _gcry_cipher_decrypt (fc->cipher_hd, buf, n, NULL, size);
         // printf("cipher_hd is allocated\n");
     }

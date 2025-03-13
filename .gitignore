@@ -1,6 +1,6 @@
 /build
 .vscode
 /node_modules*
-.o
+*.o
 build/*
 *.log

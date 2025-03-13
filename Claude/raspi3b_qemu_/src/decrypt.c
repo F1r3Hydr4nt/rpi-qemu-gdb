@@ -66,6 +66,7 @@ int decrypt_memory(ctrl_t ctrl, const unsigned char* data, size_t length) {
     }
     iobuf_fdopen (translate_file_handle (fd, use == IOBUF_INPUT ? 0 : 1),
 			 opentype);
+
 	  fp = fd_cache_open (NULL, opentype);
     fcx = xmalloc (sizeof *fcx + strlen (fname));
     fcx->fp = fp;
@@ -76,6 +77,7 @@ int decrypt_memory(ctrl_t ctrl, const unsigned char* data, size_t length) {
     a->filter = file_filter;
     fcx->no_cache = 1;
     a->filter_ov = fcx;
+
     // printf("Added\n");
     file_filter (fcx, IOBUFCTRL_INIT, NULL, NULL, &len);
     /* Add block filter for OpenPGP format */
@@ -91,7 +93,7 @@ int decrypt_memory(ctrl_t ctrl, const unsigned char* data, size_t length) {
     /* Process encryption packets */
     rc = proc_encryption_packets(ctrl, NULL, a);
     // return -1;
-    printf("\n\nEND END END\n\n");
+    printf("\n\nEND decrypt_memory\n\n");
     /* Clean up */
     // iobuf_close(a);
     return rc;
