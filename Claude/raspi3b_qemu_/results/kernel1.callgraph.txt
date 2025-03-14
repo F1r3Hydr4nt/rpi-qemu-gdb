@@ -1,0 +1,14 @@
+=== Basic Call Graph Analysis ===
+Functions that reference decrypt_memory:
+decrypt_memory -> decrypt_memory
+
+Functions called by decrypt_memory:
+decrypt_memory -> tfp_printf
+decrypt_memory -> iobuf_temp_with_content
+decrypt_memory -> translate_file_handle
+decrypt_memory -> iobuf_fdopen
+decrypt_memory -> fd_cache_open
+decrypt_memory -> strlen
+decrypt_memory -> xmalloc
+decrypt_memory -> strcpy
+decrypt_memory -> xstrdup

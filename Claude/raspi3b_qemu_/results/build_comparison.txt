@@ -14,13 +14,6 @@ decrypt_memory function in Test 2: 74 lines
 cmp result (first 5 differences):
  98497   1   2
 
-=== Key differences may be found in the diff files ===
- - results/kernel1_vs_kernel2.dump.diff (disassembly diff)
- - results/decrypt_memory_diff.txt (decrypt_memory function diff)
- - results/functions_diff.txt (function list diff)
- - results/in_asm_logs.diff (execution log diff)
- - results/crypto_lines.diff (crypto-related log lines diff)
-
 === Symbol Analysis Summary ===
 Symbols added in Test 2: 3
 Symbols removed from Test 1: 2
@@ -41,6 +34,13 @@ Most significant section size changes:
 0003c004 00000004 B iobuf_debug_mode
 0003c228 00000004 b literals_seen
 0003c000 00000004 b number.0
+
+=== Key differences may be found in the diff files ===
+ - results/kernel2_vs_kernel1.dump.diff (disassembly diff)
+ - results/decrypt_memory_diff.txt (decrypt_memory function diff)
+ - results/functions_diff.txt (function list diff)
+ - results/in_asm_logs.diff (execution log diff)
+ - results/crypto_lines.diff (crypto-related log lines diff)
 
 === Additional Analysis Reports ===
 - results/function_diff_analysis.txt - Function-specific changes

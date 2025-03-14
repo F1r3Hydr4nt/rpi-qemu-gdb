@@ -23,13 +23,16 @@ Types of machine code changes detected:
 
 Common ARM instruction patterns detected in changes:
 - LDR (load) instructions: 0
+0
 - STR (store) instructions: 0
+0
 - B (branch) instructions: 1
 - BL (branch with link) instructions: 3
 - MOV instructions: 3
 
 Memory access pattern changes:
 - Stack-relative memory accesses: 0
+0
 - Global/static memory accesses: 4
 - Top memory address patterns:
   9fe5ac309f: 1 occurrences

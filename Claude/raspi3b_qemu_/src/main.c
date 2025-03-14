@@ -137,7 +137,7 @@ void main()
     }
     // Check guard values
     printf("Guard values after decrypt: 0x%08X 0x%08X\n", guard1, guard2);
-    printf("CTRL-A + X");
+    printf("CTRL-A + X\n");
 cleanup:
     while (1) {
         __asm__("wfi");
