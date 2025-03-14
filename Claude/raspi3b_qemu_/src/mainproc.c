@@ -377,23 +377,23 @@ void reset_literals_seen(void)
 void derive_key(const uint8_t *salt, const char *password, unsigned int pass_len, uint32_t iterations, uint8_t *key)
 {
     printf("Deriving key...\n");
-    printf("Parameters: salt=%p, password=%p, pass_len=%u, iterations=%lu\n", 
-           (void*)salt, (void*)password, pass_len, iterations);
+    // printf("Parameters: salt=%p, password=%p, pass_len=%u, iterations=%lu\n", 
+    //        (void*)salt, (void*)password, pass_len, iterations);
     
-    // Print salt value
-    printf("Salt: ");
-    for (int i = 0; i < 8; i++) {
-        printf("%02x ", salt[i]);
-    }
-    printf("\n");
+    // // Print salt value
+    // printf("Salt: ");
+    // for (int i = 0; i < 8; i++) {
+    //     printf("%02x ", salt[i]);
+    // }
+    // printf("\n");
     
-    // Print first few chars of password (be careful with security)
-    printf("Password: %.*s%s\n", pass_len > 3 ? 3 : pass_len, 
-           password, pass_len > 3 ? "..." : "");
+    // // Print first few chars of password (be careful with security)
+    // printf("Password: %.*s%s\n", pass_len > 3 ? 3 : pass_len, 
+    //        password, pass_len > 3 ? "..." : "");
     
     SHA1_CTX ctx;
     SHA1Init(&ctx);
-    printf("SHA1 context initialized\n");
+    // printf("SHA1 context initialized\n");
     
     unsigned int bytesProcessed = 0;
     unsigned int index = 0;
@@ -421,12 +421,12 @@ void derive_key(const uint8_t *salt, const char *password, unsigned int pass_len
             index = 0;
         }
         
-        // Report progress at milestones without using timer
-        if (bytesProcessed >= next_milestone) {
-            // printf("Progress: %u/%lu bytes (%d%%)\n",  bytesProcessed, iterations,  (int)((bytesProcessed * 100) / iterations));
+        // // Report progress at milestones without using timer
+        // if (bytesProcessed >= next_milestone) {
+        //     // printf("Progress: %u/%lu bytes (%d%%)\n",  bytesProcessed, iterations,  (int)((bytesProcessed * 100) / iterations));
             
-            next_milestone += progress_milestone;
-        }
+        //     next_milestone += progress_milestone;
+        // }
     }
     
     printf("SHA1 update complete after processing %u bytes\n", bytesProcessed);
@@ -440,7 +440,7 @@ void derive_key(const uint8_t *salt, const char *password, unsigned int pass_len
     }
     printf("\n");
     
-    printf("Key derivation completed\n");
+    // printf("Key derivation completed\n");
 }
 static uint8_t hex_digit(char h)
 {

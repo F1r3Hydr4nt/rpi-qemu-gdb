@@ -1,0 +1,3 @@
+=== Function-specific diff analysis ===
+Function name | Diff chunks | Lines added | Lines removed
+-------------|-------------|------------|-------------
