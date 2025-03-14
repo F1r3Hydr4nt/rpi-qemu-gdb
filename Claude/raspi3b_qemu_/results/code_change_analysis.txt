@@ -1,21 +1,21 @@
 === Assembly Code Change Analysis ===
 This analysis shows patterns in the machine code changes between test cases
 
-Total OBJD-T code changes: 13
+Total OBJD-T code changes: 25
 
-Completely new code blocks: 7
-Completely removed code blocks: 6
+Completely new code blocks: 6
+Completely removed code blocks: 19
 
 Top functions with most code changes:
 
 Most frequent instruction patterns in changes:
-  e3fbffff8a: 1 occurrences
-  e20800a0e1: 1 occurrences
   e1031097e7: 1 occurrences
-  c330c08ce2: 1 occurrences
+  e000008fe0: 1 occurrences
+  d08de2f08f: 1 occurrences
   ac209fe5ac: 1 occurrences
-  a111a0e100: 1 occurrences
+  a81e9fe500: 1 occurrences
   a0e3030000: 1 occurrences
-  a0e1e3edff: 1 occurrences
-  a08ae293ec: 1 occurrences
+  a0e1d2edff: 1 occurrences
+  9fe501108f: 1 occurrences
   97e70500a0: 1 occurrences
+  408fe00400: 1 occurrences

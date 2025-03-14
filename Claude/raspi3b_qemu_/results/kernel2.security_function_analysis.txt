@@ -1,0 +1,11 @@
+=== Security Function Reference Analysis ===
+This analysis looks for references to potentially security-sensitive functions
+
+Undefined symbols (external dependencies):
+⚠️ NOTICE: Possible reference to weak cryptographic algorithm: SHA1
+build/kernel2.img:00013388 T SHA1
+build/kernel2.img:0001327c T SHA1Final
+build/kernel2.img:00013170 T SHA1Init
+build/kernel2.img:00011e8c T SHA1Transform
+build/kernel2.img:000131bc T SHA1Update
+

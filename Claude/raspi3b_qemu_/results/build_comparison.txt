@@ -1,10 +1,10 @@
 === Build Comparison Summary ===
-Test 1 binary size: 525288 bytes
-Test 2 binary size: 525288 bytes
+Test 1 binary size: 522272 bytes
+Test 2 binary size: 522272 bytes
 Size difference: 0 bytes
 
-Test 1 function count: 143
-Test 2 function count: 143
+Test 1 function count: 141
+Test 2 function count: 141
 Function count difference: 0
 
 decrypt_memory function in Test 1: 74 lines
@@ -12,7 +12,7 @@ decrypt_memory function in Test 2: 74 lines
 
 === Binary Comparison ===
 cmp result (first 5 differences):
- 99261   1   2
+ 98497   1   2
 
 === Key differences may be found in the diff files ===
  - results/kernel1_vs_kernel2.dump.diff (disassembly diff)
@@ -21,9 +21,39 @@ cmp result (first 5 differences):
  - results/in_asm_logs.diff (execution log diff)
  - results/crypto_lines.diff (crypto-related log lines diff)
 
+=== Symbol Analysis Summary ===
+Symbols added in Test 2: 3
+Symbols removed from Test 1: 2
+
+Most significant section size changes:
+
+=== Security Function Summary ===
+⚠️ NOTICE: Possible reference to weak cryptographic algorithm: SHA1
+
+=== Largest Functions in Test 2 ===
+0003c230 00000001 b heap_initialized
+00026188 00000004 D __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len
+00025d70 00000004 D encrypted_1k_gpg_len
+000180c4 00000004 D file4_gpg_len
+0003c234 00000004 b free_list
+0000c1fc 00000004 T free_symkey_enc
+0000800c 00000004 T gnupg_rl_initialize
+0003c004 00000004 B iobuf_debug_mode
+0003c228 00000004 b literals_seen
+0003c000 00000004 b number.0
+
 === Additional Analysis Reports ===
 - results/function_diff_analysis.txt - Function-specific changes
 - results/code_change_analysis.txt - Assembly code change patterns
 - results/instruction_analysis.txt - Detailed instruction-level analysis
 - results/security_assessment.txt - Security implications assessment
 - results/consolidated_report.txt - Complete analysis summary
+- results/kernel2.symbols.txt - Symbol table analysis
+- results/kernel2.symbols_by_size.txt - Symbols sorted by size
+- results/kernel2.elf_header.txt - ELF header information
+- results/kernel2.sections.txt - Section headers
+- results/kernel2.security_function_analysis.txt - Security analysis of function references
+- results/kernel2.callgraph.txt - Basic call graph for key functions
+- results/symbol_diff.txt - Symbol differences between tests
+- results/symbol_analysis.txt - Analysis of symbol changes
+- results/section_size_comparison.txt - Section size differences
