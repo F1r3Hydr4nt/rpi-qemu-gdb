@@ -1,0 +1,9 @@
+--- results/kernel2.dump	2025-03-14 00:29:01.174067504 +0000
++++ results/kernel1.dump	2025-03-14 00:28:53.329001833 +0000
+@@ -1,5 +1,5 @@
+ 
+-build/kernel2.img:     file format elf32-littlearm
++build/kernel1.img:     file format elf32-littlearm
+ 
+ 
+ Disassembly of section .text:

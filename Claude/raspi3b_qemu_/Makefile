@@ -32,8 +32,20 @@ ASFLAGS = -mcpu=cortex-a7
 LDFLAGS = -T $(SRC_DIR)/linker.ld -ffreestanding -O2 -nostdlib
 
 # Output
-TARGET = $(BUILD_DIR)/kernel.img
+# Add these modifications to your existing Makefile
 
+# Add TEST_NUM parameter (defaults to empty)
+TEST_NUM ?= 
+
+# Modify the TARGET line to include the test number if provided
+ifeq ($(TEST_NUM),)
+TARGET = $(BUILD_DIR)/kernel.img
+else
+TARGET = $(BUILD_DIR)/kernel$(TEST_NUM).img
+endif
+
+# You'll want to update the KERNEL line to match the new TARGET
+KERNEL ?= $(TARGET)
 .PHONY: all clean run debug gdb
 
 all: $(TARGET)
@@ -65,17 +77,33 @@ clean:
 run: $(TARGET)
 	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel $(TARGET) -nographic -serial mon:stdio
 
+# Modified log target that correctly handles paths
 log: $(TARGET)
-	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel kernel.good.img -d int,guest_errors,mmu,in_asm -D qemu.in_asm.good.log -nographic -serial mon:stdio
-
-log2: $(TARGET)
-	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel kernel.bad.img -d int,guest_errors,mmu,in_asm -D qemu.in_asm.bad.log -nographic -serial mon:stdio
+	@mkdir -p results
+	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel $(TARGET) -d int,guest_errors,mmu,in_asm -D results/kernel$(TEST_NUM).in_asm.log -nographic -serial mon:stdio
 
 debug: $(TARGET)
 	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel $(TARGET) -nographic -serial mon:stdio -s -S
 
 gdb:
 	gdb-multiarch $(TARGET) -x script.gdb
+# Target to run patched kernel
+runpatch: 
+	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel results/kernel2.img.patched -nographic -serial mon:stdio
+
+# Target to run patched kernel with logging
+logpatch:
+	@mkdir -p results
+	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel results/kernel2.img.patched -d int,guest_errors,mmu,in_asm -D results/kernel2.patched.in_asm.log -nographic -serial mon:stdio
+
+# Target to debug patched kernel
+debugpatch:
+	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel results/kernel2.img.patched -nographic -serial mon:stdio -s -S
+
+# Add this new command
+# run-custom: 
+# 	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel $(KERNEL) -nographic -serial mon:stdio
+# make run-custom KERNEL=kernel.bad.img
 
 # Useful commands
 # pkill qemu-system-arm

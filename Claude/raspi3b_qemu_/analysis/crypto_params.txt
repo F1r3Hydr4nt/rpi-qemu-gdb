@@ -1,0 +1,7 @@
+=== Crypto Parameters from Log1 ===
+IN: derive_key
+IN: passphrase_to_dek
+
+=== Crypto Parameters from Log2 ===
+IN: derive_key
+IN: passphrase_to_dek

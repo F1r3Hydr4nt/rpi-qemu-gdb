@@ -1,0 +1,11 @@
+=== Function Call Frequency Differences ===
+Test 1 Frequency:
+Test 2 Frequency:
+     30 derive_key						     30 derive_key
+     22 passphrase_to_dek					     22 passphrase_to_dek
+     14 decrypt_memory						     14 decrypt_memory
+     13 SHA1Final						     13 SHA1Final
+      8 SHA1Transform						      8 SHA1Transform
+      5 SHA1Update						      5 SHA1Update
+      5 proc_encryption_packets					      5 proc_encryption_packets
+      1 SHA1Init						      1 SHA1Init
