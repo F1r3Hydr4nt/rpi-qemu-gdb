@@ -1,105 +1,87 @@
---- results/kernel1.in_asm.log	2025-03-14 00:28:51.576987216 +0000
-+++ results/kernel2.in_asm.log	2025-03-14 00:28:59.161050620 +0000
-@@ -131,12 +131,8 @@
+--- results/kernel1.in_asm.log	2025-03-14 11:58:30.086840582 +0000
++++ results/kernel2.in_asm.log	2025-03-14 11:58:53.123164443 +0000
+@@ -91,13 +91,8 @@
  
  ----------------
  IN: main
--0x00013844:  e59f4064      ldr	r4, [pc, #100]	; 0x138b0
--0x00013848:  e08f4004      add	r4, pc, r4
--0x0001384c:  eaffffcd      b	0x13788
+-0x00013844:  
+-OBJD-T: 64409fe504408fe0cdffffea
 -
 -----------------
 -IN: main
-+0x00013780:  e59f4110      ldr	r4, [pc, #272]	; 0x13898
-+0x00013784:  e08f4004      add	r4, pc, r4
- 0x00013788:  e1a00004      mov	r0, r4
- 0x0001378c:  ebffedb0      bl	0xee54
+-0x00013788:  
+-OBJD-T: 0400a0e1b0edffeb
++0x00013780:  
++OBJD-T: 10419fe504408fe00400a0e1b0edffeb
  
-@@ -541,12 +537,8 @@
+ ----------------
+ IN: strlen
+@@ -401,13 +396,8 @@
  
  ----------------
  IN: main
--0x00013860:  e59f2050      ldr	r2, [pc, #80]	; 0x138b8
--0x00013864:  e59f3050      ldr	r3, [pc, #80]	; 0x138bc
--0x00013868:  eaffffe1      b	0x137f4
+-0x00013860:  
+-OBJD-T: 50209fe550309fe5e1ffffea
 -
 -----------------
 -IN: main
-+0x000137ec:  e59f20ac      ldr	r2, [pc, #172]	; 0x138a0
-+0x000137f0:  e59f30ac      ldr	r3, [pc, #172]	; 0x138a4
- 0x000137f4:  e7972002      ldr	r2, [r7, r2]
- 0x000137f8:  e1a00005      mov	r0, r5
- 0x000137fc:  e7971003      ldr	r1, [r7, r3]
-@@ -2315,8 +2307,16 @@
+-0x000137f4:  
+-OBJD-T: 022097e70500a0e1031097e7
++0x000137ec:  
++OBJD-T: ac209fe5ac309fe5022097e70500a0e1031097e7
+ 
+ ----------------
+ IN: main
+@@ -1606,8 +1596,13 @@
  
  ----------------
  IN: tfp_format
--0x000120f8:  e1a0200e      mov	r2, lr
--0x000120fc:  eaffffa1      b	0x11f88
-+0x00011f6c:  e3a0100a      mov	r1, #10	; 0xa
-+0x00011f70:  e0030391      mul	r3, r1, r3
-+0x00011f74:  e732f31e      udiv	r2, lr, r3
-+0x00011f78:  e3520009      cmp	r2, #9	; 0x9
-+0x00011f7c:  8afffffb      bhi	0x11f70
+-0x000120f8:  
+-OBJD-T: 0e20a0e1a1ffffea
++0x00011f6c:  
++OBJD-T: 0a10a0e3910303e01ef332e7090052e3fbffff8a
 +
 +----------------
 +IN: tfp_format
-+0x00011f80:  e3530000      cmp	r3, #0	; 0x0
-+0x00011f84:  0a00005d      beq	0x12100
++0x00011f80:  
++OBJD-T: 000053e35d00000a
  
  ----------------
  IN: tfp_format
-@@ -2352,6 +2352,25 @@
+@@ -1627,6 +1622,12 @@
  
  ----------------
  IN: tfp_format
-+0x00011fac:  e73cf11e      udiv	ip, lr, r1
-+0x00011fb0:  e1a03001      mov	r3, r1
-+0x00011fb4:  e0812399      umull	r2, r1, r9, r3
-+0x00011fb8:  e25a2000      subs	r2, sl, #0	; 0x0
-+0x00011fbc:  e1a00008      mov	r0, r8
-+0x00011fc0:  13a02001      movne	r2, #1	; 0x1
-+0x00011fc4:  e28aa001      add	sl, sl, #1	; 0x1
-+0x00011fc8:  e06eec93      mls	lr, r3, ip, lr
-+0x00011fcc:  e3530009      cmp	r3, #9	; 0x9
-+0x00011fd0:  93822001      orrls	r2, r2, #1	; 0x1
-+0x00011fd4:  e35c0000      cmp	ip, #0	; 0x0
-+0x00011fd8:  c3822001      orrgt	r2, r2, #1	; 0x1
-+0x00011fdc:  e28cc030      add	ip, ip, #48	; 0x30
-+0x00011fe0:  e1a011a1      lsr	r1, r1, #3
-+0x00011fe4:  e3520000      cmp	r2, #0	; 0x0
-+0x00011fe8:  1affffeb      bne	0x11f9c
++0x00011fac:  
++OBJD-T: 1ef13ce70130a0e1992381e000205ae20800a0e10120a01301a08ae293ec6ee0
++OBJD-T: 090053e30120829300005ce3012082c330c08ce2a111a0e1000052e3ebffff1a
 +
 +----------------
 +IN: tfp_format
- 0x000120cc:  e59d800c      ldr	r8, [sp, #12]
- 0x000120d0:  e59da008      ldr	sl, [sp, #8]
- 0x000120d4:  e3a01000      mov	r1, #0	; 0x0
-@@ -2704,13 +2723,6 @@
- 0x0000f094:  eb001110      bl	0x134dc
+ 0x000120cc:  
+ OBJD-T: 0c809de508a09de50010a0e30010c0e50830a0e100b08de50520a0e10710a0e1
+ OBJD-T: 0600a0e1b1feffeb
+@@ -1852,11 +1853,6 @@
+ OBJD-T: 0810a0e10b00a0e1015085e2101100eb
  
  ----------------
 -IN: derive_key
--0x0000f0a0:  e1570005      cmp	r7, r5
--0x0000f0a4:  e3a03000      mov	r3, #0	; 0x0
--0x0000f0a8:  e3a04001      mov	r4, #1	; 0x1
--0x0000f0ac:  9a000003      bls	0xf0c0
+-0x0000f0a0:  
+-OBJD-T: 050057e10030a0e30140a0e30300009a
 -
 -----------------
  IN: SHA1Update
- 0x00013534:  e2684040      rsb	r4, r8, #64	; 0x40
- 0x00013538:  e288001c      add	r0, r8, #28	; 0x1c
-@@ -3969,6 +3981,13 @@
+ 0x00013534:  
+ OBJD-T: 404068e21c0088e2000085e00420a0e129f2ffeb
+@@ -2078,6 +2074,11 @@
  
  ----------------
  IN: derive_key
-+0x0000f0a0:  e1570005      cmp	r7, r5
-+0x0000f0a4:  e3a03000      mov	r3, #0	; 0x0
-+0x0000f0a8:  e3a04001      mov	r4, #1	; 0x1
-+0x0000f0ac:  9a000003      bls	0xf0c0
++0x0000f0a0:  
++OBJD-T: 050057e10030a0e30140a0e30300009a
 +
 +----------------
 +IN: derive_key
- 0x0000f0c0:  e1a0800b      mov	r8, fp
- 0x0000f0c4:  e59f00a8      ldr	r0, [pc, #168]	; 0xf174
- 0x0000f0c8:  e1a01005      mov	r1, r5
+ 0x0000f0c0:  
+ OBJD-T: 0b80a0e1a8009fe50510a0e1a4609fe500008fe006608fe0100c00eb
+ 

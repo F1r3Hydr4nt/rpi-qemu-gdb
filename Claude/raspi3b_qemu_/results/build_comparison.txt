@@ -1,6 +1,6 @@
 === Build Comparison Summary ===
-Test 1 binary size: 525932 bytes
-Test 2 binary size: 525932 bytes
+Test 1 binary size: 525924 bytes
+Test 2 binary size: 525924 bytes
 Size difference: 0 bytes
 
 Test 1 function count: 143
