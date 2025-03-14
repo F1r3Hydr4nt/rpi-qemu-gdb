@@ -1,0 +1,18 @@
+--- analysis/log1_extract.txt	2025-03-13 23:43:32.222279441 +0000
++++ analysis/log2_extract.txt	2025-03-13 23:43:32.226279452 +0000
+@@ -43,7 +43,6 @@
+ IN: derive_key
+ IN: derive_key
+ IN: derive_key
+-IN: derive_key
+ IN: SHA1Update
+ IN: SHA1Update
+ IN: SHA1Transform
+@@ -57,6 +56,7 @@
+ IN: SHA1Update
+ IN: derive_key
+ IN: derive_key
++IN: derive_key
+ IN: SHA1Final
+ IN: SHA1Final
+ IN: SHA1Final

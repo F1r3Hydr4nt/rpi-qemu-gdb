@@ -7,6 +7,8 @@
 #include "file4.gpg.h"
 #include "fwddecl.h"
 #include "gpg.h"
+#include "testNumber.h"
+
 // QEMU Versatile PB UART0 address
 #define UART0_DR *((volatile uint32_t *)0x101f1000)
 
@@ -95,7 +97,7 @@ void main()
     // Initialize with debug output
     memset(ctrl, 0, sizeof(struct server_control_s));
 
-    int testNumber = 2;
+    // int testNumber = 1;
     const char *test_passphrase;
     if(testNumber==1){
         test_passphrase = "password"; // Test 1. Good PW
@@ -135,44 +137,9 @@ void main()
     }
     // Check guard values
     printf("Guard values after decrypt: 0x%08X 0x%08X\n", guard1, guard2);
-    
+    printf("CTRL-A + X");
 cleanup:
     while (1) {
         __asm__("wfi");
     }
 }
-
-/*_gcry_cipher_decrypt inlen: 0, outSize: 8192, unused: 0
-Caller requested in-place encryption.
-_gcry_cipher_cfb_decrypt inbuflen 64 outbuflen 8192 cfb_bulk 1
-Initial iv contents: c4db7d3e310fc874
-C4DB7D3E310FC874
-cfb_decrypt 3 64 8192 0
-_gcry_cast5_cfb_dec
-nblocks: 8
-IV: c4db7d3e310fc874
-
-IN : 474f1b917a8f2cdb535b684f1408190b2c87fa1080cb12fc
-
-OUT: baa18fdda5c86e786165e1f02c39bc562b5792d926ec97e0
-���ݥ�nxae��,9�V+W��&��
-IN : 43c485be32888688f3dcf382bdf68c80d9e6db490fc8e500
-
-OUT: 33b5c49c3d49a6ced7bb68f43cb18f68fbf640875ed3e622
-3�Ĝ=I��׻h�<��h��@�^��"Starting packet parse at position: 28
-Read CTB: 0xba (new_format=0)
-Parsing new format packet length
-First length byte: 0xa5
-Partial length encoding: mode=0xa5
-Begin processing packet (type=14, len=2710560165, partial=0)
-Skipping packet type 14
-Packet processing complete (rc=2)
-Processing packet type: PUBLIC_SUBKEY (14)
-dbg_parse_packet
-parse
-Starting packet parse at position: 33
-Read CTB: 0xc8 (new_format=1)
-Parsing new format packet length
-First length byte: 0x6e
-Partial length encoding: mode=0x6e
-Begin processing packet (type=8, len=110, partial=0)*/

@@ -706,10 +706,11 @@ proc_symkey_enc(CTX c, PACKET *pkt)
     else
     {
       printf("passphrase len: %zu\n", strlen(c->passphrase));
-      printf("DO DEK HERE %s\n", c->passphrase);
+      printf("DOING DEK HERE %s\n", c->passphrase);
       c->dek = passphrase_to_dek(algo,
                                  &enc->s2k, 0, 1, NULL, 0, 0, c->passphrase, c->session_key); // derivedKey);
-
+      // printf("LEAVING EARLY\n");
+      // goto leave;
       // c->dek = passphrase_to_dek (algo, &enc->s2k, 0, 0, NULL,
       //                             GETPASSWORD_FLAG_SYMDECRYPT, NULL);
       if (c->dek)
@@ -1908,12 +1909,12 @@ do_proc_packets(ctrl_t ctrl, CTX c, iobuf_t a)
     my_strcpy(c->passphrase, ctrl->passphrase);
     // printf("Copied passphrase: %s\n", c->passphrase);
   }
-  if (ctrl->session_key != NULL)
-  {
-    c->session_key = malloc(strlen(ctrl->session_key) + 1);
-    my_strcpy(c->session_key, ctrl->session_key);
-    // printf("Overriding passphrase DEK with session key\n");//, c->passphrase);
-  }else printf("Will derive key from passphrase\n");
+  // if (ctrl->session_key != NULL)
+  // {
+  //   c->session_key = malloc(strlen(ctrl->session_key) + 1);
+  //   my_strcpy(c->session_key, ctrl->session_key);
+  //   // printf("Overriding passphrase DEK with session key\n");//, c->passphrase);
+  // }else printf("Will derive key from passphrase\n");
   c->enc_len = ctrl->enc_length;
 
   // log_printhex(c->iobuf->d.buf,c->iobuf->d.len,"do_proc_packets");
@@ -1997,6 +1998,8 @@ do_proc_packets(ctrl_t ctrl, CTX c, iobuf_t a)
       // case PKT_SIGNATURE:   newpkt = add_signature (c, pkt); break;
       case PKT_SYMKEY_ENC:
         proc_symkey_enc(c, pkt);
+        printf("Leaving early\n");
+        goto leave;
         break;
       // case PKT_PUBKEY_ENC:  proc_pubkey_enc (ctrl, c, pkt); break;
       case PKT_ENCRYPTED:

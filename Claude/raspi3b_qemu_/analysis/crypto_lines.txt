@@ -1,0 +1,11 @@
+=== Test 1 Crypto Lines ===
+IN: decrypt_memory
+IN: derive_key
+IN: passphrase_to_dek
+IN: proc_encryption_packets
+
+=== Test 2 Crypto Lines ===
+IN: decrypt_memory
+IN: derive_key
+IN: passphrase_to_dek
+IN: proc_encryption_packets
