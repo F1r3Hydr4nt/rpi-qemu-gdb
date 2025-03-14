@@ -609,6 +609,7 @@ DEK *passphrase_to_dek(int cipher_algo, STRING2KEY *s2k,
   // xfree(last_pw);
   // last_pw = pw;
   uint32_t iterations = ((uint32_t)16 + (s2k->count & 15)) << ((s2k->count >> 4) + 6);
+  printf("\n\n\n GOT HERE \n\n\n");
   if (derivedKey != NULL)
   {
     printf("OVERRIDDEN: %s\n", derivedKey);
@@ -705,8 +706,14 @@ proc_symkey_enc(CTX c, PACKET *pkt)
     //   }
     else
     {
-      printf("passphrase len: %zu\n", strlen(c->passphrase));
-      printf("DOING DEK HERE %s\n", c->passphrase);
+      // printf("passphrase len: %zu\n", strlen(c->passphrase));
+      printf("DOING DEK HERE passphrase:%s\n", c->passphrase);
+      // Assuming c->session_key is an unsigned char array of 16 bytes
+      printf("session_key: ");
+      for (int i = 0; i < 16; i++) {
+          printf("%02x", c->session_key[i]);
+      }
+      printf("\n");
       c->dek = passphrase_to_dek(algo,
                                  &enc->s2k, 0, 1, NULL, 0, 0, c->passphrase, c->session_key); // derivedKey);
       // printf("LEAVING EARLY\n");
@@ -1998,8 +2005,8 @@ do_proc_packets(ctrl_t ctrl, CTX c, iobuf_t a)
       // case PKT_SIGNATURE:   newpkt = add_signature (c, pkt); break;
       case PKT_SYMKEY_ENC:
         proc_symkey_enc(c, pkt);
-        printf("Leaving early\n");
-        goto leave;
+        // printf("Leaving early\n");
+        // goto leave;
         break;
       // case PKT_PUBKEY_ENC:  proc_pubkey_enc (ctrl, c, pkt); break;
       case PKT_ENCRYPTED:
