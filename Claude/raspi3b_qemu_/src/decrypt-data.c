@@ -514,7 +514,11 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
       printf("\n\nBAD KEY!\n\n");
       rc = gpg_error(GPG_ERR_BAD_KEY);
       goto leave;
-    }else printf("\n\nGOOD KEY!\n\n");
+    }else{
+      printf("\n\nGOOD KEY!\n\n");
+      printf("Leaving early...\n");
+      goto leave;
+    }
 
 
     // if ( dfx->mdc_hash )
