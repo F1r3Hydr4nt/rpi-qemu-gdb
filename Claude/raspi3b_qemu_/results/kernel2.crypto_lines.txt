@@ -39,16 +39,6 @@ IN: derive_key
 IN: derive_key
 IN: derive_key
 IN: derive_key
-IN: derive_key
-IN: derive_key
-IN: derive_key
-IN: derive_key
-IN: derive_key
-IN: derive_key
-IN: derive_key
-IN: derive_key
-IN: derive_key
-IN: derive_key
 IN: passphrase_to_dek
 IN: passphrase_to_dek
 IN: passphrase_to_dek

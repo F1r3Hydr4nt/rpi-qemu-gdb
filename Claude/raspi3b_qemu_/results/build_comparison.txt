@@ -1,6 +1,6 @@
 === Build Comparison Summary ===
-Test 1 binary size: 525924 bytes
-Test 2 binary size: 525924 bytes
+Test 1 binary size: 525288 bytes
+Test 2 binary size: 525288 bytes
 Size difference: 0 bytes
 
 Test 1 function count: 143
@@ -12,7 +12,7 @@ decrypt_memory function in Test 2: 74 lines
 
 === Binary Comparison ===
 cmp result (first 5 differences):
- 99625   1   2
+ 99261   1   2
 
 === Key differences may be found in the diff files ===
  - results/kernel1_vs_kernel2.dump.diff (disassembly diff)
@@ -20,3 +20,10 @@ cmp result (first 5 differences):
  - results/functions_diff.txt (function list diff)
  - results/in_asm_logs.diff (execution log diff)
  - results/crypto_lines.diff (crypto-related log lines diff)
+
+=== Additional Analysis Reports ===
+- results/function_diff_analysis.txt - Function-specific changes
+- results/code_change_analysis.txt - Assembly code change patterns
+- results/instruction_analysis.txt - Detailed instruction-level analysis
+- results/security_assessment.txt - Security implications assessment
+- results/consolidated_report.txt - Complete analysis summary

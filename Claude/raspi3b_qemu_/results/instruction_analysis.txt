@@ -1,0 +1,48 @@
+=== Instruction Pattern Analysis ===
+This analysis identifies actual instruction changes, not just relocations
+
+Detailed instruction changes:
+Function | Address Old → New | Instruction Change | Type
+---------|-------------------|-------------------|------
+main | 0x00013778 → 0x000136b4 | 64409fe5 → 10419fe5 cdffffea → 0400a0e1 e3edffeb →   | Complete Instruction Change
+main | 0x00013794 → 0x00013720 | 50209fe5 → ac209fe5 50309fe5 → ac309fe5 e1ffffea → 022097e7 0500a0e1 →  031097e7 →  002092e5 →  72e1ffeb →   | Complete Instruction Change
+tfp_format | 0x0001202c → 0x00011ea0 | 0e20a0e1 → 0a10a0e3 a1ffffea → 910303e0 1ef332e7 →  090052e3 →  fbffff8a →   | Complete Instruction Change
+tfp_format | 0x0000f010 → 0x00011ee0 | 050056e1 → 1ef13ce7 0030a0e3 → 0130a0e1 0140a0e3 → 992381e0 0300009a → 00205ae2 0800a0e1 →  0120a013 →  01a08ae2 →  93ec6ee0 →   | Complete Instruction Change
+derive_key | (added) → 0x0000f010 | (added) → 050056e10030a0e30140a0e30300009a | Complete Addition
+
+Summary of instruction changes:
+- Relocation only (same code, different address): 0 chunks
+- Register/immediate value changes: 0 chunks
+- Complete instruction changes: 0 chunks
+
+Types of machine code changes detected:
+- Branch instruction changes: 5
+- Load/Store instruction changes: 6
+- ALU operation changes: 2
+- Move/Copy operation changes: 5
+
+Common ARM instruction patterns detected in changes:
+- LDR (load) instructions: 0
+- STR (store) instructions: 0
+- B (branch) instructions: 0
+- BL (branch with link) instructions: 3
+- MOV instructions: 5
+
+Memory access pattern changes:
+- Stack-relative memory accesses: 0
+- Global/static memory accesses: 4
+- Top memory address patterns:
+  9fe5ac309f: 1 occurrences
+  9fe504408f: 1 occurrences
+  92e572e1ff: 1 occurrences
+  8ce2a111a0: 1 occurrences
+  8ae293ec6e: 1 occurrences
+
+Security analysis:
+- INFO: 4 changes detected in crypto-related functions
+- Affected crypto functions:
+  decrypt_memory: 2 changes
+  derive_key: 2 changes
+  SHA1Update: 1 changes
+  tfp_format: 5 changes
+- No obviously suspicious instruction patterns detected

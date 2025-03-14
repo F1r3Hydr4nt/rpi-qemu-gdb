@@ -8,7 +8,7 @@
     bd20:	e08f0000 	add	r0, pc, r0
     bd24:	e1a06001 	mov	r6, r1
     bd28:	e08f8008 	add	r8, pc, r8
-    bd2c:	eb0018fb 	bl	12120 <tfp_printf>
+    bd2c:	eb0018c8 	bl	12054 <tfp_printf>
     bd30:	e5875020 	str	r5, [r7, #32]
     bd34:	e1a00006 	mov	r0, r6
     bd38:	e3a04000 	mov	r4, #0
@@ -31,15 +31,15 @@
     bd7c:	e1a00004 	mov	r0, r4
     bd80:	eb000c33 	bl	ee54 <strlen>
     bd84:	e2800038 	add	r0, r0, #56	; 0x38
-    bd88:	eb000fea 	bl	fd38 <xmalloc>
+    bd88:	eb000fb7 	bl	fc6c <xmalloc>
     bd8c:	e5804010 	str	r4, [r0, #16]
     bd90:	e1a05000 	mov	r5, r0
     bd94:	e5809000 	str	r9, [r0]
     bd98:	e1a01004 	mov	r1, r4
     bd9c:	e2800036 	add	r0, r0, #54	; 0x36
-    bda0:	eb001059 	bl	ff0c <strcpy>
+    bda0:	eb001026 	bl	fe40 <strcpy>
     bda4:	e1a00004 	mov	r0, r4
-    bda8:	eb0010af 	bl	1006c <xstrdup>
+    bda8:	eb00107c 	bl	ffa0 <xstrdup>
     bdac:	e59f306c 	ldr	r3, [pc, #108]	; be20 <decrypt_memory+0x118>
     bdb0:	e3a01001 	mov	r1, #1
     bdb4:	e5860038 	str	r0, [r6, #56]	; 0x38
@@ -56,21 +56,21 @@
     bde0:	e1a01004 	mov	r1, r4
     bde4:	e1a02006 	mov	r2, r6
     bde8:	e1a00007 	mov	r0, r7
-    bdec:	eb000f4a 	bl	fb1c <proc_encryption_packets>
+    bdec:	eb000f17 	bl	fa50 <proc_encryption_packets>
     bdf0:	e1a04000 	mov	r4, r0
     bdf4:	e59f0028 	ldr	r0, [pc, #40]	; be24 <decrypt_memory+0x11c>
     bdf8:	e08f0000 	add	r0, pc, r0
-    bdfc:	eb0018c7 	bl	12120 <tfp_printf>
+    bdfc:	eb001894 	bl	12054 <tfp_printf>
     be00:	e1a00004 	mov	r0, r4
     be04:	e28dd014 	add	sp, sp, #20
     be08:	e8bd83f0 	pop	{r4, r5, r6, r7, r8, r9, pc}
     be0c:	e3e04000 	mvn	r4, #0
     be10:	eafffffa 	b	be00 <decrypt_memory+0xf8>
-    be14:	0000b428 	.word	0x0000b428
-    be18:	0002fdfc 	.word	0x0002fdfc
-    be1c:	0000a48c 	.word	0x0000a48c
+    be14:	0000b35c 	.word	0x0000b35c
+    be18:	0002fc90 	.word	0x0002fc90
+    be1c:	0000a3c0 	.word	0x0000a3c0
     be20:	00000050 	.word	0x00000050
-    be24:	0000b360 	.word	0x0000b360
+    be24:	0000b294 	.word	0x0000b294
 
 0000be28 <decrypt_message>:
     be28:	e92d4070 	push	{r4, r5, r6, lr}
@@ -80,7 +80,7 @@
     be38:	e59f606c 	ldr	r6, [pc, #108]	; beac <decrypt_message+0x84>
     be3c:	e08f0000 	add	r0, pc, r0
     be40:	e08f6006 	add	r6, pc, r6
-    be44:	eb0018b5 	bl	12120 <tfp_printf>
+    be44:	eb001882 	bl	12054 <tfp_printf>
     be48:	e1a00004 	mov	r0, r4
     be4c:	ebfff2be 	bl	894c <iobuf_open>
     be50:	e1a04000 	mov	r4, r0
@@ -92,11 +92,11 @@
     be68:	e7963003 	ldr	r3, [r6, r3]
     be6c:	e08f0000 	add	r0, pc, r0
     be70:	e5931010 	ldr	r1, [r3, #16]
-    be74:	eb0018a9 	bl	12120 <tfp_printf>
+    be74:	eb001876 	bl	12054 <tfp_printf>
     be78:	e1a02004 	mov	r2, r4
     be7c:	e3a01000 	mov	r1, #0
     be80:	e1a00005 	mov	r0, r5
-    be84:	eb000f24 	bl	fb1c <proc_encryption_packets>
+    be84:	eb000ef1 	bl	fa50 <proc_encryption_packets>
     be88:	e1a03000 	mov	r3, r0
     be8c:	e1a00004 	mov	r0, r4
     be90:	e1a04003 	mov	r4, r3
@@ -105,31 +105,31 @@
     be9c:	e8bd8070 	pop	{r4, r5, r6, pc}
     bea0:	e3e04000 	mvn	r4, #0
     bea4:	eafffffb 	b	be98 <decrypt_message+0x70>
-    bea8:	0000b334 	.word	0x0000b334
-    beac:	0002fce4 	.word	0x0002fce4
+    bea8:	0000b268 	.word	0x0000b268
+    beac:	0002fb78 	.word	0x0002fb78
     beb0:	00000034 	.word	0x00000034
-    beb4:	0000b324 	.word	0x0000b324
+    beb4:	0000b258 	.word	0x0000b258
 
 0000beb8 <release_dfx_context>:
     beb8:	e92d4070 	push	{r4, r5, r6, lr}
     bebc:	e2504000 	subs	r4, r0, #0
     bec0:	08bd8070 	popeq	{r4, r5, r6, pc}
     bec4:	e5940000 	ldr	r0, [r4]
-    bec8:	eb001894 	bl	12120 <tfp_printf>
+    bec8:	eb001861 	bl	12054 <tfp_printf>
     becc:	e5945000 	ldr	r5, [r4]
     bed0:	e2455001 	sub	r5, r5, #1
     bed4:	e5845000 	str	r5, [r4]
     bed8:	e3550000 	cmp	r5, #0
     bedc:	18bd8070 	popne	{r4, r5, r6, pc}
     bee0:	e5940004 	ldr	r0, [r4, #4]
-    bee4:	eb000f87 	bl	fd08 <xfree>
+    bee4:	eb000f54 	bl	fc3c <xfree>
     bee8:	e5940008 	ldr	r0, [r4, #8]
     beec:	e5845004 	str	r5, [r4, #4]
-    bef0:	eb000f84 	bl	fd08 <xfree>
+    bef0:	eb000f51 	bl	fc3c <xfree>
     bef4:	e5845008 	str	r5, [r4, #8]
     bef8:	e1a00004 	mov	r0, r4
     befc:	e8bd4070 	pop	{r4, r5, r6, lr}
-    bf00:	ea000f80 	b	fd08 <xfree>
+    bf00:	ea000f4d 	b	fc3c <xfree>
 
 0000bf04 <decode_filter>:
     bf04:	e92d47f0 	push	{r4, r5, r6, r7, r8, r9, sl, lr}
@@ -143,7 +143,7 @@
     bf24:	e5992000 	ldr	r2, [r9]
     bf28:	e08f0000 	add	r0, pc, r0
     bf2c:	e5953078 	ldr	r3, [r5, #120]	; 0x78
-    bf30:	eb00187a 	bl	12120 <tfp_printf>
+    bf30:	eb001847 	bl	12054 <tfp_printf>
     bf34:	e3540003 	cmp	r4, #3
     bf38:	0a000004 	beq	bf50 <decode_filter+0x4c>
     bf3c:	e3540002 	cmp	r4, #2
@@ -157,10 +157,10 @@
     bf5c:	e59f01a8 	ldr	r0, [pc, #424]	; c10c <decode_filter+0x208>
     bf60:	e5998000 	ldr	r8, [r9]
     bf64:	e08f0000 	add	r0, pc, r0
-    bf68:	eb00186c 	bl	12120 <tfp_printf>
+    bf68:	eb001839 	bl	12054 <tfp_printf>
     bf6c:	e59f019c 	ldr	r0, [pc, #412]	; c110 <decode_filter+0x20c>
     bf70:	e08f0000 	add	r0, pc, r0
-    bf74:	eb001869 	bl	12120 <tfp_printf>
+    bf74:	eb001836 	bl	12054 <tfp_printf>
     bf78:	e5d53050 	ldrb	r3, [r5, #80]	; 0x50
     bf7c:	e2134001 	ands	r4, r3, #1
     bf80:	1a000024 	bne	c018 <decode_filter+0x114>
@@ -205,7 +205,7 @@
     c01c:	e1a02008 	mov	r2, r8
     c020:	e1a0100a 	mov	r1, sl
     c024:	e08f0000 	add	r0, pc, r0
-    c028:	eb00183c 	bl	12120 <tfp_printf>
+    c028:	eb001809 	bl	12054 <tfp_printf>
     c02c:	e3580000 	cmp	r8, #0
     c030:	11a0400a 	movne	r4, sl
     c034:	1a000003 	bne	c048 <decode_filter+0x144>
@@ -230,7 +230,7 @@
     c080:	0a000003 	beq	c094 <decode_filter+0x190>
     c084:	e59f008c 	ldr	r0, [pc, #140]	; c118 <decode_filter+0x214>
     c088:	e08f0000 	add	r0, pc, r0
-    c08c:	eb001823 	bl	12120 <tfp_printf>
+    c08c:	eb0017f0 	bl	12054 <tfp_printf>
     c090:	e5950004 	ldr	r0, [r5, #4]
     c094:	e3a05000 	mov	r5, #0
     c098:	e1a01006 	mov	r1, r6
@@ -256,17 +256,17 @@
     c0e8:	eaffffc0 	b	bff0 <decode_filter+0xec>
     c0ec:	e59f0028 	ldr	r0, [pc, #40]	; c11c <decode_filter+0x218>
     c0f0:	e08f0000 	add	r0, pc, r0
-    c0f4:	eb001809 	bl	12120 <tfp_printf>
+    c0f4:	eb0017d6 	bl	12054 <tfp_printf>
     c0f8:	e3a03000 	mov	r3, #0
     c0fc:	e3e00000 	mvn	r0, #0
     c100:	e5893000 	str	r3, [r9]
     c104:	eaffff8f 	b	bf48 <decode_filter+0x44>
-    c108:	0000b278 	.word	0x0000b278
-    c10c:	0000b294 	.word	0x0000b294
-    c110:	0000b2a8 	.word	0x0000b2a8
-    c114:	0000b204 	.word	0x0000b204
-    c118:	0000b1c4 	.word	0x0000b1c4
-    c11c:	0000b0e0 	.word	0x0000b0e0
+    c108:	0000b1ac 	.word	0x0000b1ac
+    c10c:	0000b1c8 	.word	0x0000b1c8
+    c110:	0000b1dc 	.word	0x0000b1dc
+    c114:	0000b138 	.word	0x0000b138
+    c118:	0000b0f8 	.word	0x0000b0f8
+    c11c:	0000b014 	.word	0x0000b014
 
 0000c120 <decrypt_data>:
     c120:	e92d47f0 	push	{r4, r5, r6, r7, r8, r9, sl, lr}
@@ -279,11 +279,11 @@
     c13c:	e1a04002 	mov	r4, r2
     c140:	e08f0000 	add	r0, pc, r0
     c144:	e1a05003 	mov	r5, r3
-    c148:	eb0017f4 	bl	12120 <tfp_printf>
+    c148:	eb0017c1 	bl	12054 <tfp_printf>
     c14c:	e5896000 	str	r6, [r9]
     c150:	e3a01080 	mov	r1, #128	; 0x80
     c154:	e3a00001 	mov	r0, #1
-    c158:	eb000f71 	bl	ff24 <xtrycalloc>
+    c158:	eb000f3e 	bl	fe58 <xtrycalloc>
     c15c:	e1500006 	cmp	r0, r6
     c160:	e58d000c 	str	r0, [sp, #12]
     c164:	0a0000c0 	beq	c46c <decrypt_data+0x34c>
@@ -292,14 +292,14 @@
     c170:	e5803000 	str	r3, [r0]
     c174:	e59f02fc 	ldr	r0, [pc, #764]	; c478 <decrypt_data+0x358>
     c178:	e08f0000 	add	r0, pc, r0
-    c17c:	eb0017e7 	bl	12120 <tfp_printf>
+    c17c:	eb0017b4 	bl	12054 <tfp_printf>
     c180:	e59f12f4 	ldr	r1, [pc, #756]	; c47c <decrypt_data+0x35c>
     c184:	e3a00017 	mov	r0, #23
     c188:	e58d6000 	str	r6, [sp]
     c18c:	e08f1001 	add	r1, pc, r1
     c190:	e5953000 	ldr	r3, [r5]
     c194:	e5d4200a 	ldrb	r2, [r4, #10]
-    c198:	eb0017e0 	bl	12120 <tfp_printf>
+    c198:	eb0017ad 	bl	12054 <tfp_printf>
     c19c:	e5d4900b 	ldrb	r9, [r4, #11]
     c1a0:	e3590000 	cmp	r9, #0
     c1a4:	1a000059 	bne	c310 <decrypt_data+0x1f0>
@@ -310,10 +310,10 @@
     c1b8:	e3a02004 	mov	r2, #4
     c1bc:	e1a01009 	mov	r1, r9
     c1c0:	e28d000c 	add	r0, sp, #12
-    c1c4:	eb000ed2 	bl	fd14 <memset>
+    c1c4:	eb000e9f 	bl	fc48 <memset>
     c1c8:	e59d600c 	ldr	r6, [sp, #12]
     c1cc:	e3a00040 	mov	r0, #64	; 0x40
-    c1d0:	eb000e6b 	bl	fb84 <malloc>
+    c1d0:	eb000e38 	bl	fab8 <malloc>
     c1d4:	e59d300c 	ldr	r3, [sp, #12]
     c1d8:	e5860004 	str	r0, [r6, #4]
     c1dc:	e5930004 	ldr	r0, [r3, #4]
@@ -321,7 +321,7 @@
     c1e4:	0a0000a0 	beq	c46c <decrypt_data+0x34c>
     c1e8:	e3a02040 	mov	r2, #64	; 0x40
     c1ec:	e1a01009 	mov	r1, r9
-    c1f0:	eb000ec7 	bl	fd14 <memset>
+    c1f0:	eb000e94 	bl	fc48 <memset>
     c1f4:	e59d300c 	ldr	r3, [sp, #12]
     c1f8:	e2851009 	add	r1, r5, #9
     c1fc:	e5952004 	ldr	r2, [r5, #4]
@@ -390,7 +390,7 @@
     c2f8:	e3a06013 	mov	r6, #19
     c2fc:	e3406200 	movt	r6, #512	; 0x200
     c300:	e08f0000 	add	r0, pc, r0
-    c304:	eb001785 	bl	12120 <tfp_printf>
+    c304:	eb001752 	bl	12054 <tfp_printf>
     c308:	e59d000c 	ldr	r0, [sp, #12]
     c30c:	ea000002 	b	c31c <decrypt_data+0x1fc>
     c310:	e59d000c 	ldr	r0, [sp, #12]
@@ -402,7 +402,7 @@
     c328:	e8bd87f0 	pop	{r4, r5, r6, r7, r8, r9, sl, pc}
     c32c:	e59f0150 	ldr	r0, [pc, #336]	; c484 <decrypt_data+0x364>
     c330:	e08f0000 	add	r0, pc, r0
-    c334:	eb001779 	bl	12120 <tfp_printf>
+    c334:	eb001746 	bl	12054 <tfp_printf>
     c338:	e59d200c 	ldr	r2, [sp, #12]
     c33c:	e5940010 	ldr	r0, [r4, #16]
     c340:	e5923000 	ldr	r3, [r2]
@@ -422,7 +422,7 @@
     c378:	e5942010 	ldr	r2, [r4, #16]
     c37c:	e1a01008 	mov	r1, r8
     c380:	e1a00007 	mov	r0, r7
-    c384:	eb000dce 	bl	fac4 <proc_packets>
+    c384:	eb000d9b 	bl	f9f8 <proc_packets>
     c388:	e59d000c 	ldr	r0, [sp, #12]
     c38c:	e3a0200e 	mov	r2, #14
     c390:	e3402200 	movt	r2, #512	; 0x200
@@ -437,7 +437,7 @@
     c3b4:	e3a0600e 	mov	r6, #14
     c3b8:	e3406200 	movt	r6, #512	; 0x200
     c3bc:	e08f0000 	add	r0, pc, r0
-    c3c0:	eb001756 	bl	12120 <tfp_printf>
+    c3c0:	eb001723 	bl	12054 <tfp_printf>
     c3c4:	e59d000c 	ldr	r0, [sp, #12]
     c3c8:	eaffffd3 	b	c31c <decrypt_data+0x1fc>
     c3cc:	e59d000c 	ldr	r0, [sp, #12]
@@ -448,7 +448,7 @@
     c3e0:	e28da00f 	add	sl, sp, #15
     c3e4:	e28d9019 	add	r9, sp, #25
     c3e8:	e08f0000 	add	r0, pc, r0
-    c3ec:	eb00174b 	bl	12120 <tfp_printf>
+    c3ec:	eb001718 	bl	12054 <tfp_printf>
     c3f0:	e5942000 	ldr	r2, [r4]
     c3f4:	ea00000a 	b	c424 <decrypt_data+0x304>
     c3f8:	e5930008 	ldr	r0, [r3, #8]
@@ -482,17 +482,17 @@
     c468:	eaffffe8 	b	c410 <decrypt_data+0x2f0>
     c46c:	e3e06000 	mvn	r6, #0
     c470:	eaffffaa 	b	c320 <decrypt_data+0x200>
-    c474:	0000b124 	.word	0x0000b124
-    c478:	0000b0fc 	.word	0x0000b0fc
-    c47c:	0000b0fc 	.word	0x0000b0fc
-    c480:	0000afc8 	.word	0x0000afc8
-    c484:	0000afa8 	.word	0x0000afa8
+    c474:	0000b058 	.word	0x0000b058
+    c478:	0000b030 	.word	0x0000b030
+    c47c:	0000b030 	.word	0x0000b030
+    c480:	0000aefc 	.word	0x0000aefc
+    c484:	0000aedc 	.word	0x0000aedc
     c488:	fffffba4 	.word	0xfffffba4
-    c48c:	0000aed8 	.word	0x0000aed8
-    c490:	0000aed0 	.word	0x0000aed0
+    c48c:	0000ae0c 	.word	0x0000ae0c
+    c490:	0000ae04 	.word	0x0000ae04
 
 0000c494 <free_symkey_enc>:
-    c494:	ea000e1b 	b	fd08 <xfree>
+    c494:	ea000de8 	b	fc3c <xfree>
 
 0000c498 <free_encrypted>:
     c498:	e92d4010 	push	{r4, lr}
