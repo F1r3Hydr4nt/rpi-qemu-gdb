@@ -114,14 +114,14 @@ void main()
     
     // Set up and verify session key
     // If we want to skip KDF comment out above block and leave this in
-    const char *key;
-    if(testNumber==1) key = "693B7847FA44CDC6E1C403F5E44E95C1"; // Test 1. Good Derived Key
-    else key = "427c028e28eeb15464c376d7dcca6ca2"; // Test 2. Good/Bad Derived Key???
-    size_t key_len = strlen(key);
-    ctrl->session_key = malloc(key_len + 1);
-    my_strcpy(ctrl->session_key, key);
+    // const char *key;
+    // if(testNumber==1) key = "693B7847FA44CDC6E1C403F5E44E95C1"; // Test 1. Good Derived Key
+    // else key = "427c028e28eeb15464c376d7dcca6ca2"; // Test 2. Good/Bad Derived Key???
+    // size_t key_len = strlen(key);
+    // ctrl->session_key = malloc(key_len + 1);
+    // my_strcpy(ctrl->session_key, key);
 
-    // ctrl->session_key = NULL; // Force KDF
+    ctrl->session_key = NULL; // Force KDF
 
     // Add some guard values
     uint32_t guard1 = 0xDEADBEEF;

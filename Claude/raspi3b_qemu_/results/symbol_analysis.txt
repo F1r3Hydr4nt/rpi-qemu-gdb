@@ -1,0 +1,6 @@
+=== Symbol Table Comparison ===
+Symbols present in Test 2 but not in Test 1:
+
+Symbols present in Test 1 but not in Test 2:
+
+Symbols with different sizes or addresses:

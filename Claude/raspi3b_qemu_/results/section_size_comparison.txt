@@ -1,0 +1,25 @@
+=== Section Size Comparison ===
+Section | Test 1 Size | Test 2 Size | Difference
+--------|------------|------------|------------
+1] | 00b414 | 00b414 | 0
+2] | 000194 | 000194 | 0
+3] | 002744 | 002744 | 0
+4] | 0023d4 | 0023d4 | 0
+5] | 0235be | 0235be | 0
+6] | 000044 | 000044 | 0
+7] | 000068 | 000068 | 0
+8] | 00000c | 00000c | 0
+9] | 000100 | 000100 | 0
+.bss | 00 | 00 | 0
+.debug_line | 00 | 00 | 0
+.debug_str | 01 | 01 | 0
+.comment | 01 | 01 | 0
+.debug_info | 00 | 00 | 0
+.debug_abbrev | 00 | 00 | 0
+.debug_aranges | 00 | 00 | 0
+.debug_frame | 00 | 00 | 0
+.debug_loc | 00 | 00 | 0
+.debug_ranges | 00 | 00 | 0
+.symtab | 10 | 10 | 0
+.strtab | 00 | 00 | 0
+.shstrtab | 00 | 00 | 0

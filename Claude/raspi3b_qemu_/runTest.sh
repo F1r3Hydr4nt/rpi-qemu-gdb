@@ -96,6 +96,27 @@ cp build/kernel$TEST_NUMBER.img results/kernel$TEST_NUMBER.img
 echo "Creating disassembly..."
 arm-none-eabi-objdump -d build/kernel$TEST_NUMBER.img > results/kernel$TEST_NUMBER.dump
 
+
+# Add symbol table analysis using nm
+echo "Analyzing symbol tables..."
+arm-none-eabi-nm -S build/kernel$TEST_NUMBER.img > results/kernel$TEST_NUMBER.symbols.txt
+
+# Sort symbols by size to identify largest functions
+arm-none-eabi-nm -S --size-sort build/kernel$TEST_NUMBER.img > results/kernel$TEST_NUMBER.symbols_by_size.txt
+
+# Get ELF header information using readelf
+echo "Extracting ELF header information..."
+arm-none-eabi-readelf -h build/kernel$TEST_NUMBER.img > results/kernel$TEST_NUMBER.elf_header.txt
+
+# Extract section headers
+arm-none-eabi-readelf -S build/kernel$TEST_NUMBER.img > results/kernel$TEST_NUMBER.sections.txt
+
+# Generate relocation information
+arm-none-eabi-readelf -r build/kernel$TEST_NUMBER.img > results/kernel$TEST_NUMBER.relocations.txt
+
+# Extract program headers
+arm-none-eabi-readelf -l build/kernel$TEST_NUMBER.img > results/kernel$TEST_NUMBER.segments.txt
+
 # Create diff if requested
 if [ "$DIFF_OUTPUT" = true ]; then
     # Determine which is the other test number
@@ -108,7 +129,134 @@ if [ "$DIFF_OUTPUT" = true ]; then
     # Check if the other test dump exists
     if [ -f "results/kernel$OTHER_TEST.dump" ]; then
         echo "Creating diff between test $TEST_NUMBER and test $OTHER_TEST..."
+        # Compare symbol tables between test 1 and test 2
+if [ -f "results/kernel1.symbols.txt" ] && [ -f "results/kernel2.symbols.txt" ]; then
+    echo "Comparing symbol tables..."
+    diff -u results/kernel1.symbols.txt results/kernel2.symbols.txt > results/symbol_diff.txt
+    
+    # Create a summary of symbol changes
+    {
+        echo "=== Symbol Table Comparison ==="
+        echo "Symbols present in Test 2 but not in Test 1:"
+        grep "^>" results/symbol_diff.txt | sed 's/^> //'
         
+        echo ""
+        echo "Symbols present in Test 1 but not in Test 2:"
+        grep "^<" results/symbol_diff.txt | sed 's/^< //'
+        
+        echo ""
+        echo "Symbols with different sizes or addresses:"
+        grep "^[<>]" results/symbol_diff.txt | grep " [tT] " | sort
+    } > results/symbol_analysis.txt
+    
+   # Add section size comparison
+echo "Comparing section sizes..."
+{
+    echo "=== Section Size Comparison ==="
+    echo "Section | Test 1 Size | Test 2 Size | Difference"
+    echo "--------|------------|------------|------------"
+    
+    grep " \.[a-z]" results/kernel1.sections.txt | while read line; do
+        section_name=$(echo "$line" | awk '{print $2}')
+        section1_size=$(grep " $section_name " results/kernel1.sections.txt | awk '{print $7}')
+        section2_size=$(grep " $section_name " results/kernel2.sections.txt | awk '{print $7}')
+        
+        # Convert hex to decimal for calculation
+        if [[ $section1_size == 0x* ]]; then
+            section1_dec=$((section1_size))
+        else
+            # Handle hex values without 0x prefix
+            if [[ $section1_size =~ ^[0-9a-fA-F]+$ ]]; then
+                section1_dec=$((16#$section1_size))
+            else
+                section1_dec=$section1_size
+            fi
+        fi
+        
+        if [[ $section2_size == 0x* ]]; then
+            section2_dec=$((section2_size))
+        else
+            # Handle hex values without 0x prefix
+            if [[ $section2_size =~ ^[0-9a-fA-F]+$ ]]; then
+                section2_dec=$((16#$section2_size))
+            else
+                section2_dec=$section2_size
+            fi
+        fi
+        
+        # Handle case where one section might exist in one file but not the other
+        if [ -z "$section1_dec" ]; then
+            section1_dec=0
+        fi
+        if [ -z "$section2_dec" ]; then
+            section2_dec=0
+        fi
+        
+        diff=$((section2_dec - section1_dec))
+        
+        echo "$section_name | $section1_size | $section2_size | $diff"
+    done
+} > results/section_size_comparison.txt
+fi
+
+# Check for suspicious function references
+echo "Checking for potentially suspicious function calls..."
+{
+    echo "=== Security Function Reference Analysis ==="
+    echo "This analysis looks for references to potentially security-sensitive functions"
+    echo ""
+    
+    # Check for references to potentially dangerous functions
+    for func in system exec fork memcpy strcpy sprintf gets; do
+        refs=$(arm-none-eabi-nm -A build/kernel$TEST_NUMBER.img | grep " U $func$" || echo "")
+        if [ -n "$refs" ]; then
+            echo "⚠️ WARNING: Reference to potentially unsafe function: $func"
+            echo "$refs"
+            echo ""
+        fi
+    done
+    
+    # Look for undefined symbols (potential external dependencies)
+    echo "Undefined symbols (external dependencies):"
+    arm-none-eabi-nm -u build/kernel$TEST_NUMBER.img
+    
+    # Check for potentially weak cryptographic algorithms
+    for weak_algo in MD5 DES RC4 SHA1; do
+        refs=$(arm-none-eabi-nm -A build/kernel$TEST_NUMBER.img | grep -i "$weak_algo" || echo "")
+        if [ -n "$refs" ]; then
+            echo "⚠️ NOTICE: Possible reference to weak cryptographic algorithm: $weak_algo"
+            echo "$refs"
+            echo ""
+        fi
+    done
+} > results/kernel$TEST_NUMBER.security_function_analysis.txt
+
+# Use objdump with source (if available) for better context
+if [ -d "src" ]; then
+    echo "Creating source-annotated disassembly..."
+    arm-none-eabi-objdump -dS build/kernel$TEST_NUMBER.img > results/kernel$TEST_NUMBER.source_dump.txt
+fi
+
+# Generate callgraph information (if addr2line is available)
+if command -v arm-none-eabi-addr2line >/dev/null 2>&1; then
+    echo "Generating basic call graph for key functions..."
+    {
+        echo "=== Basic Call Graph Analysis ==="
+        echo "Functions that reference decrypt_memory:"
+        grep -B 2 -A 2 "<decrypt_memory>" results/kernel$TEST_NUMBER.dump | grep "bl" | \
+        while read line; do
+            echo "$line" | sed -n 's/.*bl.*<\(.*\)>.*/\1 -> decrypt_memory/p'
+        done
+        
+        echo ""
+        echo "Functions called by decrypt_memory:"
+        grep -A 50 "<decrypt_memory>:" results/kernel$TEST_NUMBER.dump | grep "bl" | \
+        while read line; do
+            echo "$line" | sed -n 's/.*bl.*<\(.*\)>.*/decrypt_memory -> \1/p'
+        done
+    } > results/kernel$TEST_NUMBER.callgraph.txt
+fi
+
         # Create a normal diff
         diff -u results/kernel$TEST_NUMBER.dump results/kernel$OTHER_TEST.dump > results/kernel${TEST_NUMBER}_vs_kernel${OTHER_TEST}.dump.diff
         
@@ -223,6 +371,33 @@ if [ -f "results/kernel1.dump" ] && [ -f "results/kernel2.dump" ]; then
         echo " - results/functions_diff.txt (function list diff)"
         echo " - results/in_asm_logs.diff (execution log diff)"
         echo " - results/crypto_lines.diff (crypto-related log lines diff)"
+        # Add symbol and section analysis information to the build summary
+        if [ -f "results/symbol_analysis.txt" ] && [ -f "results/section_size_comparison.txt" ]; then
+            echo ""
+            echo "=== Symbol Analysis Summary ==="
+            echo "Symbols added in Test 2: $(grep -A50 "Symbols present in Test 2 but not in Test 1" results/symbol_analysis.txt | grep -v "^--" | grep -v "^$" | wc -l)"
+            echo "Symbols removed from Test 1: $(grep -A50 "Symbols present in Test 1 but not in Test 2" results/symbol_analysis.txt | grep -v "^--" | grep -v "^$" | wc -l)"
+            
+            # Extract the most significant section size changes
+            echo ""
+            echo "Most significant section size changes:"
+            grep -A20 "Section |" results/section_size_comparison.txt | grep -v "^--" | \
+            awk -F"|" '{if ($4 && $4 != " Difference" && ($4+0 > 100 || $4+0 < -100)) print $0}' | head -5
+            
+            # Add security-relevant findings
+            if [ -f "results/kernel$TEST_NUMBER.security_function_analysis.txt" ]; then
+                echo ""
+                echo "=== Security Function Summary ==="
+                grep "WARNING\|NOTICE" results/kernel$TEST_NUMBER.security_function_analysis.txt | head -5
+            fi
+        fi
+
+        # Add largest functions information
+        if [ -f "results/kernel$TEST_NUMBER.symbols_by_size.txt" ]; then
+            echo ""
+            echo "=== Largest Functions in Test $TEST_NUMBER ==="
+            head -10 results/kernel$TEST_NUMBER.symbols_by_size.txt
+        fi
     } > results/build_comparison.txt
     
     echo "Summary created: results/build_comparison.txt"
@@ -644,7 +819,12 @@ if [ -f "results/in_asm_logs.diff" ]; then
         echo "Disclaimer: This is an automated assessment and cannot detect all"
         echo "security issues. Manual code review is always recommended for security-critical code."
     } > results/security_assessment.txt
-    
+    echo ""
+    echo "= Symbol-based security analysis ="
+    if [ -f "results/kernel$TEST_NUMBER.security_function_analysis.txt" ]; then
+        # Extract information about potentially risky function usage
+        grep -A2 "potentially unsafe function\|weak cryptographic algorithm" results/kernel$TEST_NUMBER.security_function_analysis.txt
+    fi
     # Generate a consolidated analysis report
     echo "Generating consolidated analysis report..."
     {
@@ -664,12 +844,18 @@ if [ -f "results/in_asm_logs.diff" ]; then
         
         echo "== Top Modified Functions =="
         # List top 5 most modified functions
-        for func in $(echo "$AFFECTED_FUNC_LIST"); do
-            FUNC_OBJD_CHANGES=$(grep -B 5 -A 5 "IN: $func" results/in_asm_logs.diff | grep "OBJD-T:" | grep "^[+-]" | wc -l)
-            echo "$func: $FUNC_OBJD_CHANGES changes" >> temp_func_changes.txt
-        done
+    for func in $(echo "$AFFECTED_FUNC_LIST"); do
+        FUNC_OBJD_CHANGES=$(grep -B 5 -A 5 "IN: $func" results/in_asm_logs.diff | grep "OBJD-T:" | grep "^[+-]" | wc -l)
+        echo "$func: $FUNC_OBJD_CHANGES changes" >> temp_func_changes.txt
+    done
+
+    # Check if the file exists before sorting
+    if [ -f "temp_func_changes.txt" ]; then
         sort -t: -k2 -nr temp_func_changes.txt | head -5
         rm -f temp_func_changes.txt
+    else
+        echo "No function changes detected."
+    fi
         echo ""
         
         echo "== Security Assessment =="
@@ -677,6 +863,36 @@ if [ -f "results/in_asm_logs.diff" ]; then
         echo ""
         
         echo "== Key Code Changes =="
+        echo ""
+        echo "== Symbol and Section Analysis =="
+        if [ -f "results/symbol_analysis.txt" ]; then
+            # Extract key findings from symbol analysis
+            echo "Symbol changes:"
+            NEW_SYMBOLS=$(grep -c "^Symbols present in Test 2 but not in Test 1" -A5 results/symbol_analysis.txt | grep -v "^--" | head -3)
+            REMOVED_SYMBOLS=$(grep -c "^Symbols present in Test 1 but not in Test 2" -A5 results/symbol_analysis.txt | grep -v "^--" | head -3)
+            echo "- New symbols in Test 2: $(echo "$NEW_SYMBOLS" | wc -l)"
+            echo "- Removed symbols in Test 1: $(echo "$REMOVED_SYMBOLS" | wc -l)"
+            
+            # Extract significant section size changes
+            echo ""
+            echo "Section size changes:"
+            grep -A10 "Section |" results/section_size_comparison.txt | grep -v "^--" | awk -F"|" '{if ($4 && $4 != " Difference" && $4+0 != 0) print $0}' | head -5
+        fi
+
+        # Check for suspicious functions found
+        if [ -f "results/kernel$TEST_NUMBER.security_function_analysis.txt" ]; then
+            echo ""
+            echo "Security function findings:"
+            grep "WARNING\|NOTICE" results/kernel$TEST_NUMBER.security_function_analysis.txt | head -3
+        fi
+
+        # Add callgraph analysis information
+        if [ -f "results/kernel$TEST_NUMBER.callgraph.txt" ]; then
+            echo ""
+            echo "Call graph analysis for decrypt_memory:"
+            grep "decrypt_memory ->" results/kernel$TEST_NUMBER.callgraph.txt | head -5
+        fi
+
         # Extract the most significant instruction changes
         grep "Complete Instruction Change" results/instruction_analysis.txt | head -5
         echo "..."
@@ -714,8 +930,9 @@ if [ -f "results/in_asm_logs.diff" ]; then
         echo "- results/instruction_analysis.txt - Low-level instruction analysis"
         echo "- results/security_assessment.txt - Security implications"
         echo "- results/decrypt_memory_diff.txt - Focused analysis of decrypt_memory function"
-    } > results/consolidated_report.txt
+    } > results/consolidated_report.txt·
     
+
     # Update the main summary file with references
     {
         echo ""
@@ -725,8 +942,21 @@ if [ -f "results/in_asm_logs.diff" ]; then
         echo "- results/instruction_analysis.txt - Detailed instruction-level analysis"
         echo "- results/security_assessment.txt - Security implications assessment"
         echo "- results/consolidated_report.txt - Complete analysis summary"
+
+
+    echo "- results/kernel${TEST_NUMBER}.symbols.txt - Symbol table analysis"
+echo "- results/kernel${TEST_NUMBER}.symbols_by_size.txt - Symbols sorted by size"
+echo "- results/kernel${TEST_NUMBER}.elf_header.txt - ELF header information"
+echo "- results/kernel${TEST_NUMBER}.sections.txt - Section headers"
+echo "- results/kernel${TEST_NUMBER}.security_function_analysis.txt - Security analysis of function references"
+echo "- results/kernel${TEST_NUMBER}.callgraph.txt - Basic call graph for key functions"
+echo "- results/symbol_diff.txt - Symbol differences between tests"
+echo "- results/symbol_analysis.txt - Analysis of symbol changes"
+echo "- results/section_size_comparison.txt - Section size differences"
+
     } >> results/build_comparison.txt
-    
+
+
     echo "Analysis complete. See results/consolidated_report.txt for the full summary."
     echo "Security assessment available in results/security_assessment.txt"
 fi

@@ -1,6 +1,6 @@
 === Consolidated Analysis Report ===
 Test 1 vs. Test 2 Comparison
-Generated on: Fri 14 Mar 2025 14:21:41 GMT
+Generated on: Fri 14 Mar 2025 17:55:18 GMT
 
 == Summary ==
 Binary size: 522272 vs 522272 bytes (diff: 0 bytes)
@@ -11,6 +11,7 @@ Functions modified: 0
 Machine code changes: 25 blocks
 
 == Top Modified Functions ==
+No function changes detected.
 
 == Security Assessment ==
 - ⚠️ CRITICAL: decrypt_memory function was modified with 2 changes
@@ -22,6 +23,23 @@ Machine code changes: 25 blocks
 Overall security risk assessment:
 
 == Key Code Changes ==
+
+== Symbol and Section Analysis ==
+Symbol changes:
+- New symbols in Test 2: 1
+- Removed symbols in Test 1: 1
+
+Section size changes:
+
+Security function findings:
+⚠️ NOTICE: Possible reference to weak cryptographic algorithm: SHA1
+
+Call graph analysis for decrypt_memory:
+decrypt_memory -> decrypt_memory
+decrypt_memory -> tfp_printf
+decrypt_memory -> iobuf_temp_with_content
+decrypt_memory -> translate_file_handle
+decrypt_memory -> iobuf_fdopen
 main | 0x00013524 → 0x00013460 | 64409fe5 → 10419fe5 cdffffea → 0400a0e1 d2edffeb →   | Complete Instruction Change
 main | 0x00013540 → 0x000134cc | 50209fe5 → ac209fe5 50309fe5 → ac309fe5 e1ffffea → 022097e7 0500a0e1 →  031097e7 →  002092e5 →  07e2ffeb →   | Complete Instruction Change
 derive_key | 0x00009b18 → 0x0000ed78 | 000052e3 → 050056e1 0a10a0e1 → 0030a0e3 0700a0e1 → 0140a0e3 1600000a → 0300009a  | Complete Instruction Change
