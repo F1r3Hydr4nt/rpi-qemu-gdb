@@ -44,7 +44,7 @@ int decrypt_memory(ctrl_t ctrl, const unsigned char* data, size_t length) {
     printf("decrypt_memory\n");
     // printf("Decrypt params:\n");
     // printf("Data ptr: %p\n", (void*)data);
-    // printf("Session key: %s\n", ctrl->session_key);
+    printf("Session key: %s\n", ctrl->session_key);
     ctrl->enc_length=length;
     // printf("Decrypt params: %d\n",ctrl->enc_length);
     iobuf_t a;

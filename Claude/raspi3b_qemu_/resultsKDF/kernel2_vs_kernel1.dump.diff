@@ -1,5 +1,5 @@
---- results/kernel2.dump	2025-03-15 03:20:06.256076148 +0000
-+++ results/kernel1.dump	2025-03-15 03:19:55.202182935 +0000
+--- results/kernel2.dump	2025-03-14 18:12:38.751598374 +0000
++++ results/kernel1.dump	2025-03-14 18:12:31.537961883 +0000
 @@ -1,5 +1,5 @@
  
 -build/kernel2.img:     file format elf32-littlearm
