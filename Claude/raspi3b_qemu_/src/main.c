@@ -98,30 +98,33 @@ void main()
     memset(ctrl, 0, sizeof(struct server_control_s));
 
     // If we want to use the KDF leave this in
-    const char *test_passphrase;
-    if(testNumber==1){
-        test_passphrase = "password"; // Test 1. Good PW
-    }else{
-        test_passphrase = "2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945"; // Test 2. Good PW
-    }
-    size_t pass_len = strlen(test_passphrase);
-    ctrl->passphrase = malloc(pass_len + 1);
-    if (!ctrl->passphrase) {
-        printf("Failed to allocate passphrase\n");
-        goto cleanup;
-    }
-    my_strcpy(ctrl->passphrase, test_passphrase);
+    // const char *test_passphrase;
+    // if(testNumber==1){
+    //     test_passphrase = "password"; // Test 1. Good PW
+    // }else{
+    //     test_passphrase = "2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945"; // Test 2. Good PW
+    // }
+    // size_t pass_len = strlen(test_passphrase);
+    // ctrl->passphrase = malloc(pass_len + 1);
+    // if (!ctrl->passphrase) {
+    //     printf("Failed to allocate passphrase\n");
+    //     goto cleanup;
+    // }
+    // my_strcpy(ctrl->passphrase, test_passphrase);
     
     // Set up and verify session key
     // If we want to skip KDF comment out above block and leave this in
-    // const char *key;
-    // if(testNumber==1) key = "693B7847FA44CDC6E1C403F5E44E95C1"; // Test 1. Good Derived Key
-    // else key = "427c028e28eeb15464c376d7dcca6ca2"; // Test 2. Good/Bad Derived Key???
-    // size_t key_len = strlen(key);
-    // ctrl->session_key = malloc(key_len + 1);
-    // my_strcpy(ctrl->session_key, key);
-
-    ctrl->session_key = NULL; // Force KDF
+    const char *key;
+    if(testNumber==1) key = "693B7847FA44CDC6E1C403F5E44E95C1"; // Test 1. Good Derived Key
+    else key = "427c028e28eeb15464c376d7dcca6ca2"; // Test 2. Good/Bad Derived Key???
+    size_t key_len = strlen(key);
+    ctrl->session_key = malloc(key_len + 1);
+    if (!ctrl->session_key) {
+        printf("Failed to allocate session_key\n");
+        goto cleanup;
+    }
+    my_strcpy(ctrl->session_key, key);
+    // ctrl->session_key = NULL; // Force KDF
 
     // Add some guard values
     uint32_t guard1 = 0xDEADBEEF;
