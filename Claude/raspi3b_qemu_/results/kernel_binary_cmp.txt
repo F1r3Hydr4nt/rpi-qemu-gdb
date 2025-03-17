@@ -1,1 +1,1 @@
-results/kernel2.img results/kernel1.img differ: byte 98557, line 795
+results/kernel2.img results/kernel1.img differ: byte 98541, line 795

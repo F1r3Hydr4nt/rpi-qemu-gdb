@@ -1,76 +1,138 @@
---- results/kernel2.in_asm.log	2025-03-15 03:20:03.264104846 +0000
-+++ results/kernel1.in_asm.log	2025-03-15 03:19:52.712207281 +0000
-@@ -128,8 +128,12 @@
+--- results/kernel2.in_asm.log	2025-03-15 13:47:07.423026790 +0000
++++ results/kernel1.in_asm.log	2025-03-15 13:47:00.096995628 +0000
+@@ -87,8 +87,13 @@
  
  ----------------
  IN: main
--0x00013470:  e59f410c      ldr	r4, [pc, #268]	; 0x13584
--0x00013474:  e08f4004      add	r4, pc, r4
-+0x00013530:  e59f4064      ldr	r4, [pc, #100]	; 0x1359c
-+0x00013534:  e08f4004      add	r4, pc, r4
-+0x00013538:  eaffffce      b	0x13478
+-0x00013470:  
+-OBJD-T: 0c419fe504408fe00400a0e1d3edffeb
++0x00013530:  
++OBJD-T: 64409fe504408fe0ceffffea
 +
 +----------------
 +IN: main
- 0x00013478:  e1a00004      mov	r0, r4
- 0x0001347c:  ebffedd3      bl	0xebd0
++0x00013478:  
++OBJD-T: 0400a0e1d3edffeb
  
-@@ -530,8 +534,12 @@
+ ----------------
+ IN: strlen
+@@ -387,8 +392,13 @@
  
  ----------------
  IN: main
--0x000134d8:  e59f20ac      ldr	r2, [pc, #172]	; 0x1358c
--0x000134dc:  e59f30ac      ldr	r3, [pc, #172]	; 0x13590
-+0x0001354c:  e59f2050      ldr	r2, [pc, #80]	; 0x135a4
-+0x00013550:  e59f3050      ldr	r3, [pc, #80]	; 0x135a8
-+0x00013554:  eaffffe1      b	0x134e0
+-0x000134d8:  
+-OBJD-T: ac209fe5ac309fe5022097e70500a0e1031097e7002092e504e2ffeb
++0x0001354c:  
++OBJD-T: 50209fe550309fe5e1ffffea
 +
 +----------------
 +IN: main
- 0x000134e0:  e7972002      ldr	r2, [r7, r2]
- 0x000134e4:  e1a00005      mov	r0, r5
- 0x000134e8:  e7971003      ldr	r1, [r7, r3]
-@@ -2409,15 +2417,10 @@
++0x000134e0:  
++OBJD-T: 022097e70500a0e1031097e7002092e504e2ffeb
+ 
+ ----------------
+ IN: decrypt_memory
+@@ -1646,9 +1656,8 @@
  
  ----------------
  IN: hex_to_bytes
--0x0000ee94:  e24e2061      sub	r2, lr, #97	; 0x61
--0x0000ee98:  e3520005      cmp	r2, #5	; 0x5
--0x0000ee9c:  924ee057      subls	lr, lr, #87	; 0x57
--0x0000eea0:  9183300e      orrls	r3, r3, lr
--0x0000eea4:  96af3073      sxtbls	r3, r3
--0x0000eea8:  e5e13001      strb	r3, [r1, #1]!
--0x0000eeac:  e2800002      add	r0, r0, #2	; 0x2
--0x0000eeb0:  e150000c      cmp	r0, ip
--0x0000eeb4:  049df004      popeq	{pc}		; (ldreq pc, [sp], #4)
-+0x0000eef0:  e24ee037      sub	lr, lr, #55	; 0x37
-+0x0000eef4:  e183300e      orr	r3, r3, lr
-+0x0000eef8:  e6af3073      sxtb	r3, r3
-+0x0000eefc:  eaffffe9      b	0xeea8
+-0x0000ee94:  
+-OBJD-T: 61204ee2050052e357e04e920e3083917330af960130e1e5020080e20c0050e1
+-OBJD-T: 04f09d04
++0x0000eef0:  
++OBJD-T: 37e04ee20e3083e17330afe6e9ffffea
  
  ----------------
  IN: hex_to_bytes
-@@ -2427,19 +2430,10 @@
+@@ -1657,9 +1666,8 @@
  
  ----------------
  IN: hex_to_bytes
--0x0000ee54:  e2423061      sub	r3, r2, #97	; 0x61
--0x0000ee58:  e3530005      cmp	r3, #5	; 0x5
--0x0000ee5c:  92423057      subls	r3, r2, #87	; 0x57
--0x0000ee60:  83a03000      movhi	r3, #0	; 0x0
--0x0000ee64:  97a33053      sbfxls	r3, r3, #0, #4
--0x0000ee68:  91a03203      lslls	r3, r3, #4
--0x0000ee6c:  e5d0e001      ldrb	lr, [r0, #1]
--0x0000ee70:  e24e2030      sub	r2, lr, #48	; 0x30
--0x0000ee74:  e6ef2072      uxtb	r2, r2
--0x0000ee78:  e3520009      cmp	r2, #9	; 0x9
--0x0000ee7c:  91833002      orrls	r3, r3, r2
--0x0000ee80:  96af3073      sxtbls	r3, r3
--0x0000ee84:  9a000007      bls	0xeea8
-+0x0000eee0:  e2423037      sub	r3, r2, #55	; 0x37
-+0x0000eee4:  e7a33053      sbfx	r3, r3, #0, #4
-+0x0000eee8:  e1a03203      lsl	r3, r3, #4
-+0x0000eeec:  eaffffde      b	0xee6c
+-0x0000ee54:  
+-OBJD-T: 613042e2050053e3573042920030a0835330a3970332a09101e0d0e530204ee2
+-OBJD-T: 7220efe6090052e3023083917330af960700009a
++0x0000eee0:  
++OBJD-T: 373042e25330a3e70332a0e1deffffea
  
  ----------------
  IN: passphrase_to_dek
+@@ -2498,8 +2506,39 @@
+ 
+ ----------------
+ IN: block_filter
+-0x00009bec:  
+-OBJD-T: e1ffffea
++0x00009b18:  
++OBJD-T: 000052e30a10a0e10700a0e11600000a
++
++----------------
++IN: block_filter
++0x00009bf0:  
++OBJD-T: 103097e5000053e33700001a
++
++----------------
++IN: block_filter
++0x00009bfc:  
++OBJD-T: 183097e5
++
++----------------
++IN: block_filter
++0x00009c00:  
++OBJD-T: 1c2097e5020053e13300002a
++
++----------------
++IN: block_filter
++0x00009c0c:  
++OBJD-T: 082097e5201097e5012082e2082087e5012083e2182087e50330d1e7bf0053e3
++OBJD-T: 1f0000da
++
++----------------
++IN: block_filter
++0x00009cb0:  
++OBJD-T: 043085e5000053e30220a0e30c2085e593ffff1a
++
++----------------
++IN: block_filter
++0x00009cc4:  
++OBJD-T: 169f6fe10130a0e31c3085e5a992a0e1009069e2a6ffffea
+ 
+ ----------------
+ IN: block_filter
+@@ -3426,13 +3465,33 @@
+ 
+ ----------------
+ IN: parse.constprop.0
+-0x0000ff3c:  
+-OBJD-T: a81e9fe50020a0e1a40e9fe501108fe000008fe0ae0700eb
++0x00010068:  
++OBJD-T: 7e0000ea
++
++----------------
++IN: parse.constprop.0
++0x00010268:  
++OBJD-T: 0000a0e30610a0e131f0ffeb
++
++----------------
++IN: parse.constprop.0
++0x00010274:  
++OBJD-T: 940b9fe50910a0e100008fe0e20600eb
++
++----------------
++IN: parse.constprop.0
++0x00010284:  
++OBJD-T: 0910a0e12c008de219ebffeb
++
++----------------
++IN: parse.constprop.0
++0x00010290:  
++OBJD-T: 0200a0e38bffffea
+ 
+ ----------------
+ IN: parse.constprop.0
+-0x0000ff54:  
+-OBJD-T: 0e00a0e39cd08de2f08fbde8
++0x000100c8:  
++OBJD-T: 9cd08de2f08fbde8
+ 
+ ----------------
+ IN: do_proc_packets

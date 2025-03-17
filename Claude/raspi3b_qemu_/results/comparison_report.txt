@@ -1,10 +1,10 @@
 === Binary Comparison Summary ===
 Test 2 vs Test 1
-Generated on: Sat 15 Mar 2025 03:20:06 GMT
+Generated on: Sat 15 Mar 2025 13:47:09 GMT
 
 Binary sizes:
-- Test 2: 522452 bytes
-- Test 1: 522452 bytes
+- Test 2: 522408 bytes
+- Test 1: 522408 bytes
 - Difference: 0 bytes
 
 Binary comparison result:
@@ -16,7 +16,7 @@ Binary comparison result:
 - results/kernel_binary_cmp.txt - Binary comparison
 
 === Execution Log Analysis ===
-Execution logs have 48 different lines
+Execution logs have 93 different lines
 
 Additional log analysis files:
 - results/in_asm_logs.diff - Full execution log diff

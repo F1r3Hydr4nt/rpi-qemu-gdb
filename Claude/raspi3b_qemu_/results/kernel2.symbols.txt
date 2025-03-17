@@ -1,5 +1,5 @@
-000261c8 000154f2 D __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg
-000261c4 00000004 D __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len
+000261b8 000154f2 D __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg
+000261b4 00000004 D __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len
 00009a1c 00000834 t block_filter
 0000e01c 00000048 T blockFromBytes
 0005c240 B __bss_end
@@ -19,11 +19,11 @@
 0000dac8 000000f4 T cipher_block_xor_n_copy_2
 0000ba4c 000002bc T cipher_filter_cfb
 0000dee0 00000044 T cipher_sync
-0003b6bc 00000044 D control_mode_str
+0003b6ac 00000044 D control_mode_str
 00011788 00000068 T create_gpg_control
 00015c48 00000058 r CSWTCH.1
 00015ca0 00000058 r CSWTCH.3
-0003b6ba D __data_end
+0003b6aa D __data_end
 00015cf8 R __data_start
 00011548 000000b0 T dbg_copy_all_packets
 000115f8 000000d8 T dbg_copy_some_packets
@@ -38,13 +38,13 @@
 000085b8 000001c0 t do_open.constprop.0
 0000f154 00000660 t do_proc_packets
 0000df74 00000038 T encrypt
-00025db0 00000414 D encrypted_1k_gpg
-00025dac 00000004 D encrypted_1k_gpg_len
+00025da0 00000414 D encrypted_1k_gpg
+00025d9c 00000004 D encrypted_1k_gpg_len
 00008078 00000058 t fd_cache_invalidate
 00008420 000000a4 T fd_cache_open
 00008010 00000068 t fd_cache_strcmp
-00018104 0000dca7 D file4_gpg
-00018100 00000004 D file4_gpg_len
+000180f4 0000dca7 D file4_gpg
+000180f0 00000004 D file4_gpg_len
 000080d0 00000170 T file_filter
 00008240 00000124 t filter_flush
 0000f950 000000a8 T free
@@ -64,7 +64,7 @@
 0000ab70 0000025c T get_inv_recpsgnr_code
 0000adcc 00000058 T get_pkttype_name
 0000ab3c 00000034 T get_status_string
-0003b768 d _GLOBAL_OFFSET_TABLE_
+0003b758 d _GLOBAL_OFFSET_TABLE_
 0000800c 00000004 T gnupg_rl_initialize
 0003c238 00020000 b heap
 0003c230 00000001 b heap_initialized
@@ -120,7 +120,7 @@
 0003c008 00000220 B opt
 0000fdcc 000016a0 t parse.constprop.0
 0000ef00 00000254 T passphrase_to_dek
-0003b774 00000100 d pkt_type_str.0
+0003b764 00000100 d pkt_type_str.0
 00008364 000000bc t print_chain.part.0
 0000b854 00000168 T print_iobuf_info2
 0000ebfc 000000c4 T print_memory_map
@@ -160,7 +160,7 @@
 0000fbfc 00000018 T strcpy
 0000fd28 00000034 T strdup
 0000ebd0 0000002c T strlen
-000180fc 00000004 D testNumber
+000180ec 00000004 D testNumber
 00013424 T __text_end
 000133f4 00000030 T text_filter
 00008000 T __text_start
