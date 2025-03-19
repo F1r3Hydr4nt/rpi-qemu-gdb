@@ -77,3 +77,44 @@ Applied 2 patches
 
 
 python kernel-patcher.py build/kernel1.img build/patchedKernel.img 7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c.gpg passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword.gpg 0x14668 0x14C84 && sha256sum build/patchedKernel.img > build/patchedKernel.img.sha256sum
+
+
+
+ make compareLog 
+Comparing log files between kernel1 and patchedKernel...
+Extracting critical sections from logs...
+# Extract instruction execution around the decryption code
+# Extract memory access patterns
+# Extract any errors or warnings
+# Look for differences in execution flow
+
+Comparing decrypt function execution...
+  Found differences in decrypt execution (see results/decrypt_diff.log)
+  First 10 differences:
+612,629d611
+< ----------------
+< IN: do_proc_packets
+< 0x00010ce0:  e59f0210      ldr        r0, [pc, #528]  ; 0x10ef8
+< 0x00010ce4:  e08f0000      add        r0, pc, r0
+< 0x00010ce8:  ebfff86b      bl 0xee9c
+< 
+< ----------------
+< IN: do_proc_packets
+< 0x00010cec:  eaffffa7      b  0x10b90
+
+Comparing memory access patterns...
+  No differences found in memory access patterns.
+
+Comparing error/warning messages...
+  No differences found in error/warning messages.
+# Create a full diff of the logs for reference
+
+Creating full log diff (this may be very large)...
+Full log diff saved to results/full_log_diff.log
+Number of differences in full log: 293
+
+Log comparison complete. Results saved in results/
+
+
+
+LOL WTF?!

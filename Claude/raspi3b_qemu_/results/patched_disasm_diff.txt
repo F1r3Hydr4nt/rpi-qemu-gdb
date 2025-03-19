@@ -1,0 +1,4 @@
+2c2
+< build/kernel1.img:     file format elf32-littlearm
+---
+> build/patchedKernel.img:     file format elf32-littlearm
