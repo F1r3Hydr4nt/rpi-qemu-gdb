@@ -1,25 +1,4 @@
 === Section Size Comparison ===
 Section | kernel1.img Size | kernel2.img Size | Difference
 --------|------------|------------|------------
-1] | 00b424 | 00b424 | 0
-2] | 000144 | 000144 | 0
-3] | 002744 | 002744 | 0
-4] | 0023cf | 0023cf | 0
-5] | 0235ba | 0235ba | 0
-6] | 000044 | 000044 | 0
-7] | 00005c | 00005c | 0
-8] | 00000c | 00000c | 0
-9] | 000100 | 000100 | 0
-.bss | 00 | 00 | 0
-.debug_line | 00 | 00 | 0
-.debug_str | 01 | 01 | 0
-.comment | 01 | 01 | 0
-.debug_info | 00 | 00 | 0
-.debug_abbrev | 00 | 00 | 0
-.debug_aranges | 00 | 00 | 0
-.debug_frame | 00 | 00 | 0
-.debug_loc | 00 | 00 | 0
-.debug_ranges | 00 | 00 | 0
-.symtab | 10 | 10 | 0
-.strtab | 00 | 00 | 0
-.shstrtab | 00 | 00 | 0
+No section information available for comparison.

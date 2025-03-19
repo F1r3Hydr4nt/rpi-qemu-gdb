@@ -99,8 +99,7 @@ void main()
     printf("Guard values before decrypt: 0x%08X 0x%08X\n", guard1, guard2);
     
     // Decrypt the data
-    int rc = decrypt_memory(ctrl, __passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword_gpg, __passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword_gpg_len); // Test 1. Good Decrypt
-    // rc = decrypt_memory(ctrl, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len); // Test 2. BAD DECRYPT !!!!
+    int rc = decrypt_memory(ctrl, __passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword_gpg, __passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword_gpg_len);
     if (rc) {
         printf("Decryption failed with code: %d\n", rc);
     }

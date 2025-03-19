@@ -1,17 +1,17 @@
---- results/kernel1.symbols.txt	2025-03-19 00:25:17.199692719 +0000
-+++ results/kernel2.symbols.txt	2025-03-19 00:25:17.720695678 +0000
+--- results/kernel1.symbols.txt	2025-03-19 01:47:36.217471193 +0000
++++ results/kernel2.symbols.txt	2025-03-19 01:47:36.715470408 +0000
 @@ -1,3 +1,5 @@
-+00026144 000154f2 D __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg
-+00026140 00000004 D __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len
- 00009a1c 00000834 t block_filter
- 0000e01c 00000048 T blockFromBytes
- 0005c23c B __bss_end
-@@ -118,8 +120,6 @@
- 0003c008 00000220 B opt
- 0000f128 000016a0 t parse.constprop.0
- 00012ab0 00000254 T passphrase_to_dek
--00026144 000154f2 D __passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword_gpg
--00026140 00000004 D __passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword_gpg_len
- 0003b6e4 00000100 d pkt_type_str.0
- 00008364 000000bc t print_chain.part.0
- 0000b854 00000168 T print_iobuf_info2
++00014c90 000154f2 D __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg
++0002a184 00000004 D __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len
+ 000096f4 00000834 t block_filter
+ 0000c530 00000048 T blockFromBytes
+ 0004b01c B __bss_end
+@@ -67,8 +69,6 @@
+ 0000d0f8 00000054 T open
+ 0000d194 000016a0 t parse.constprop.0
+ 00010688 00000254 T passphrase_to_dek
+-00014c90 000154f2 D __passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword_gpg
+-0002a184 00000004 D __passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword_gpg_len
+ 00014b90 00000100 d pkt_type_str.0
+ 00008460 000000bc t print_chain.part.0
+ 00010f94 00000068 T proc_encryption_packets

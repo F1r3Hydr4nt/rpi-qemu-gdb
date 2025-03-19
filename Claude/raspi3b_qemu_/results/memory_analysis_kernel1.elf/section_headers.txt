@@ -1,0 +1,13 @@
+
+build/kernel1.elf:     file format elf32-littlearm
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         00008ffc  00008000  00008000  00008000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .rodata       00003b50  00010ffc  00010ffc  00010ffc  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  2 .data         00015680  00014b4c  00014b4c  00014b4c  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  3 .bss          0002001c  0002b000  0002b000  0002a1cc  2**3
+                  ALLOC

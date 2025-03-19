@@ -1,6 +1,1 @@
-=== Symbol Table Comparison ===
-Symbols present in kernel2.img but not in kernel1.img:
-
-Symbols present in kernel1.img but not in kernel2.img:
-
-Symbols with different sizes or addresses:
+No symbol information available for comparison.

@@ -1,0 +1,6 @@
+Memory layout analysis:
+----------------------
+
+Largest contiguous blocks:
+
+Large data blocks (potential search targets):

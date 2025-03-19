@@ -1,48 +1,42 @@
 === Consolidated Analysis Report ===
 kernel1.img vs. kernel2.img Comparison
-Generated on: Wed 19 Mar 2025 00:25:18 GMT
+Generated on: Wed 19 Mar 2025 02:50:57 GMT
 
 == Summary ==
-Binary size: 521880 vs 521880 bytes (diff: 0 bytes)
-Functions: 141 vs 141 (diff: 0)
+Binary size: 139724 vs 139724 bytes (diff: 0 bytes)
+Functions: 1 vs 1 (diff: 0)
 
 == Binary Differences ==
 The binary files are different.
-Number of byte differences: 89388
+Number of byte differences: 86979
 
 == QEMU Runtime Risk Assessment ==
-QEMU runtime risk score: 173/100
+QEMU runtime risk score: 41/100
 ⚠️ HIGH RISK: Runtime analysis indicates potentially dangerous behavior changes
 Key factors that contributed to this risk assessment:
 ⚠️ WARNING: Instruction count difference detected in binaries that should be logically identical
-⚠️ WARNING: Execution path differences detected (27 total paths) in binaries that should be logically identical
-⚠️ WARNING: 83 memory address constants differ between binaries
+⚠️ WARNING: Execution path differences detected (143 total paths) in binaries that should be logically identical
 
 == Security Assessment ==
 Key security indicators:
 - ✓ Binary size difference is minimal (0 bytes)
-- ⚠️ NOTICE: Change in number of crypto-related strings: -5
-  Crypto strings in kernel2.img not in kernel1.img:
-- ⚠️ WARNING: Potential backdoor-related strings found: 3
-GPG_ERR_LDAP_ADMINLIMIT
-GPG_ERR_EREMOTE
-GPG_ERR_EREMOTEIO
+- ✓ No change in number of crypto-related strings
+- ✓ No obvious backdoor-related strings detected
 - ✓ No URL or IP address patterns detected
 - Entropy comparison: kernel1.img: , kernel2.img: 
+  ✓ No significant entropy difference detected
+- QEMU runtime analysis risk score: 41
+  ⚠️ HIGH RISK: Runtime behavior shows potentially dangerous changes
+
 ...
 Overall security risk assessment:
-⚠️ HIGH RISK: Score 198/100
+⚠️ HIGH RISK: Score 41/100
 Significant indicators of security-relevant changes
 Manual inspection strongly recommended
 
 Disclaimer: This is an automated assessment and cannot detect all
 
 == Symbol Changes ==
-Symbols present in kernel2.img but not in kernel1.img:
-
-Symbols present in kernel1.img but not in kernel2.img:
-
-Symbols with different sizes or addresses:
 ...
 
 For detailed information, refer to the following reports:

@@ -51,13 +51,21 @@ MAIN2_OBJ = $(BUILD_DIR)/main2.o
 INCLUDES = -I$(SRC_DIR) -I$(COMMON_DIR)
 
 # Flags
-CFLAGS = -mcpu=cortex-a7 -fpic -ffreestanding -O2 -Wall -Wextra -g $(INCLUDES)
+CFLAGS = -mcpu=cortex-a7 -fpic -ffreestanding -O2 -Wall -Wextra -g $(INCLUDES) -ffunction-sections -fdata-sections -fno-common
 ASFLAGS = -mcpu=cortex-a7
-LDFLAGS = -T $(SRC_DIR)/linker.ld -ffreestanding -O2 -nostdlib
+LDFLAGS = -T $(SRC_DIR)/linker.ld -ffreestanding -O2 -nostdlib \
+          -Wl,--gc-sections \
+          -Wl,--sort-section=alignment \
+          -Wl,--sort-common=descending \
+          -Wl,--no-merge-exidx-entries
 
 # Define targets for each version
 TARGET1 = $(BUILD_DIR)/kernel1.img
 TARGET2 = $(BUILD_DIR)/kernel2.img
+
+# Define targets for each version
+TARGET1_ELF = $(BUILD_DIR)/kernel1.elf
+TARGET2_ELF = $(BUILD_DIR)/kernel2.elf
 
 .PHONY: all clean run1 run2 debug1 debug2 gdb1 gdb2 compare
 
@@ -103,6 +111,21 @@ $(TARGET2): $(COMMON_OBJS) $(OBJS) $(ASM_OBJS) $(MAIN2_OBJ) $(MAINPROC_OBJ)
 	@mkdir -p $(@D)
 	$(CC) $(LDFLAGS) $^ -o $@
 
+# Build both kernel ELF files - explicitly include mainproc.o
+$(TARGET1_ELF): $(COMMON_OBJS) $(OBJS) $(ASM_OBJS) $(MAIN1_OBJ) $(MAINPROC_OBJ)
+	@mkdir -p $(@D)
+	$(CC) $(LDFLAGS) $^ -o $@
+
+$(TARGET2_ELF): $(COMMON_OBJS) $(OBJS) $(ASM_OBJS) $(MAIN2_OBJ) $(MAINPROC_OBJ)
+	@mkdir -p $(@D)
+	$(CC) $(LDFLAGS) $^ -o $@
+
+# # Create binary images from ELF files
+# $(TARGET1): $(TARGET1_ELF)
+# 	$(OBJCOPY) -O binary $< $@
+
+# $(TARGET2): $(TARGET2_ELF)
+# 	$(OBJCOPY) -O binary $< $@
 clean:
 	rm -rf $(BUILD_DIR)
 
@@ -146,94 +169,102 @@ compare: $(TARGET1) $(TARGET2)
 	@echo "Full diff saved to $(RESULTS_DIR)/disasm_diff.txt"
 	@diff $(RESULTS_DIR)/kernel1.dump $(RESULTS_DIR)/kernel2.dump > $(RESULTS_DIR)/disasm_diff.txt || true
 
-# # Target to run patched kernel
-# runpatch: 
-# 	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel results/kernel2.img.patched -nographic -serial mon:stdio
 
-# # Target to run patched kernel with logging
-# logpatch:
-# 	@mkdir -p results
-# 	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel results/kernel2.img.patched -d int,guest_errors,mmu,in_asm -D results/kernel2.patched.in_asm.log -nographic -serial mon:stdio
-
-# # Target to debug patched kernel
-# debugpatch:
-# 	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel results/kernel2.img.patched -nographic -serial mon:stdio -s -S
-
-# # Add this new command
-# # run-custom: 
-# # 	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel $(KERNEL) -nographic -serial mon:stdio
-# # make run-custom KERNEL=kernel.bad.img
+# Generate memory map for analysis
+mapmem: $(TARGET1_ELF) $(TARGET2_ELF)
+	@mkdir -p $(RESULTS_DIR)
+	$(CROSS_COMPILE)nm -n $(TARGET1_ELF) > $(RESULTS_DIR)/kernel1.map
+	$(CROSS_COMPILE)nm -n $(TARGET2_ELF) > $(RESULTS_DIR)/kernel2.map
+	$(CROSS_COMPILE)readelf -S $(TARGET1_ELF) > $(RESULTS_DIR)/kernel1.sections
+	$(CROSS_COMPILE)readelf -S $(TARGET2_ELF) > $(RESULTS_DIR)/kernel2.sections
+	@echo "Memory maps generated in $(RESULTS_DIR)"
 
 # # Useful commands
 # # pkill qemu-system-arm
 # # (gdb) break main.c:10 # Break at line 10
+# Add these variables to your flags section
+ASM_CFLAGS = $(CFLAGS) -S -fverbose-asm
 
+# Add these targets to your Makefile
 
-# # Add targets to generate assembly output
-# asm-output: $(SRCS) $(COMMON_SRCS)
-# 	@mkdir -p $(ASM_OUTPUT_DIR)
-# 	@mkdir -p $(ASM_OUTPUT_DIR)/common
-# 	@for src in $(SRCS); do \
-# 		out=$$(echo $$src | sed 's|$(SRC_DIR)/|$(ASM_OUTPUT_DIR)/|' | sed 's|\.c$$|\.s|'); \
-# 		echo "Generating $$out"; \
-# 		$(CC) $(ASM_CFLAGS) -o $$out $$src; \
-# 	done
-# 	@for src in $(COMMON_SRCS); do \
-# 		out=$$(echo $$src | sed 's|$(SRC_DIR)/|$(ASM_OUTPUT_DIR)/|' | sed 's|\.c$$|\.s|'); \
-# 		echo "Generating $$out"; \
-# 		$(CC) $(ASM_CFLAGS) -o $$out $$src; \
-# 	done
-
-# # Add a target to compare assembly of two kernels
-# diff-asm: 
-# 	@mkdir -p results
-# 	@if [ -z "$(TEST1)" ] || [ -z "$(TEST2)" ]; then \
-# 		echo "Usage: make diff-asm TEST1=1 TEST2=2"; \
-# 		exit 1; \
-# 	fi
-# 	@echo "Comparing assembly output between test $(TEST1) and test $(TEST2)..."
-# 	@for file in $$(find $(ASM_OUTPUT_DIR) -name "*.s" | grep -v start.s); do \
-# 		diff -u $$file $$file || true; \
-# 	done > results/asm_diff.txt
-# 	@echo "Diff saved to results/asm_diff.txt"
-
-# # Add test build targets with debug flags
-# test-debug-1:
-# 	@mkdir -p $(BUILD_DIR)
-# 	$(MAKE) clean
-# 	$(MAKE) DEBUG=1 TEST_NUM=1
-
-# test-debug-2:
-# 	@mkdir -p $(BUILD_DIR)
-# 	$(MAKE) clean
-# 	$(MAKE) DEBUG=1 TEST_NUM=2
-
-# # Build both tests with debugging for comparison
-# build-both-debug: test-debug-1 test-debug-2
-# 	@echo "Both test kernels built with debugging flags"
-
-# # Generate assembly for both and compare
-# compare-asm: build-both-debug asm-output diff-asm
-# 	@echo "Assembly comparison complete"
-
-# # Target to disassemble built binaries
-# disassemble:
-# 	@mkdir -p results
-# 	$(CROSS_COMPILE)objdump -d $(BUILD_DIR)/kernel1.img > results/kernel1.disasm
-# 	$(CROSS_COMPILE)objdump -d $(BUILD_DIR)/kernel2.img > results/kernel2.disasm
-# 	diff -u results/kernel1.disasm results/kernel2.disasm > results/disasm_diff.txt
-# 	@echo "Disassembly and diff saved to results directory"
-
-# # Add QEMU trace analysis helper
-# analyze-traces:
-# 	@mkdir -p results
-# 	@if [ -z "$(TEST1)" ] || [ -z "$(TEST2)" ]; then \
-# 		echo "Usage: make analyze-traces TEST1=1 TEST2=2"; \
-# 		exit 1; \
-# 	fi
-# 	@echo "Extracting key sections from QEMU traces..."
-# 	@grep -A 20 -B 20 "decrypt" results/kernel$(TEST1).in_asm.log > results/kernel$(TEST1).decrypt.log
-# 	@grep -A 20 -B 20 "decrypt" results/kernel$(TEST2).in_asm.log > results/kernel$(TEST2).decrypt.log
-# 	@echo "Comparing decrypt sections..."
-# 	@diff -u results/kernel$(TEST1).decrypt.log results/kernel$(TEST2).decrypt.log > results/decrypt_diff.txt
-# 	@echo "Analysis complete. Check results/decrypt_diff.txt"
+# Create assembly output for all source files
+asm: $(SRCS) $(COMMON_SRCS) $(MAINPROC_SRC) $(MAIN1_SRC) $(MAIN2_SRC)
+	@mkdir -p $(ASM_OUTPUT_DIR)
+	@mkdir -p $(ASM_OUTPUT_DIR)/common
+	@for src in $(SRCS); do \
+		base=$$(basename $$src .c); \
+		out=$(ASM_OUTPUT_DIR)/$$base.s; \
+		echo "Generating $$out"; \
+		$(CC) $(ASM_CFLAGS) -o $$out $$src; \
+	done
+	@for src in $(COMMON_SRCS); do \
+		base=$$(basename $$src .c); \
+		out=$(ASM_OUTPUT_DIR)/common/$$base.s; \
+		echo "Generating $$out"; \
+		$(CC) $(ASM_CFLAGS) -o $$out $$src; \
+	done
+	@echo "Generating assembly for mainproc.c"
+	@$(CC) $(ASM_CFLAGS) -o $(ASM_OUTPUT_DIR)/mainproc.s $(MAINPROC_SRC)
+	@echo "Generating assembly for main.1.c"
+	@$(CC) $(ASM_CFLAGS) -o $(ASM_OUTPUT_DIR)/main.1.s $(MAIN1_SRC)
+	@echo "Generating assembly for main.2.c"
+	@$(CC) $(ASM_CFLAGS) -o $(ASM_OUTPUT_DIR)/main.2.s $(MAIN2_SRC)
+	@echo "Assembly output generated in $(ASM_OUTPUT_DIR)"
+	@echo "Comparing assembly between $(FILE1) and $(FILE2)..."
+	@diff -u $(ASM_OUTPUT_DIR)/main.1.s $(ASM_OUTPUT_DIR)/main.2.s > $(RESULTS_DIR)/$(FILE1)_vs_$(FILE2).diff || true
+	@echo "Diff saved to $(RESULTS_DIR)/$(FILE1)_vs_$(FILE2).diff"
+# Build both kernels from assembly output
+build-asm:
+	@mkdir -p $(BUILD_DIR) $(BUILD_COMMON_DIR)
+	
+	@# Assemble common .s files
+	@for src in $(ASM_OUTPUT_DIR)/common/*.s; do \
+		base=$$(basename $$src .s); \
+		out=$(BUILD_COMMON_DIR)/$$base.o; \
+		echo "Assembling $$src to $$out"; \
+		$(AS) $(ASFLAGS) $$src -o $$out; \
+	done
+	
+	@# Assemble start.s if it exists
+	@if [ -f "$(SRC_DIR)/start.s" ]; then \
+		echo "Assembling $(SRC_DIR)/start.s to $(BUILD_DIR)/start.o"; \
+		$(AS) $(ASFLAGS) $(SRC_DIR)/start.s -o $(BUILD_DIR)/start.o; \
+	fi
+	
+	@# Assemble all other .s files, excluding main.1.s and main.2.s
+	@for src in $(ASM_OUTPUT_DIR)/*.s; do \
+		if [ -f "$$src" ]; then \
+			base=$$(basename $$src .s); \
+			if [ "$$base" != "main.1" ] && [ "$$base" != "main.2" ]; then \
+				out=$(BUILD_DIR)/$$base.o; \
+				echo "Assembling $$src to $$out"; \
+				$(AS) $(ASFLAGS) $$src -o $$out; \
+			fi \
+		fi \
+	done
+	
+	@# Build kernel1
+	@if [ -f "$(ASM_OUTPUT_DIR)/main.1.s" ]; then \
+		echo "Assembling $(ASM_OUTPUT_DIR)/main.1.s to $(BUILD_DIR)/main1.o"; \
+		$(AS) $(ASFLAGS) $(ASM_OUTPUT_DIR)/main.1.s -o $(BUILD_DIR)/main1.o; \
+		echo "Building kernel1"; \
+		$(CC) $(LDFLAGS) $(BUILD_DIR)/*.o $(BUILD_COMMON_DIR)/*.o -o $(TARGET1_ELF); \
+		$(OBJCOPY) -O binary $(TARGET1_ELF) $(TARGET1); \
+	else \
+		echo "Warning: main.1.s not found, skipping kernel1 build"; \
+	fi
+	
+	@# Build kernel2
+	@if [ -f "$(ASM_OUTPUT_DIR)/main.2.s" ]; then \
+		echo "Assembling $(ASM_OUTPUT_DIR)/main.2.s to $(BUILD_DIR)/main2.o"; \
+		$(AS) $(ASFLAGS) $(ASM_OUTPUT_DIR)/main.2.s -o $(BUILD_DIR)/main2.o; \
+		echo "Building kernel2"; \
+		mv $(BUILD_DIR)/main1.o $(BUILD_DIR)/main1.o.bak || true; \
+		$(CC) $(LDFLAGS) $(BUILD_DIR)/*.o $(BUILD_COMMON_DIR)/*.o -o $(TARGET2_ELF); \
+		mv $(BUILD_DIR)/main1.o.bak $(BUILD_DIR)/main1.o || true; \
+		$(OBJCOPY) -O binary $(TARGET2_ELF) $(TARGET2); \
+	else \
+		echo "Warning: main.2.s not found, skipping kernel2 build"; \
+	fi
+	
+	@echo "Build from assembly complete"

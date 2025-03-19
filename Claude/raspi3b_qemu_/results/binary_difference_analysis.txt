@@ -3,27 +3,28 @@ This analysis shows patterns in the machine code differences between kernel1.img
 
 Binary comparison:
 The binary files are different.
-Number of byte differences: 89388
+Number of byte differences: 86979
 
 First 10 byte differences (byte position: kernel1 vs kernel2):
-Position 34657: 0x6e vs 0x68
-Position 36301: 0x6e vs 0x68
-Position 36605: 0x6e vs 0x68
-Position 42293: 0x6e vs 0x68
-Position 42397: 0x6e vs 0x68
-Position 42633: 0x6e vs 0x68
-Position 42737: 0x6e vs 0x68
-Position 42921: 0x6e vs 0x68
-Position 48693: 0x6e vs 0x68
-Position 54213: 0x78 vs 0x72
+Position 297: 0xa0 vs 0x9a
+Position 309: 0x86 vs 0x6e
+Position 313: 0x6e vs 0xa0
+Position 2537: 0x90 vs 0x8c
+Position 6777: 0x9a vs 0x96
+Position 6797: 0x96 vs 0x90
+Position 6805: 0x8c vs 0x86
+Position 31249: 0x90 vs 0x8c
+Position 31553: 0x90 vs 0x8c
+Position 46949: 0x8d vs 0x40
 
 Size comparison:
-kernel1.img: 521880 bytes
-kernel2.img: 521880 bytes
+kernel1.img: 139724 bytes
+kernel2.img: 139724 bytes
 Difference: 0 bytes
 
 Instruction pattern differences (sampling):
 Sample of instructions unique to kernel2.img:
-    8760:	00000044 	.word	0x00000044
-    8dcc:	00000044 	.word	0x00000044
-    8efc:	00000044 	.word	0x00000044
+     128:	0001566c 	andeq	r5, r1, ip, ror #12
+     134:	00015648 	andeq	r5, r1, r8, asr #12
+     138:	00015670 	andeq	r5, r1, r0, ror r6
+     9e8:	00015660 	andeq	r5, r1, r0, ror #12

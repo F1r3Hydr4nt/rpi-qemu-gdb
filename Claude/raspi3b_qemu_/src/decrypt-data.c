@@ -516,7 +516,7 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
       goto leave;
     }else{
       printf("\n\nGOOD KEY!\n\n");
-      printf("Leaving early...\n"); goto leave;
+      // printf("Leaving early...\n"); goto leave;
     }
 
 
