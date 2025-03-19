@@ -138,6 +138,8 @@ run2: $(TARGET2)
 	
 runPatched: $(TARGET2)
 	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel build/patchedKernel.img -nographic -serial mon:stdio
+runPatched2: $(TARGET2)
+	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel build/patched_kernel.img -nographic -serial mon:stdio
 
 # Log targets for each version
 log1: $(TARGET1)
@@ -176,13 +178,14 @@ compare: $(TARGET1) $(TARGET2)
 	@echo "Full diff saved to $(RESULTS_DIR)/disasm_diff.txt"
 	@diff $(RESULTS_DIR)/kernel1.dump $(RESULTS_DIR)/kernel2.dump > $(RESULTS_DIR)/disasm_diff.txt || true
 
-
-# Add this new target after the compare target
-# Compare the patched kernel with kernel1
+# Combined comparePatched target with binary verification, GPG verification, and log comparison
 comparePatched: $(TARGET1)
 	@mkdir -p $(RESULTS_DIR)
 	@echo "Comparing sizes of kernel1.img and patchedKernel.img:"
 	@ls -la $(TARGET1) build/patchedKernel.img
+	
+	
+	# Continue with the original comparePatched content
 	@echo "\nComparing objdump of kernel1.img and patchedKernel.img:"
 	@$(CROSS_COMPILE)objdump -d $(TARGET1) > $(RESULTS_DIR)/kernel1.dump
 	@$(CROSS_COMPILE)objdump -d build/patchedKernel.img > $(RESULTS_DIR)/patchedKernel.dump
@@ -205,15 +208,77 @@ comparePatched: $(TARGET1)
 	@echo "Key location (expecting differences around 0x14668):"
 	@hexdump -C $(TARGET1) -s 0x14660 -n 64 > $(RESULTS_DIR)/kernel1_key.hex
 	@hexdump -C build/patchedKernel.img -s 0x14660 -n 64 > $(RESULTS_DIR)/patchedKernel_key.hex
-	@diff $(RESULTS_DIR)/kernel1_key.hex $(RESULTS_DIR)/patchedKernel_key.hex
+	@diff $(RESULTS_DIR)/kernel1_key.hex $(RESULTS_DIR)/patchedKernel_key.hex || true
 	
 	@echo "\nData location (expecting differences around 0x14C84):"
-	@hexdump -C $(TARGET1) -s 0x14C80 -n 64 > $(RESULTS_DIR)/kernel1_data.hex
-	@hexdump -C build/patchedKernel.img -s 0x14C80 -n 64 > $(RESULTS_DIR)/patchedKernel_data.hex
-	@diff $(RESULTS_DIR)/kernel1_data.hex $(RESULTS_DIR)/patchedKernel_data.hex
-
-
-
+	@hexdump -C $(TARGET1) -s 0x14C80 -n 128 > $(RESULTS_DIR)/kernel1_data.hex
+	@hexdump -C build/patchedKernel.img -s 0x14C80 -n 128 > $(RESULTS_DIR)/patchedKernel_data.hex
+	@diff $(RESULTS_DIR)/kernel1_data.hex $(RESULTS_DIR)/patchedKernel_data.hex || true
+	
+	# Log file comparison section
+	@echo "\n====== RUNTIME LOG COMPARISON ======\n"
+	@echo "Checking for log files to compare..."
+	
+	@if [ ! -f "$(RESULTS_DIR)/kernel1.in_asm.log" ] || [ ! -f "$(RESULTS_DIR)/patchedKernel.in_asm.log" ]; then \
+		echo "Note: Log files not found. Run these commands first to generate logs:"; \
+		echo "  make log1"; \
+		echo "  make logPatched"; \
+		echo "Then run comparePatched again for full analysis."; \
+	else \
+		echo "✓ Log files found. Analyzing runtime behavior differences..."; \
+		echo "\nExtracting critical sections from logs..."; \
+		\
+		grep -A 50 -B 50 "decrypt_memory" $(RESULTS_DIR)/kernel1.in_asm.log > $(RESULTS_DIR)/kernel1.decrypt.log || true; \
+		grep -A 50 -B 50 "decrypt_memory" $(RESULTS_DIR)/patchedKernel.in_asm.log > $(RESULTS_DIR)/patchedKernel.decrypt.log || true; \
+		\
+		grep "memory access" $(RESULTS_DIR)/kernel1.in_asm.log > $(RESULTS_DIR)/kernel1.mem_access.log || true; \
+		grep "memory access" $(RESULTS_DIR)/patchedKernel.in_asm.log > $(RESULTS_DIR)/patchedKernel.mem_access.log || true; \
+		\
+		grep -E "error|warning|fail" $(RESULTS_DIR)/kernel1.in_asm.log > $(RESULTS_DIR)/kernel1.errors.log || true; \
+		grep -E "error|warning|fail" $(RESULTS_DIR)/patchedKernel.in_asm.log > $(RESULTS_DIR)/patchedKernel.errors.log || true; \
+		\
+		echo "\nComparing decrypt function execution:"; \
+		diff $(RESULTS_DIR)/kernel1.decrypt.log $(RESULTS_DIR)/patchedKernel.decrypt.log > $(RESULTS_DIR)/decrypt_diff.log || true; \
+		if [ -s "$(RESULTS_DIR)/decrypt_diff.log" ]; then \
+			echo "  Found differences in decrypt execution (see $(RESULTS_DIR)/decrypt_diff.log)"; \
+			echo "  First 10 differences:"; \
+			head -n 10 $(RESULTS_DIR)/decrypt_diff.log; \
+		else \
+			echo "  No differences found in decrypt execution."; \
+		fi; \
+		\
+		echo "\nComparing memory access patterns:"; \
+		diff $(RESULTS_DIR)/kernel1.mem_access.log $(RESULTS_DIR)/patchedKernel.mem_access.log > $(RESULTS_DIR)/mem_access_diff.log || true; \
+		if [ -s "$(RESULTS_DIR)/mem_access_diff.log" ]; then \
+			echo "  Found differences in memory access patterns (see $(RESULTS_DIR)/mem_access_diff.log)"; \
+			echo "  Number of differences: `wc -l < $(RESULTS_DIR)/mem_access_diff.log`"; \
+		else \
+			echo "  No differences found in memory access patterns."; \
+		fi; \
+		\
+		echo "\nComparing error/warning messages:"; \
+		diff $(RESULTS_DIR)/kernel1.errors.log $(RESULTS_DIR)/patchedKernel.errors.log > $(RESULTS_DIR)/errors_diff.log || true; \
+		if [ -s "$(RESULTS_DIR)/errors_diff.log" ]; then \
+			echo "  Found differences in error/warning messages (see $(RESULTS_DIR)/errors_diff.log)"; \
+			cat $(RESULTS_DIR)/errors_diff.log; \
+		else \
+			echo "  No differences found in error/warning messages."; \
+		fi; \
+		\
+		echo "\nCreating full log diff summary:"; \
+		diff --brief $(RESULTS_DIR)/kernel1.in_asm.log $(RESULTS_DIR)/patchedKernel.in_asm.log > /dev/null; \
+		if [ $$? -eq 0 ]; then \
+			echo "  ✓ Log files are identical - execution behavior unchanged"; \
+		else \
+			echo "  ✗ Log files differ - execution behavior changed"; \
+			diff $(RESULTS_DIR)/kernel1.in_asm.log $(RESULTS_DIR)/patchedKernel.in_asm.log > $(RESULTS_DIR)/full_log_diff.log || true; \
+			echo "  Full log diff saved to $(RESULTS_DIR)/full_log_diff.log"; \
+			echo "  Number of differences in full log: `wc -l < $(RESULTS_DIR)/full_log_diff.log`"; \
+		fi; \
+	fi
+	
+	@echo "\n====== COMPARISON COMPLETE ======\n"
+	@echo "All results saved in $(RESULTS_DIR)/"
 # Add this new target
 # Compare log files between kernel1 and patchedKernel
 compareLog: 

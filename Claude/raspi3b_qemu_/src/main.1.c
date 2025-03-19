@@ -29,14 +29,14 @@ size_t strlen(const char *str)
     for (s = str; *s; ++s);
     return (s - str);
 }
-void print_memory_map(void)
-{
-    printf("Memory Map:\n");
-    printf(" text: %p - %p\n", __text_start, __text_end);
-    printf(" rodata: %p - %p\n", __rodata_start, __rodata_end);
-    printf(" data: %p - %p\n", __data_start, __data_end);
-    printf(" bss: %p - %p\n", __bss_start, __bss_end);
-}
+// void print_memory_map(void)
+// {
+//     printf("Memory Map:\n");
+//     printf(" text: %p - %p\n", __text_start, __text_end);
+//     printf(" rodata: %p - %p\n", __rodata_start, __rodata_end);
+//     printf(" data: %p - %p\n", __data_start, __data_end);
+//     printf(" bss: %p - %p\n", __bss_start, __bss_end);
+// }
 
 void uart_putc(char c)
 {

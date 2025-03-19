@@ -1,0 +1,293 @@
+2395,2406d2394
+< 0x00010644:  e2423041      sub	r3, r2, #65	; 0x41
+< 0x00010648:  e3530005      cmp	r3, #5	; 0x5
+< 0x0001064c:  8affffdc      bhi	0x105c4
+< 
+< ----------------
+< IN: hex_to_bytes
+< 0x000105c4:  e2423061      sub	r3, r2, #97	; 0x61
+< 0x000105c8:  e3530005      cmp	r3, #5	; 0x5
+< 0x000105cc:  92423057      subls	r3, r2, #87	; 0x57
+< 0x000105d0:  83a03000      movhi	r3, #0	; 0x0
+< 0x000105d4:  97a33053      sbfxls	r3, r3, #0, #4
+< 0x000105d8:  91a03203      lslls	r3, r3, #4
+2416a2405,2411
+> 0x00010618:  e5e13001      strb	r3, [r1, #1]!
+> 0x0001061c:  e2800002      add	r0, r0, #2	; 0x2
+> 0x00010620:  e150000c      cmp	r0, ip
+> 0x00010624:  049df004      popeq	{pc}		; (ldreq pc, [sp], #4)
+> 
+> ----------------
+> IN: hex_to_bytes
+2434a2430,2441
+> 0x00010644:  e2423041      sub	r3, r2, #65	; 0x41
+> 0x00010648:  e3530005      cmp	r3, #5	; 0x5
+> 0x0001064c:  8affffdc      bhi	0x105c4
+> 
+> ----------------
+> IN: hex_to_bytes
+> 0x000105c4:  e2423061      sub	r3, r2, #97	; 0x61
+> 0x000105c8:  e3530005      cmp	r3, #5	; 0x5
+> 0x000105cc:  92423057      subls	r3, r2, #87	; 0x57
+> 0x000105d0:  83a03000      movhi	r3, #0	; 0x0
+> 0x000105d4:  97a33053      sbfxls	r3, r3, #0, #4
+> 0x000105d8:  91a03203      lslls	r3, r3, #4
+2444,2450d2450
+< IN: hex_to_bytes
+< 0x00010618:  e5e13001      strb	r3, [r1, #1]!
+< 0x0001061c:  e2800002      add	r0, r0, #2	; 0x2
+< 0x00010620:  e150000c      cmp	r0, ip
+< 0x00010624:  049df004      popeq	{pc}		; (ldreq pc, [sp], #4)
+< 
+< ----------------
+6115,6213c6115
+< 0x0000d584:  ea000036      b	0xd664
+< 
+< ----------------
+< IN: parse.constprop.0
+< 0x0000d43c:  ea0001aa      b	0xdaec
+< 
+< ----------------
+< IN: parse.constprop.0
+< 0x0000daec:  e22a2001      eor	r2, sl, #1	; 0x1
+< 0x0000daf0:  e3550005      cmp	r5, #5	; 0x5
+< 0x0000daf4:  83a02000      movhi	r2, #0	; 0x0
+< 0x0000daf8:  92022001      andls	r2, r2, #1	; 0x1
+< 0x0000dafc:  e3520000      cmp	r2, #0	; 0x0
+< 0x0000db00:  1a00031a      bne	0xe770
+< 
+< ----------------
+< IN: parse.constprop.0
+< 0x0000db04:  e5942010      ldr	r2, [r4, #16]
+< 0x0000db08:  e3520000      cmp	r2, #0	; 0x0
+< 0x0000db0c:  1a000102      bne	0xdf1c
+< 
+< ----------------
+< IN: parse.constprop.0
+< 0x0000db10:  e5940018      ldr	r0, [r4, #24]
+< 0x0000db14:  e594201c      ldr	r2, [r4, #28]
+< 0x0000db18:  e1500002      cmp	r0, r2
+< 0x0000db1c:  2a0000fe      bcs	0xdf1c
+< 
+< ----------------
+< IN: parse.constprop.0
+< 0x0000df1c:  e58d3010      str	r3, [sp, #16]
+< 0x0000df20:  e1a00004      mov	r0, r4
+< 0x0000df24:  ebffec81      bl	0x9130
+< 
+< ----------------
+< IN: parse.constprop.0
+< 0x0000df28:  e5942010      ldr	r2, [r4, #16]
+< 0x0000df2c:  e3550000      cmp	r5, #0	; 0x0
+< 0x0000df30:  e59d3010      ldr	r3, [sp, #16]
+< 0x0000df34:  12455001      subne	r5, r5, #1	; 0x1
+< 0x0000df38:  e3520000      cmp	r2, #0	; 0x0
+< 0x0000df3c:  e6ef8070      uxtb	r8, r0
+< 0x0000df40:  0a000109      beq	0xe36c
+< 
+< ----------------
+< IN: parse.constprop.0
+< 0x0000e36c:  e594201c      ldr	r2, [r4, #28]
+< 0x0000e370:  eafffdf4      b	0xdb48
+< 
+< ----------------
+< IN: parse.constprop.0
+< 0x0000db48:  e5941018      ldr	r1, [r4, #24]
+< 0x0000db4c:  e1510002      cmp	r1, r2
+< 0x0000db50:  2a0000fb      bcs	0xdf44
+< 
+< ----------------
+< IN: parse.constprop.0
+< 0x0000db54:  e5942008      ldr	r2, [r4, #8]
+< 0x0000db58:  e5940020      ldr	r0, [r4, #32]
+< 0x0000db5c:  e2822001      add	r2, r2, #1	; 0x1
+< 0x0000db60:  e5842008      str	r2, [r4, #8]
+< 0x0000db64:  e2812001      add	r2, r1, #1	; 0x1
+< 0x0000db68:  e5842018      str	r2, [r4, #24]
+< 0x0000db6c:  e7d07001      ldrb	r7, [r0, r1]
+< 0x0000db70:  e58d3010      str	r3, [sp, #16]
+< 0x0000db74:  e3550000      cmp	r5, #0	; 0x0
+< 0x0000db78:  0a00011a      beq	0xdfe8
+< 
+< ----------------
+< IN: parse.constprop.0
+< 0x0000dfe8:  e287001b      add	r0, r7, #27	; 0x1b
+< 0x0000dfec:  ebfffb90      bl	0xce34
+< 
+< ----------------
+< IN: parse.constprop.0
+< 0x0000dff0:  e59d300c      ldr	r3, [sp, #12]
+< 0x0000dff4:  e1a0b000      mov	fp, r0
+< 0x0000dff8:  e5830004      str	r0, [r3, #4]
+< 0x0000dffc:  e59d3010      ldr	r3, [sp, #16]
+< 
+< ----------------
+< IN: parse.constprop.0
+< 0x0000e000:  e580800c      str	r8, [r0, #12]
+< 0x0000e004:  e5c03008      strb	r3, [r0, #8]
+< 0x0000e008:  e5c0a009      strb	sl, [r0, #9]
+< 0x0000e00c:  e5807014      str	r7, [r0, #20]
+< 0x0000e010:  e5942010      ldr	r2, [r4, #16]
+< 0x0000e014:  e3570000      cmp	r7, #0	; 0x0
+< 0x0000e018:  0a0000d8      beq	0xe380
+< 
+< ----------------
+< IN: parse.constprop.0
+< 0x0000e380:  e3a05000      mov	r5, #0	; 0x0
+< 0x0000e384:  eafffeaf      b	0xde48
+< 
+< ----------------
+< IN: parse.constprop.0
+< 0x0000de48:  e3520000      cmp	r2, #0	; 0x0
+< 0x0000de4c:  1a00004f      bne	0xdf90
+---
+> 0x0000d448:  ea000072      b	0xd618
+6217,6220c6119,6121
+< 0x0000de50:  e5941018      ldr	r1, [r4, #24]
+< 0x0000de54:  e594301c      ldr	r3, [r4, #28]
+< 0x0000de58:  e1510003      cmp	r1, r3
+< 0x0000de5c:  2a00004b      bcs	0xdf90
+---
+> 0x0000d618:  e3a00000      mov	r0, #0	; 0x0
+> 0x0000d61c:  e1a01006      mov	r1, r6
+> 0x0000d620:  ebfff4d0      bl	0xa968
+6224,6233c6125,6128
+< 0x0000de60:  e5942008      ldr	r2, [r4, #8]
+< 0x0000de64:  e5940020      ldr	r0, [r4, #32]
+< 0x0000de68:  e2822001      add	r2, r2, #1	; 0x1
+< 0x0000de6c:  e5842008      str	r2, [r4, #8]
+< 0x0000de70:  e2812001      add	r2, r1, #1	; 0x1
+< 0x0000de74:  e5842018      str	r2, [r4, #24]
+< 0x0000de78:  e7d01001      ldrb	r1, [r0, r1]
+< 0x0000de7c:  e1a08c01      lsl	r8, r1, #24
+< 0x0000de80:  e1530002      cmp	r3, r2
+< 0x0000de84:  9a000048      bls	0xdfac
+---
+> 0x0000d624:  e59f0b94      ldr	r0, [pc, #2964]	; 0xe1c0
+> 0x0000d628:  e1a01009      mov	r1, r9
+> 0x0000d62c:  e08f0000      add	r0, pc, r0
+> 0x0000d630:  eb000616      bl	0xee90
+6237,6246c6132,6134
+< 0x0000de88:  e5941008      ldr	r1, [r4, #8]
+< 0x0000de8c:  e5940020      ldr	r0, [r4, #32]
+< 0x0000de90:  e2811001      add	r1, r1, #1	; 0x1
+< 0x0000de94:  e5841008      str	r1, [r4, #8]
+< 0x0000de98:  e2821001      add	r1, r2, #1	; 0x1
+< 0x0000de9c:  e5841018      str	r1, [r4, #24]
+< 0x0000dea0:  e7d07002      ldrb	r7, [r0, r2]
+< 0x0000dea4:  e1887807      orr	r7, r8, r7, lsl #16
+< 0x0000dea8:  e1530001      cmp	r3, r1
+< 0x0000deac:  9a00002a      bls	0xdf5c
+---
+> 0x0000d634:  e1a01009      mov	r1, r9
+> 0x0000d638:  e28d002c      add	r0, sp, #44	; 0x2c
+> 0x0000d63c:  ebfff2ad      bl	0xa0f8
+6250,6259c6138,6139
+< 0x0000deb0:  e5942008      ldr	r2, [r4, #8]
+< 0x0000deb4:  e5940020      ldr	r0, [r4, #32]
+< 0x0000deb8:  e2822001      add	r2, r2, #1	; 0x1
+< 0x0000debc:  e5842008      str	r2, [r4, #8]
+< 0x0000dec0:  e2812001      add	r2, r1, #1	; 0x1
+< 0x0000dec4:  e5842018      str	r2, [r4, #24]
+< 0x0000dec8:  e7d01001      ldrb	r1, [r0, r1]
+< 0x0000decc:  e1877401      orr	r7, r7, r1, lsl #8
+< 0x0000ded0:  e1520003      cmp	r2, r3
+< 0x0000ded4:  2a000029      bcs	0xdf80
+---
+> 0x0000d640:  e3a00002      mov	r0, #2	; 0x2
+> 0x0000d644:  eaffff8b      b	0xd478
+6263,6297c6143,6144
+< 0x0000ded8:  e5943008      ldr	r3, [r4, #8]
+< 0x0000dedc:  e5941020      ldr	r1, [r4, #32]
+< 0x0000dee0:  e2833001      add	r3, r3, #1	; 0x1
+< 0x0000dee4:  e5843008      str	r3, [r4, #8]
+< 0x0000dee8:  e2823001      add	r3, r2, #1	; 0x1
+< 0x0000deec:  e5843018      str	r3, [r4, #24]
+< 0x0000def0:  e7d13002      ldrb	r3, [r1, r2]
+< 0x0000def4:  e1833007      orr	r3, r3, r7
+< 0x0000def8:  e3550000      cmp	r5, #0	; 0x0
+< 0x0000defc:  e58b3010      str	r3, [fp, #16]
+< 0x0000df00:  12455004      subne	r5, r5, #4	; 0x4
+< 0x0000df04:  e58b5000      str	r5, [fp]
+< 0x0000df08:  e1a01006      mov	r1, r6
+< 0x0000df0c:  e58b4004      str	r4, [fp, #4]
+< 0x0000df10:  e3a00000      mov	r0, #0	; 0x0
+< 0x0000df14:  ebfff293      bl	0xa968
+< 
+< ----------------
+< IN: parse.constprop.0
+< 0x0000df18:  eafffec8      b	0xda40
+< 
+< ----------------
+< IN: parse.constprop.0
+< 0x0000d2ec:  e59f1ea8      ldr	r1, [pc, #3752]	; 0xe19c
+< 0x0000d2f0:  e1a02000      mov	r2, r0
+< 0x0000d2f4:  e59f0ea4      ldr	r0, [pc, #3748]	; 0xe1a0
+< 0x0000d2f8:  e08f1001      add	r1, pc, r1
+< 0x0000d2fc:  e08f0000      add	r0, pc, r0
+< 0x0000d300:  eb0006e2      bl	0xee90
+< 
+< ----------------
+< IN: parse.constprop.0
+< 0x0000d304:  e3a0000e      mov	r0, #14	; 0xe
+< 0x0000d308:  e28dd09c      add	sp, sp, #156	; 0x9c
+< 0x0000d30c:  e8bd8ff0      pop	{r4, r5, r6, r7, r8, r9, sl, fp, pc}
+---
+> 0x0000d478:  e28dd09c      add	sp, sp, #156	; 0x9c
+> 0x0000d47c:  e8bd8ff0      pop	{r4, r5, r6, r7, r8, r9, sl, fp, pc}
+6313,6320d6159
+< IN: free_packet.localalias
+< 0x0000a984:  e5d01000      ldrb	r1, [r0]
+< 0x0000a988:  e59f0050      ldr	r0, [pc, #80]	; 0xa9e0
+< 0x0000a98c:  e8bd4010      pop	{r4, lr}
+< 0x0000a990:  e08f0000      add	r0, pc, r0
+< 0x0000a994:  ea00113d      b	0xee90
+< 
+< ----------------
+6377a6217,6226
+> 0x0000cde4:  e593c000      ldr	ip, [r3]
+> 0x0000cde8:  e510200c      ldr	r2, [r0, #-12]
+> 0x0000cdec:  e5931008      ldr	r1, [r3, #8]
+> 0x0000cdf0:  e082300c      add	r3, r2, ip
+> 0x0000cdf4:  e500300c      str	r3, [r0, #-12]
+> 0x0000cdf8:  e5001004      str	r1, [r0, #-4]
+> 0x0000cdfc:  eaffffe2      b	0xcd8c
+> 
+> ----------------
+> IN: free
+6398,6404d6246
+< IN: free
+< 0x0000cdbc:  e5921000      ldr	r1, [r2]
+< 0x0000cdc0:  e082c001      add	ip, r2, r1
+< 0x0000cdc4:  e15e000c      cmp	lr, ip
+< 0x0000cdc8:  1afffff4      bne	0xcda0
+< 
+< ----------------
+6416a6259,6265
+> IN: free
+> 0x0000cdbc:  e5921000      ldr	r1, [r2]
+> 0x0000cdc0:  e082c001      add	ip, r2, r1
+> 0x0000cdc4:  e15e000c      cmp	lr, ip
+> 0x0000cdc8:  1afffff4      bne	0xcda0
+> 
+> ----------------
+6507a6357,6364
+> IN: free_packet.localalias
+> 0x0000a984:  e5d01000      ldrb	r1, [r0]
+> 0x0000a988:  e59f0050      ldr	r0, [pc, #80]	; 0xa9e0
+> 0x0000a98c:  e8bd4010      pop	{r4, lr}
+> 0x0000a990:  e08f0000      add	r0, pc, r0
+> 0x0000a994:  ea00113d      b	0xee90
+> 
+> ----------------
+6520a6378,6387
+> 
+> ----------------
+> IN: parse.constprop.0
+> 0x0000d358:  e358003f      cmp	r8, #63	; 0x3f
+> 0x0000d35c:  03750001      cmneq	r5, #1	; 0x1
+> 0x0000d360:  0a00003e      beq	0xd460
+> 
+> ----------------
+> IN: parse.constprop.0
+> 0x0000d430:  ea000078      b	0xd618
