@@ -3,11 +3,11 @@ This analysis looks for references to potentially security-sensitive functions
 
 Undefined symbols (external dependencies):
 ⚠️ NOTICE: Possible reference to weak cryptographic algorithm: SHA1
-build/kernel1.img:0001298c T SHA1
-build/kernel1.img:00012880 T SHA1Final
-build/kernel1.img:00012774 T SHA1Init
-build/kernel1.img:00011490 T SHA1Transform
-build/kernel1.img:000127c0 T SHA1Update
+build/kernel1.img:000126f4 T SHA1
+build/kernel1.img:000125e8 T SHA1Final
+build/kernel1.img:000124dc T SHA1Init
+build/kernel1.img:000111f8 T SHA1Transform
+build/kernel1.img:00012528 T SHA1Update
 
 Scanning for crypto-related strings:
 NO_PUBKEY
@@ -49,7 +49,6 @@ decrypt_memory
 Session key: %s
 END decrypt_memory
 decrypt_message filename:%s
-cipher_hd is allocated
 decrypt_data
 decrypt_data %d
 problem handling encrypted packet

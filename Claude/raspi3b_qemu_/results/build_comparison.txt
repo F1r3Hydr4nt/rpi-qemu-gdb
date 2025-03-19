@@ -1,10 +1,10 @@
 === Binary Comparison Summary ===
-kernel1.img size: 525188 bytes
-kernel2.img size: 525188 bytes
+kernel1.img size: 521880 bytes
+kernel2.img size: 521880 bytes
 Size difference: 0 bytes
 
-kernel1.img function count: 143
-kernel2.img function count: 143
+kernel1.img function count: 141
+kernel2.img function count: 141
 Function count difference: 0
 
 === Binary Comparison ===
@@ -22,12 +22,12 @@ Symbols removed from kernel1.img: 2
 Most significant section size changes:
 
 === QEMU Runtime Analysis ===
-QEMU runtime risk score: 41
+QEMU runtime risk score: 173
 ⚠️ HIGH RISK in runtime behavior
 
 === Security Assessment Summary ===
 Overall security risk assessment:
-⚠️ HIGH RISK: Score 66/100
+⚠️ HIGH RISK: Score 198/100
 Significant indicators of security-relevant changes
 Manual inspection strongly recommended
 

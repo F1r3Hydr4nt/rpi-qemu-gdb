@@ -338,6 +338,45 @@ function create_in_asm_diff {
             echo "⚠️ WARNING: Execution path differences detected ($TOTAL_PATH_DIFF total paths) in binaries that should be logically identical"
         fi
         
+        # Analyze memory address pattern changes
+        echo ""
+        echo "Memory address pattern analysis:"
+
+        # Check for memory address constant differences in disassembly
+        CONST_ADDR_CHANGES=0
+        if [ -f "results/kernel2_vs_kernel1.dump.diff" ]; then
+            # Count lines with .word pattern changes 
+            CONST_ADDR_CHANGES=$(grep -c "\.word" results/kernel2_vs_kernel1.dump.diff)
+            if [ $CONST_ADDR_CHANGES -gt 0 ]; then
+                echo "⚠️ WARNING: $CONST_ADDR_CHANGES memory address constants differ between binaries"
+                echo "Sample of address constant changes:"
+                grep -A1 -B1 "\.word" results/kernel2_vs_kernel1.dump.diff | head -6
+                
+                # Pattern detection for consistent address offsets
+                # Extract the constant values
+                grep "\.word" results/kernel2_vs_kernel1.dump.diff | 
+                grep -o "0x[0-9a-fA-F]\+" > results/address_constants.txt
+                
+                # Use awk to check if constants follow a pattern (e.g., all shifted by same amount)
+                if [ -f "results/address_constants.txt" ] && [ $(wc -l < results/address_constants.txt) -gt 4 ]; then
+                    echo "Analyzing address constant patterns..."
+                    
+                    # If more than 50% of changes are 0x44 to 0x48 (or vice versa)
+                    PATTERN_44_48=$(grep -c "0x00000044\|0x00000048" results/address_constants.txt)
+                    if [ $PATTERN_44_48 -gt $((CONST_ADDR_CHANGES / 2)) ]; then
+                        echo "⚠️ HIGH RISK: Consistent pattern of memory address changes (0x44 <-> 0x48)"
+                        echo "This suggests memory layout changes that could affect security boundaries"
+                        QEMU_RUN_RISK=$((QEMU_RUN_RISK + 20))
+                    fi
+                fi
+                
+                # Any address constant changes are high risk for security
+                QEMU_RUN_RISK=$((QEMU_RUN_RISK + (CONST_ADDR_CHANGES * 2)))
+            else 
+                echo "✓ No memory address constant differences detected"
+            fi
+        fi
+        
         # Analyze frequency of instruction types
         echo ""
         echo "Instruction type frequency comparison:"
@@ -482,6 +521,27 @@ function create_in_asm_diff {
             QEMU_RUN_RISK=$((QEMU_RUN_RISK + (MEM_DIFF_TOTAL / 10)))
         fi
         
+        # Memory layout changes detected from disassembly analysis
+        if [ $CONST_ADDR_CHANGES -gt 0 ]; then
+            echo ""
+            echo "=== Memory Layout Change Analysis ==="
+            echo "Memory layout changes detected: $CONST_ADDR_CHANGES constants"
+            echo ""
+            echo "⚠️ SECURITY IMPLICATIONS:"
+            echo "1. Changes in memory offsets can affect buffer boundaries and sizes"
+            echo "2. Different memory layout may introduce buffer overflow vulnerabilities"
+            echo "3. Potential format string vulnerabilities if string handling uses different offsets"
+            echo "4. Possible ASLR bypass if memory layout changes are predictable"
+            echo ""
+            echo "RECOMMENDATION: Manual review required to ensure memory safety"
+            
+            # Serious security risk due to memory layout changes
+            if [ $QEMU_RUN_RISK -lt 15 ]; then
+                QEMU_RUN_RISK=15
+                echo "Memory layout changes have resulted in elevated risk assessment"
+            fi
+        fi
+        
         # For binaries with identical logic, any differences should raise minimum risk level
         if [ $QEMU_RUN_RISK -eq 0 ] && ( [ $INSTR_DIFF -ne 0 ] || [ $NOVEL_PATHS -gt 0 ] || [ $REMOVED_PATHS -gt 0 ] ); then
             QEMU_RUN_RISK=5
@@ -490,7 +550,7 @@ function create_in_asm_diff {
         
         # Compiler misconfiguration risk - if there are significant differences
         # in builds that should be identical, assign a minimum risk
-        if [ $INSTR_DIFF -ne 0 ] || [ $NOVEL_PATHS -gt 0 ] || [ $REMOVED_PATHS -gt 0 ]; then
+        if [ $INSTR_DIFF -ne 0 ] || [ $NOVEL_PATHS -gt 0 ] || [ $REMOVED_PATHS -gt 0 ] || [ $CONST_ADDR_CHANGES -gt 0 ]; then
             if [ $QEMU_RUN_RISK -lt 10 ]; then
                 QEMU_RUN_RISK=10
                 echo "⚠️ WARNING: Potential compiler misconfiguration detected - execution differences in binaries that should be logically identical"
@@ -517,6 +577,11 @@ function create_in_asm_diff {
             echo "2. Different compiler flags affecting code generation"
             echo "3. Different compiler versions or toolchains"
             echo "4. Potential security implications from behavior differences"
+            
+            if [ $CONST_ADDR_CHANGES -gt 0 ]; then
+                echo "5. CRITICAL: Memory layout changes that could affect security boundaries"
+            fi
+            
             echo ""
             echo "Risk level: $([ $QEMU_RUN_RISK -gt 15 ] && echo "HIGH" || ([ $QEMU_RUN_RISK -gt 5 ] && echo "MEDIUM" || echo "LOW"))"
         fi
@@ -533,15 +598,25 @@ function create_in_asm_diff {
             echo "Instructions executed: $INSTR_COUNT1 vs $INSTR_COUNT2 (diff: $INSTR_DIFF)"
             echo "Novel execution paths in kernel2.img: $NOVEL_PATHS"
             echo "Removed execution paths from kernel1.img: $REMOVED_PATHS"
+            
+            if [ $CONST_ADDR_CHANGES -gt 0 ]; then
+                echo "⚠️ CRITICAL: $CONST_ADDR_CHANGES memory address constants changed between binaries"
+                echo "   Memory layout changes significantly increase security risk"
+            fi
+            
             if [ $INSTR_DIFF -ne 0 ] || [ $NOVEL_PATHS -gt 0 ] || [ $REMOVED_PATHS -gt 0 ]; then
                 echo "⚠️ WARNING: Execution differences detected in binaries that should be logically identical"
                 echo "This may indicate compiler misconfigurations or optimization differences with security implications"
             fi
+            
             echo "QEMU execution risk score: $QEMU_RUN_RISK (contributes directly to overall security risk)"
             
             # Include more details on what factors contributed to the QEMU risk score
             if [ $QEMU_RUN_RISK -gt 15 ]; then
                 echo "⚠️ HIGH QEMU RISK: Runtime behavior shows potentially dangerous changes"
+                if [ $CONST_ADDR_CHANGES -gt 0 ]; then
+                    echo "   - Memory layout changes with significant security implications"
+                fi
             elif [ $QEMU_RUN_RISK -gt 5 ]; then
                 echo "⚠️ MEDIUM QEMU RISK: Runtime behavior shows notable changes requiring investigation"
             fi

@@ -3,17 +3,28 @@ This analysis compares instruction execution traces from QEMU logs
 between kernel1.img and kernel2.img runs
 
 Instruction count comparison:
-kernel1.img: 6568 instructions executed
-kernel2.img: 6438 instructions executed
-Difference: -130 instructions
+kernel1.img: 5715 instructions executed
+kernel2.img: 5691 instructions executed
+Difference: -24 instructions
 ⚠️ WARNING: Instruction count difference detected in binaries that should be logically identical
 
 Execution path analysis:
-Unique addresses executed in kernel1.img: 4043
-Unique addresses executed in kernel2.img: 3952
-Novel execution paths in kernel2.img: 26 addresses
-Removed execution paths from kernel1.img: 117 addresses
-⚠️ WARNING: Execution path differences detected (143 total paths) in binaries that should be logically identical
+Unique addresses executed in kernel1.img: 3550
+Unique addresses executed in kernel2.img: 3541
+Novel execution paths in kernel2.img: 9 addresses
+Removed execution paths from kernel1.img: 18 addresses
+⚠️ WARNING: Execution path differences detected (27 total paths) in binaries that should be logically identical
+
+Memory address pattern analysis:
+⚠️ WARNING: 83 memory address constants differ between binaries
+Sample of address constant changes:
+     8754:	eaffffe8 	b	86fc <do_open.constprop.0+0x144>
+     8758:	0000d83c 	.word	0x0000d83c
+     875c:	0003309c 	.word	0x0003309c
+-    8760:	00000044 	.word	0x00000044
++    8760:	00000048 	.word	0x00000048
+     8764:	0000001c 	.word	0x0000001c
+Analyzing address constant patterns...
 
 Instruction type frequency comparison:
 Top 10 instruction types in kernel1.img:
@@ -27,8 +38,19 @@ Difference: 0
 
 Memory manipulation instruction changes:
 
-QEMU execution trace risk score: 41
-Updated overall security risk score: 41
+=== Memory Layout Change Analysis ===
+Memory layout changes detected: 83 constants
+
+⚠️ SECURITY IMPLICATIONS:
+1. Changes in memory offsets can affect buffer boundaries and sizes
+2. Different memory layout may introduce buffer overflow vulnerabilities
+3. Potential format string vulnerabilities if string handling uses different offsets
+4. Possible ASLR bypass if memory layout changes are predictable
+
+RECOMMENDATION: Manual review required to ensure memory safety
+
+QEMU execution trace risk score: 173
+Updated overall security risk score: 173
 
 === Compiler Configuration Risk Assessment ===
 For binaries that should have identical logic, runtime differences may indicate:
@@ -36,5 +58,6 @@ For binaries that should have identical logic, runtime differences may indicate:
 2. Different compiler flags affecting code generation
 3. Different compiler versions or toolchains
 4. Potential security implications from behavior differences
+5. CRITICAL: Memory layout changes that could affect security boundaries
 
 Risk level: HIGH
