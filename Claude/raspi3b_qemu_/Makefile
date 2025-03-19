@@ -135,6 +135,9 @@ run1: $(TARGET1)
 
 run2: $(TARGET2)
 	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel $(TARGET2) -nographic -serial mon:stdio
+	
+runPatched: $(TARGET2)
+	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel build/patchedKernel.img -nographic -serial mon:stdio
 
 # Log targets for each version
 log1: $(TARGET1)

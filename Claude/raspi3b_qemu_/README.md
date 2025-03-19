@@ -51,3 +51,29 @@ Conclusion: These changes appear benign and related to the legitimate handling o
 
 Ok now we skip key derivation
 And decrypt only the random bytes then exit
+
+
+
+
+python3 kernel-patcher.py build/kernel1.img build/patchedKernel.img 7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c.gpg passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword.gpg --key-offset 0x00014668 --data-offset 0x00014c84
+Unknown option: passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword.gpg
+Input binary size: 179756 bytes
+Read 87282 bytes from 7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c.gpg
+Extracted 87282 bytes of data from 7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c.gpg
+Verified original key at offset 0x14668: aa26542afd6f970982eedb0ca8477fd7
+Will patch key at offset 0x14668 with: 427c028e28eeb15464c376d7dcca6ca2
+Verified GPG marker at data offset 0x14C84
+Will patch 87282 bytes of data at offset 0x14C84
+Patched at 0x14668: 61613236353432616664 -> 34323763303238653238...
+Patched at 0x14C84: 8c0d040303020a0b0c0d -> 8c0d0403030243b7a256...
+Patched binary saved to build/patchedKernel.img
+Applied 2 patches
+
+
+
+
+
+
+
+
+python kernel-patcher.py build/kernel1.img build/patchedKernel.img 7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c.gpg passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword.gpg 0x14668 0x14C84 && sha256sum build/patchedKernel.img > build/patchedKernel.img.sha256sum

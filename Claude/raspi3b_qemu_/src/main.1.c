@@ -84,7 +84,7 @@ void main()
     // Set up and verify session key
     // If we want to skip KDF comment out above block and leave this in
     const char *key = "aa26542afd6f970982eedb0ca8477fd7"; // "427c028e28eeb15464c376d7dcca6ca2"; // Test 2. Good/Bad Derived Key???
-    size_t key_len = strlen(key);
+    size_t key_len = 32;// strlen(key);
     ctrl->session_key = malloc(key_len + 1);
     if (!ctrl->session_key) {
         printf("Failed to allocate session_key\n");
