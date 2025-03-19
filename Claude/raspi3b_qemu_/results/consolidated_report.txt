@@ -1,0 +1,52 @@
+=== Consolidated Analysis Report ===
+kernel1.img vs. kernel2.img Comparison
+Generated on: Wed 19 Mar 2025 00:10:00 GMT
+
+== Summary ==
+Binary size: 525188 vs 525188 bytes (diff: 0 bytes)
+Functions: 143 vs 143 (diff: 0)
+
+== Binary Differences ==
+The binary files are different.
+Number of byte differences: 89389
+
+== QEMU Runtime Risk Assessment ==
+QEMU runtime risk score: 41/100
+⚠️ HIGH RISK: Runtime analysis indicates potentially dangerous behavior changes
+Key factors that contributed to this risk assessment:
+⚠️ WARNING: Instruction count difference detected in binaries that should be logically identical
+⚠️ WARNING: Execution path differences detected (143 total paths) in binaries that should be logically identical
+
+== Security Assessment ==
+Key security indicators:
+- ✓ Binary size difference is minimal (0 bytes)
+- ⚠️ NOTICE: Change in number of crypto-related strings: -5
+  Crypto strings in kernel2.img not in kernel1.img:
+- ⚠️ WARNING: Potential backdoor-related strings found: 3
+GPG_ERR_LDAP_ADMINLIMIT
+GPG_ERR_EREMOTE
+GPG_ERR_EREMOTEIO
+- ✓ No URL or IP address patterns detected
+- Entropy comparison: kernel1.img: , kernel2.img: 
+...
+Overall security risk assessment:
+⚠️ HIGH RISK: Score 66/100
+Significant indicators of security-relevant changes
+Manual inspection strongly recommended
+
+Disclaimer: This is an automated assessment and cannot detect all
+
+== Symbol Changes ==
+Symbols present in kernel2.img but not in kernel1.img:
+
+Symbols present in kernel1.img but not in kernel2.img:
+
+Symbols with different sizes or addresses:
+...
+
+For detailed information, refer to the following reports:
+- results/build_comparison.txt - Overall build differences
+- results/binary_difference_analysis.txt - Binary-level differences
+- results/security_assessment.txt - Security implications
+- results/qemu_execution_analysis.txt - QEMU runtime behavior analysis
+- results/symbol_diff.txt - Symbol table differences

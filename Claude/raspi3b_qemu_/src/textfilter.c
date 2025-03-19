@@ -17,21 +17,21 @@
  * along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "config.h"
+#include "common/config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 
 // #include "gpg.h"
-// #include "../common/status.h"
-#include "iobuf.h"
+// #include "common/status.h"
+#include "common/iobuf.h"
 #include "printf.h"
-// #include "../common/util.h"
+// #include "common/util.h"
 #include "filter.h"
-// #include "../common/i18n.h"
+// #include "common/i18n.h"
 // #include "options.h"
-// #include "../common/status.h"
+// #include "common/status.h"
 
 #ifdef HAVE_DOSISH_SYSTEM
 #define LF "\r\n"

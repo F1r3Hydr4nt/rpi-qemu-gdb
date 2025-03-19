@@ -1,0 +1,29 @@
+=== Assembly Code Difference Analysis ===
+This analysis shows patterns in the machine code differences between kernel1.img and kernel2.img
+
+Binary comparison:
+The binary files are different.
+Number of byte differences: 89389
+
+First 10 byte differences (byte position: kernel1 vs kernel2):
+Position 34657: 0x6e vs 0x68
+Position 36301: 0x6e vs 0x68
+Position 36605: 0x6e vs 0x68
+Position 42293: 0x6e vs 0x68
+Position 42397: 0x6e vs 0x68
+Position 42633: 0x6e vs 0x68
+Position 42737: 0x6e vs 0x68
+Position 42921: 0x6e vs 0x68
+Position 48693: 0x6e vs 0x68
+Position 54877: 0x78 vs 0x72
+
+Size comparison:
+kernel1.img: 525188 bytes
+kernel2.img: 525188 bytes
+Difference: 0 bytes
+
+Instruction pattern differences (sampling):
+Sample of instructions unique to kernel2.img:
+    8760:	00000044 	.word	0x00000044
+    8dcc:	00000044 	.word	0x00000044
+    8efc:	00000044 	.word	0x00000044

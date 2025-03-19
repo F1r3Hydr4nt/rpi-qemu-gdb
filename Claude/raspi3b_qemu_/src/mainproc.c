@@ -19,28 +19,28 @@
  * along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <config.h>
+#include "common/config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
 #include "gpg.h"
-#include "../common/util.h"
+#include "common/util.h"
 #include "packet.h"
-#include "../common/iobuf.h"
+#include "common/iobuf.h"
 // #include "options.h"
 #include "keydb.h"
 #include "filter.h"
 // #include "main.h"
-#include "../common/status.h"
-#include "../common/i18n.h"
+#include "common/status.h"
+#include "common/i18n.h"
 // #include "trustdb.h"
 // #include "keyserver-internal.h"
 // #include "photoid.h"
-// #include "../common/mbox-util.h"
+// #include "common/mbox-util.h"
 // #include "call-dirmngr.h"
-#include "../common/compliance.h"
+#include "common/compliance.h"
 #include "printf.h"
 #include "sha1.h"
 /* Put an upper limit on nested packets.  The 32 is an arbitrary

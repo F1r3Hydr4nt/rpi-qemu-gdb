@@ -1,0 +1,40 @@
+=== QEMU in_asm Execution Log Analysis ===
+This analysis compares instruction execution traces from QEMU logs
+between kernel1.img and kernel2.img runs
+
+Instruction count comparison:
+kernel1.img: 6568 instructions executed
+kernel2.img: 6438 instructions executed
+Difference: -130 instructions
+⚠️ WARNING: Instruction count difference detected in binaries that should be logically identical
+
+Execution path analysis:
+Unique addresses executed in kernel1.img: 4043
+Unique addresses executed in kernel2.img: 3952
+Novel execution paths in kernel2.img: 26 addresses
+Removed execution paths from kernel1.img: 117 addresses
+⚠️ WARNING: Execution path differences detected (143 total paths) in binaries that should be logically identical
+
+Instruction type frequency comparison:
+Top 10 instruction types in kernel1.img:
+
+Top 10 instruction types in kernel2.img:
+
+Security-sensitive instruction analysis:
+System calls (svc) in kernel1.img: 00
+System calls (svc) in kernel2.img: 00
+Difference: 0
+
+Memory manipulation instruction changes:
+
+QEMU execution trace risk score: 41
+Updated overall security risk score: 41
+
+=== Compiler Configuration Risk Assessment ===
+For binaries that should have identical logic, runtime differences may indicate:
+1. Different compiler optimization levels (-O0 vs -O2, etc.)
+2. Different compiler flags affecting code generation
+3. Different compiler versions or toolchains
+4. Potential security implications from behavior differences
+
+Risk level: HIGH

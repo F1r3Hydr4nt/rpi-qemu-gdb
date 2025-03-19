@@ -20,22 +20,22 @@
  * along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <config.h>
+#include "common/config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "gpg.h"
-#include "../common/util.h"
+#include "common/util.h"
 #include "packet.h"
 #include "../common/iobuf.h"
 #include "filter.h"
 // #include "photoid.h"
 // #include "options.h"
 // #include "main.h"
-#include "../common/i18n.h"
-#include "../common/host2net.h"
-#include "../common/mbox-util.h"
+#include "common/i18n.h"
+#include "common/host2net.h"
+#include "common/mbox-util.h"
 #include "printf.h"
 #include "memory.h"
 static int mpi_print_mode;

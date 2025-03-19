@@ -3,8 +3,8 @@
 #include <stddef.h>
 #include "printf.h"
 #include <string.h>
-#include "7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c.gpg.h"
-// #include "passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword.gpg.h"
+// #include "7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c.gpg.h"// 
+#include "passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword.gpg.h"
 #include "encrypted.1k.h"
 #include "file4.gpg.h"
 #include "fwddecl.h"
@@ -83,7 +83,7 @@ void main()
     
     // Set up and verify session key
     // If we want to skip KDF comment out above block and leave this in
-    const char *key = "427c028e28eeb15464c376d7dcca6ca2"; // Test 2. Good/Bad Derived Key???
+    const char *key = "aa26542afd6f970982eedb0ca8477fd7"; // "427c028e28eeb15464c376d7dcca6ca2"; // Test 2. Good/Bad Derived Key???
     size_t key_len = strlen(key);
     ctrl->session_key = malloc(key_len + 1);
     if (!ctrl->session_key) {
@@ -99,7 +99,8 @@ void main()
     printf("Guard values before decrypt: 0x%08X 0x%08X\n", guard1, guard2);
     
     // Decrypt the data
-    int rc = decrypt_memory(ctrl, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len); // Test 2. BAD DECRYPT !!!!
+    int rc = decrypt_memory(ctrl, __passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword_gpg, __passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword_gpg_len); // Test 1. Good Decrypt
+    // rc = decrypt_memory(ctrl, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg, __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len); // Test 2. BAD DECRYPT !!!!
     if (rc) {
         printf("Decryption failed with code: %d\n", rc);
     }

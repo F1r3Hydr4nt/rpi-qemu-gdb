@@ -60,15 +60,15 @@
 
 // #include "gpg.h"
 // #ifdef HAVE_W32_SYSTEM
-// # include "../common/status.h"
+// # include "common/status.h"
 // #endif /*HAVE_W32_SYSTEM*/
 // #include "common/util.h"
 // // #include "main.h"
 // // #include "photoid.h"
 // #include "options.h"
 // // #include "call-agent.h"
-// #include "../common/i18n.h"
-// #include "../common/zb32.h"
+// #include "common/i18n.h"
+// #include "common/zb32.h"
 #include "common/openpgpdefs.h"
 // /* FIXME: Libgcrypt 1.9 will support EAX.  Until we name this a
 //  * requirement we hardwire the enum used for EAX.  */

@@ -326,3 +326,6 @@ rm src/start.s
 
 
 
+
+head -c 87222 lorem.txt | ./g10/gpg --symmetric --compress-algo none --cipher-algo CAST5 --passphrase "passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword" --s2k-digest-algo SHA1 --batch --rfc2440 --verbose > passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword.gpg && ls -la passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword.gpg #TARGET=87282
+

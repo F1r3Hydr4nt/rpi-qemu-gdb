@@ -7275,3 +7275,6 @@ unsigned char __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c
   0x90, 0x1e, 0xcc, 0x38, 0x22, 0x50
 };
 unsigned int __7379ab5047b143c0b6cfe5d8d79ad240b4b4f8cced55aa26f86d1d3d370c0d4c_gpg_len = 87282;
+
+// // -rw-rw-r-- 1 fred fred 87282 Mar 18 17:53 lorem.gpg
+// (3.7.9) fred@fred:~/code/gnupg-2.2.43-debug$ head -c 87222 lorem.txt | ./g10/gpg --symmetric --compress-algo none --cipher-algo CAST5 --passphrase "passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword" --s2k-digest-algo SHA1 --batch --rfc2440 --verbose > lorem.gpg && ls -la lorem.gpg #TARGET=87282

@@ -20,19 +20,19 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <config.h>
+#include "common/config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "memory.h"
 #include "gpg.h"
-#include "../common/util.h"
+#include "common/util.h"
 #include "printf.h"
 #include "packet.h"
 // #include "options.h"
-#include "../common/i18n.h"
-#include "../common/status.h"
-#include "../common/compliance.h"
+#include "common/i18n.h"
+#include "common/status.h"
+#include "common/compliance.h"
 #include "libgcrypt.h"
 
 static int aead_decode_filter(void *opaque, int control, iobuf_t a,
@@ -516,7 +516,7 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
       goto leave;
     }else{
       printf("\n\nGOOD KEY!\n\n");
-      printf("Leaving early...\n"); goto leave;
+      // printf("Leaving early...\n"); goto leave;
     }
 
 

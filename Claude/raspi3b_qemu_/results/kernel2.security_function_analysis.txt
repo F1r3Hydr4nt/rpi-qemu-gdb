@@ -1,0 +1,392 @@
+=== Security Function Reference Analysis ===
+This analysis looks for references to potentially security-sensitive functions
+
+Undefined symbols (external dependencies):
+⚠️ NOTICE: Possible reference to weak cryptographic algorithm: SHA1
+build/kernel2.img:0001298c T SHA1
+build/kernel2.img:00012880 T SHA1Final
+build/kernel2.img:00012774 T SHA1Init
+build/kernel2.img:00011490 T SHA1Transform
+build/kernel2.img:000127c0 T SHA1Update
+
+Scanning for crypto-related strings:
+NO_PUBKEY
+NO_SECKEY
+DECRYPTION_KEY
+DECRYPTION_INFO
+DECRYPTION_FAILED
+DECRYPTION_OKAY
+BEGIN_DECRYPTION
+END_DECRYPTION
+BEGIN_ENCRYPTION
+END_ENCRYPTION
+SESSION_KEY
+KEY_CREATED
+KEY_CONSIDERED
+KEYEXPIRED
+KEYREVOKED
+EXPKEYSIG
+REVKEYSIG
+KEY_NOT_CREATED
+BACKUP_KEY_CREATED
+ENCRYPTION_COMPLIANCE_MODE
+DECRYPTION_COMPLIANCE_MODE
+PKT_ENCRYPTED
+PKT_SYMKEY_ENC
+do_symkey_enc out->use %d
+PKT_symkey_enc:
+  cipher_algo: %u
+    hash_algo: %u
+  seskeylen: %u
+do_symkey_enc: s2k=%d
+_gcry_cipher_encrypt inlen: %d, outSize: %d, unused: %d
+cipher_filter_cfb
+cipher_filter_cfb %d %d
+Encrypting: %d bytes
+Encrypting2: %d bytes
+cipher_filter_cfb RETURNING %d
+decrypt_memory
+Session key: %s
+END decrypt_memory
+decrypt_message filename:%s
+cipher_hd is allocated
+decrypt_data
+decrypt_data %d
+problem handling encrypted packet
+BAD KEY!
+GOOD KEY!
+Input Key: 
+-- Key Schedule Round %d --
+_gcry_cipher_cfb_decrypt inbuflen %d outbuflen %d cfb_bulk %d
+cfb_decrypt 1 %d %d %d
+cfb_decrypt 2 %d %d %d
+cfb_decrypt 3 %d %d %d
+cfb_decrypt 4 %d %d %d
+cfb_decrypt 5 %d %d %d
+cfb_decrypt 6 %d %d %d
+_gcry_cipher_decrypt inlen: %d, outSize: %d, unused: %d
+Caller requested in-place encryption.
+_gcry_cipher_cfb_encrypt inbuflen %d outbuflen %d
+cfb_encrypt 1 %d %d %d
+cfb_encrypt 2 %d %d %d
+cfb_encrypt 4 %d %d %d
+cfb_encrypt 5 %d %d %d
+cfb_encrypt 6 %d %d %d
+WARNING: potentially insecure symmetrically encrypted session key
+:symkey enc packet: version %d, cipher %d, aead %d,s2k %d, hash %d
+, encrypted seskey %d bytes
+, seskey %d bits
+parse_encrypted
+=== parse_encrypted start ===
+encrypted_mdc packet with unknown version %d
+Encrypted data length: %lu
+Allocated encrypted packet at: %p
+=== parse_encrypted end (rc=%d) ===
+PUBKEY_ENC
+SECRET_KEY
+PUBLIC_KEY
+SECRET_SUBKEY
+PUBLIC_SUBKEY
+ENCRYPTED_MDC
+ENCRYPTED_AEAD
+Failed to allocate session_key
+Guard values before decrypt: 0x%08X 0x%08X
+Decryption failed with code: %d
+Guard values after decrypt: 0x%08X 0x%08X
+Deriving key...
+Derived key: 
+Key Length: %d bytes
+Key: 
+Will derive key from passphrase
+Encrypt only
+proc_symkey_enc
+invalid symkey encrypted packet
+%s %s encrypted data
+session_key: %s
+processing encrypted packet
+decryption.early_plaintext
+encrypted with %lu passphrases
+encrypted with 1 passphrase
+pkt->pkt.encrypted: %p
+decrypt_data result: %d
+decryption okay
+WARNING: encrypted message has been manipulated!
+symkey_decrypt.maybe_error 11_BAD_PASSPHRASE
+decryption failed: %s
+proc_encryption_packets a->use: %d, a->filter: %d
+gcrypt.h
+cipher.c
+libgcrypt.h
+gcrypt.h
+decrypt.c
+libgcrypt.h
+decrypt-data.c
+libgcrypt.h
+gcrypt.h
+libgcrypt.h
+gcrypt.h
+libgcrypt.c
+libgcrypt.h
+libgcrypt.h
+gcrypt.h
+encrypted.1k.h
+libgcrypt.h
+gcrypt.h
+GPG_ERR_CIPHER_ALGO
+GPG_ERR_NO_ENCRYPTION_SCHEME
+GPG_ERR_WRONG_KEY_USAGE
+GPG_ERR_BAD_PUBKEY
+GPG_ERR_PUBKEY_NOT_TRUSTED
+GPG_ERR_NO_CRYPT_CTX
+GPG_ERR_BAD_SECKEY
+GPG_ERR_WRONG_PUBKEY_ALGO
+GPG_ERR_NO_KEYSERVER
+GPG_ERR_BAD_CRYPT_CTX
+GPG_ERR_PUBKEY_ALGO
+GPG_ERR_INV_KEYLEN
+GPG_ERR_KEYSERVER
+GPG_ERR_INV_KEYRING
+GPG_ERR_NO_PUBKEY
+GPG_ERR_UNUSABLE_PUBKEY
+GPG_ERR_NO_CIPHER
+GPG_ERR_BROKEN_SECKEY
+GPG_ERR_EOF_GCRYPT
+GPG_ERR_WRONG_CRYPT_CTX
+GPG_ERR_WEAK_KEY
+GPG_ERR_NO_SECKEY
+GPG_ERR_UNUSABLE_SECKEY
+GPG_ERR_NO_KEYBOXD
+GPG_ERR_CRYPT_CTX_CONFLICT
+GPG_ERR_SUBKEYS_EXP_OR_REV
+GPG_ERR_INV_KEYINFO
+GPG_ERR_BROKEN_PUBKEY
+GPG_ERR_DUP_KEY
+GPG_ERR_LEGACY_KEY
+GPG_ERR_BAD_HS_CHANGE_CIPHER
+GPG_ERR_KEY_EXPIRED
+GPG_ERR_INV_CIPHER_MODE
+GPG_ERR_NOT_ENCRYPTED
+GPG_ERR_DECRYPT_FAILED
+GPG_ERR_KEYRING_OPEN
+GPG_ERR_NO_KEY
+GPG_ERR_WRONG_SECKEY
+GPG_ERR_MISSING_KEY
+GPG_ERR_BAD_KEY
+GPG_ERR_KEY_DISABLED
+GPG_ERR_KEYBOXD
+GPG_ERR_KEY_ON_CARD
+GPG_ERR_INV_SESSION_KEY
+PKT_public_key
+secret_key
+PKT_SYMKEY_ENC
+throw_keyid
+PKT_ENCRYPTED_AEAD
+STRING2KEY
+pubkey_algo
+PKT_SECRET_SUBKEY
+PKT_SECRET_KEY
+PKT_PUBKEY_ENC
+pkey
+namehash
+PKT_symkey_enc
+keyorg
+seskey
+PKT_ENCRYPTED
+keyupdate
+revkey
+PKT_ENCRYPTED_MDC
+PKT_pubkey_enc
+PKT_encrypted
+PKT_PUBLIC_SUBKEY
+seckey_info
+help_key_expire
+do_symkey_enc
+pubkey_usage
+help_key_usage
+hash_algo
+unhashed
+seskeylen
+PKT_PUBLIC_KEY
+numrevkeys
+main_keyid
+do_encrypted
+revocation_key
+cipher_hd
+cipher_filter_context_t
+src/cipher.c
+_gcry_cipher_setkey
+cipher_sync
+_gcry_cipher_encrypt
+_gcry_cipher_cfb_encrypt
+_gcry_cipher_setiv
+gcry_cipher_hd_t
+mdc_hash
+gcry_cipher_handle
+cipher_filter_cfb
+cipher_context_alignment_t
+_gcry_cipher_close
+key_origin_url
+auto_key_import
+s2k_cipher_algo
+decrypt_message
+def_keyserver_url
+KEYDB_HANDLE
+no_symkey_cache
+keyserver_options
+auto_key_locate
+with_wkd_hash
+unwrap_encryption
+src/decrypt.c
+force_sign_key
+cached_getkey_kdb
+include_key_block
+def_new_key_algo
+def_cipher_algo
+keydb_handle
+throw_keyids
+with_key_origin
+show_session_key
+KEY_LEN
+allow_weak_key_signatures
+with_secret
+decrypt_memory
+encrypt_to_default_key
+proc_encryption_packets
+no_encrypt_to
+weakhash
+try_all_secrets
+with_keygrip
+keyid_format
+override_session_key
+with_subkey_fingerprint
+AKL_KEYSERVER
+with_key_data
+GCRY_CIPHER_MODE_CTR
+STATUS_NO_SECKEY
+GCRY_CIPHER_EXTENDED
+GCRY_CIPHER_MODE_XTS
+decrypt_data
+STATUS_BEGIN_DECRYPTION
+GCRY_CIPHER_ENABLE_SYNC
+STATUS_DECRYPTION_KEY
+GCRY_CIPHER_MODE_GCM
+STATUS_BACKUP_KEY_CREATED
+STATUS_SESSION_KEY
+_gcry_cipher_decrypt
+STATUS_KEY_CREATED
+openpgp_cipher_open
+STATUS_KEY_NOT_CREATED
+STATUS_KEY_CONSIDERED
+STATUS_END_DECRYPTION
+STATUS_BEGIN_ENCRYPTION
+GPG_ERR_SOURCE_GCRYPT
+GCRY_CIPHER_MODE_CFB8
+STATUS_DECRYPTION_FAILED
+STATUS_DECRYPTION_INFO
+GPG_ERR_SOURCE_KEYBOX
+GCRY_CIPHER_SECURE
+STATUS_KEYREVOKED
+STATUS_END_ENCRYPTION
+STATUS_KEYEXPIRED
+GCRY_CIPHER_MODE_SIV
+STATUS_NO_PUBKEY
+src/decrypt-data.c
+GCRY_CIPHER_MODE_STREAM
+openpgp_cipher_algo_name
+STATUS_DECRYPTION_COMPLIANCE_MODE
+GCRY_CIPHER_MODE_ECB
+gcry_cipher_modes
+GCRY_CIPHER_MODE_AESWRAP
+STATUS_EXPKEYSIG
+STATUS_REVKEYSIG
+GCRY_CIPHER_MODE_NONE
+GCRY_CIPHER_MODE_CBC
+GCRY_CIPHER_MODE_CCM
+STATUS_ENCRYPTION_COMPLIANCE_MODE
+GCRY_CIPHER_MODE_GCM_SIV
+gcry_cipher_flags
+GCRY_CIPHER_MODE_CFB
+GCRY_CIPHER_CBC_CTS
+GCRY_CIPHER_MODE_OCB
+GCRY_CIPHER_MODE_EAX
+GCRY_CIPHER_CBC_MAC
+ciphermode
+GCRY_CIPHER_MODE_POLY1305
+GCRY_CIPHER_MODE_OFB
+STATUS_DECRYPTION_OKAY
+src/encrypt.c
+free_encrypted
+free_symkey_enc
+keywords
+cipher_block_xor_2dst
+src/libgcrypt.c
+cipher_block_cpy
+key2
+_gcry_cipher_cfb_decrypt
+cipher_block_xor_n_copy
+cipher_block_xor_n_copy_2
+pubkey_algo_t
+PUBKEY_ALGO_ELGAMAL
+PUBKEY_ALGO_RSA_E
+PUBKEY_ALGO_ELGAMAL_E
+PUBKEY_ALGO_PRIVATE10
+PUBKEY_ALGO_EDDSA
+PUBKEY_ALGO_RSA_S
+PUBKEY_ALGO_DSA
+PUBKEY_ALGO_RSA
+pubkey_get_nsig
+PUBKEY_ALGO_ECDH
+PUBKEY_ALGO_ECDSA
+pubkey_get_nenc
+parse_symkeyenc
+onlykeypkts
+parse_encrypted
+hash_out
+key_len
+encrypted_1k_gpg_len
+encrypted_1k_gpg
+symkeys
+seen_pkt_encrypted_aead
+last_was_session_key
+proc_encrypted
+seen_pkt_encrypted_mdc
+password
+last_pubkey
+derive_key
+encrypt_only
+derivedKey
+proc_symkey_enc
+	Key
++key
+?key
+&key
+Mkey
+cipher.c
+decrypt.c
+decrypt-data.c
+encrypt.c
+libgcrypt.c
+encrypted_1k_gpg
+cipher_block_xor_2dst
+free_symkey_enc
+pubkey_get_nsig
+proc_encryption_packets
+decrypt_memory
+derive_key
+_gcry_cipher_cfb_encrypt
+_gcry_cipher_close
+free_encrypted
+_gcry_cipher_encrypt
+_gcry_cipher_decrypt
+cipher_filter_cfb
+_gcry_cipher_cfb_decrypt
+_gcry_cipher_setiv
+encrypted_1k_gpg_len
+cipher_block_xor_n_copy_2
+decrypt_data
+pubkey_get_nenc
+decrypt_message
+cipher_block_cpy
+_gcry_cipher_setkey
+cipher_block_xor_n_copy
+cipher_sync

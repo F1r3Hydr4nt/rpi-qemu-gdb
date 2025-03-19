@@ -18,7 +18,7 @@
  * along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <config.h>
+#include "common/config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,7 +26,7 @@
 #include "gpg.h"
 #include "common/util.h"
 #include "packet.h"
-#include "../common/iobuf.h"
+#include "common/iobuf.h"
 // #include "options.h"
 #include "printf.h"
 #include "gcrypt.h"

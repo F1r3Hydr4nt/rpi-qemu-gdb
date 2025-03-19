@@ -24,7 +24,7 @@
 
 /* Include whatever files you need.  */
 #include <gcrypt.h>
-#include "../common/logging.h"
+#include "common/logging.h"
 
 /* Try to write error message using the standard gnupg log mechanism.  */
 #define SPWQ_USE_LOGGING  1
