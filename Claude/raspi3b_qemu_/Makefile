@@ -271,7 +271,11 @@ comparePatched: $(TARGET1)
 			echo "  ✓ Log files are identical - execution behavior unchanged"; \
 		else \
 			echo "  ✗ Log files differ - execution behavior changed"; \
-			diff $(RESULTS_DIR)/kernel1.in_asm.log $(RESULTS_DIR)/patchedKernel.in_asm.log > $(RESULTS_DIR)/full_log_diff.log || true; \
+			echo "# DIFF LEGEND:" > $(RESULTS_DIR)/full_log_diff.log; \
+			echo "# < lines from kernel1.in_asm.log (original kernel)" >> $(RESULTS_DIR)/full_log_diff.log; \
+			echo "# > lines from patchedKernel.in_asm.log (patched kernel)" >> $(RESULTS_DIR)/full_log_diff.log; \
+			echo "# ---" >> $(RESULTS_DIR)/full_log_diff.log; \
+			diff $(RESULTS_DIR)/kernel1.in_asm.log $(RESULTS_DIR)/patchedKernel.in_asm.log >> $(RESULTS_DIR)/full_log_diff.log || true; \
 			echo "  Full log diff saved to $(RESULTS_DIR)/full_log_diff.log"; \
 			echo "  Number of differences in full log: `wc -l < $(RESULTS_DIR)/full_log_diff.log`"; \
 		fi; \
