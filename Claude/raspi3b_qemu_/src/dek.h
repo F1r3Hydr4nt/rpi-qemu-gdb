@@ -44,7 +44,7 @@ typedef struct
   unsigned int symmetric : 1;
 
   /* This is the largest used keylen (256 bit). */
-  byte key[32];
+  unsigned char* key;
 
   /* The cacheid for the S2K. */
   char s2k_cacheid[1+16+1];

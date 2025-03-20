@@ -101,7 +101,7 @@ struct mainproc_context
   DEK *dek;
 
   char *passphrase;
-  char *session_key;
+  unsigned char *session_key;
   int last_was_session_key;
   kbnode_t list;                    /* The current list of packets. */
   iobuf_t iobuf;                    /* Used to get the filename etc. */
@@ -464,7 +464,7 @@ void hex_to_bytes(const char *hex, uint8_t *bytes, size_t length)
 DEK *passphrase_to_dek(int cipher_algo, STRING2KEY *s2k,
                        int create, int nocache,
                        const char *tryagain_text, unsigned int flags,
-                       int *canceled, const char *passphrase, const char *derivedKey)
+                       int *canceled, const char *passphrase, unsigned char *derivedKey)
 {
   printf("passphrase_to_dek\n");
   char *pw = NULL;
@@ -614,9 +614,13 @@ DEK *passphrase_to_dek(int cipher_algo, STRING2KEY *s2k,
   {
     printf("OVERRIDDEN: %s\n", derivedKey);
     // Usage example:
-    uint8_t key[dek->keylen]; // For SHA1 output
-    hex_to_bytes(derivedKey, key, dek->keylen);
-    memcpy(dek->key, key, dek->keylen);
+    // uint8_t key[dek->keylen]; // For SHA1 output
+    // hex_to_bytes(derivedKey, key, dek->keylen);
+    // memcpy(dek->key, key, dek->keylen);
+
+    size_t key_len = strlen(derivedKey) + 1;  // +1 for the null terminator
+    dek->key = malloc(key_len);
+        memcpy(dek->key, derivedKey , key_len);
   }
   else
     derive_key(s2k->salt, passphrase, strlen(passphrase), iterations, dek->key);
@@ -1910,18 +1914,21 @@ do_proc_packets(ctrl_t ctrl, CTX c, iobuf_t a)
 
   // printf("do_proc_packets\n");// %s\n", ctrl->passphrase);
   // Copy across any main ctx passphrase or session_key
-  if (ctrl->passphrase != NULL)
-  {
-    c->passphrase = malloc(strlen(ctrl->passphrase) + 1);
-    my_strcpy(c->passphrase, ctrl->passphrase);
-    // printf("Copied passphrase: %s\n", c->passphrase);
-  }
+  // if (ctrl->passphrase != NULL)
+  // {
+  //   c->passphrase = malloc(strlen(ctrl->passphrase) + 1);
+  //   my_strcpy(c->passphrase, ctrl->passphrase);
+  //   // printf("Copied passphrase: %s\n", c->passphrase);
+  // }
   if (ctrl->session_key != NULL)
-  {
-    c->session_key = malloc(strlen(ctrl->session_key) + 1);
-    my_strcpy(c->session_key, ctrl->session_key);
-    // printf("Overriding passphrase DEK with session key\n");//, c->passphrase);
-  }
+{
+    size_t key_len = strlen(ctrl->session_key) + 1;  // +1 for the null terminator
+    c->session_key = malloc(key_len);
+    if (c->session_key != NULL) {
+        memcpy(c->session_key, ctrl->session_key, key_len);
+        // printf("Overriding passphrase DEK with session key\n");//, c->passphrase);
+    }
+}
   else printf("Will derive key from passphrase\n");
   c->enc_len = ctrl->enc_length;
 

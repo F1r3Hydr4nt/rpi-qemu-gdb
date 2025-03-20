@@ -83,14 +83,23 @@ void main()
     
     // Set up and verify session key
     // If we want to skip KDF comment out above block and leave this in
-    const char *key = "aa26542afd6f970982eedb0ca8477fd7"; // "427c028e28eeb15464c376d7dcca6ca2"; // Test 2. Good/Bad Derived Key???
-    size_t key_len = 32;// strlen(key);
-    ctrl->session_key = malloc(key_len + 1);
+    // Define the key as a byte array (unsigned char)
+    const unsigned char key_bytes[] = {
+        0xaa, 0x26, 0x54, 0x2a, 0xfd, 0x6f, 0x97, 0x09,
+        0x82, 0xee, 0xdb, 0x0c, 0xa8, 0x47, 0x7f, 0xd7
+        // Second key commented out: 0x42, 0x7c, 0x02, 0x8e, 0x28, 0xee, 0xb1, 0x54, 0x64, 0xc3, 0x76, 0xd7, 0xdc, 0xca, 0x6c, 0xa2
+    };
+    size_t key_len = sizeof(key_bytes);
+
+    // Allocate memory for the session key
+    ctrl->session_key = malloc(key_len);
     if (!ctrl->session_key) {
         printf("Failed to allocate session_key\n");
         goto cleanup;
     }
-    my_strcpy(ctrl->session_key, key);
+
+    // Copy the key bytes to the session key
+    memcpy(ctrl->session_key, key_bytes, key_len);
     // ctrl->session_key = NULL; // Force KDF
 
     // Add some guard values

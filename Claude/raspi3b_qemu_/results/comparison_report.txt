@@ -1,0 +1,23 @@
+=== Binary Comparison Summary ===
+Test 2 vs Test 1
+Generated on: Sat 15 Mar 2025 13:47:09 GMT
+
+Binary sizes:
+- Test 2: 522408 bytes
+- Test 1: 522408 bytes
+- Difference: 0 bytes
+
+Binary comparison result:
+- Binaries are different
+
+=== Diff files ===
+- results/kernel2_vs_kernel1.dump.diff - Disassembly diff
+- results/symbol_diff.txt - Symbol table diff
+- results/kernel_binary_cmp.txt - Binary comparison
+
+=== Execution Log Analysis ===
+Execution logs have 93 different lines
+
+Additional log analysis files:
+- results/in_asm_logs.diff - Full execution log diff
+
