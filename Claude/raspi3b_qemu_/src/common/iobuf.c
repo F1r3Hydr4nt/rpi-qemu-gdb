@@ -404,27 +404,27 @@ fd_cache_open (const char *fname, const char *mode)
 	{
 	  gnupg_fd_t fp = cc->fp;
 	  cc->fp = GNUPG_INVALID_FD;
-	  if (DBG_IOBUF)
-	    printf ("fd_cache_open (%s) using cached fp\n", fname);
-#ifdef HAVE_W32_SYSTEM
-	  if (SetFilePointer (fp, 0, NULL, FILE_BEGIN) == 0xffffffff)
-	    {
-	      printf ("rewind file failed on handle %p: ec=%d\n",
-			 fp, (int) GetLastError ());
-	      fp = GNUPG_INVALID_FD;
-	    }
-#else
+// 	  if (DBG_IOBUF)
+// 	    printf ("fd_cache_open (%s) using cached fp\n", fname);
+// #ifdef HAVE_W32_SYSTEM
+// 	  if (SetFilePointer (fp, 0, NULL, FILE_BEGIN) == 0xffffffff)
+// 	    {
+// 	      printf ("rewind file failed on handle %p: ec=%d\n",
+// 			 fp, (int) GetLastError ());
+// 	      fp = GNUPG_INVALID_FD;
+// 	    }
+// #else
 	  if (lseek (fp, 0, SEEK_SET) == (off_t) - 1)
 	    {
 	      printf ("can't rewind fd %d: %s\n", fp, strerror (errno));
 	      fp = GNUPG_INVALID_FD;
 	    }
-#endif
+// #endif
 	  return fp;
 	}
     }
   // if (DBG_IOBUF)
-  printf ("fd_cache_open (%s) not cached\n", fname);
+  // printf ("fd_cache_open (%s) not cached\n", fname);
   return direct_open (fname, mode, 0);
 }
 
@@ -639,7 +639,7 @@ static int
 block_filter (void *opaque, int control, iobuf_t chain, byte * buffer,
 	      size_t * ret_len)
 {
-printf("block_filter %s\n", control_mode_str[control]);
+// printf("block_filter %s\n", control_mode_str[control]);
   block_filter_ctx_t *a = opaque;
   char *buf = (char *)buffer;
   size_t size = *ret_len;
@@ -648,7 +648,7 @@ printf("block_filter %s\n", control_mode_str[control]);
 
   if (control == IOBUFCTRL_UNDERFLOW)
     {
-      printf ("IOBUFCTRL_UNDERFLOW %d\n", size);
+      // printf ("IOBUFCTRL_UNDERFLOW %d\n", size);
       size_t n = 0;
 
       p = buf;
@@ -670,7 +670,7 @@ printf("block_filter %s\n", control_mode_str[control]);
 		{
 		  /* These OpenPGP introduced huffman like encoded length
 		   * bytes are really a mess :-( */
-      printf("These OpenPGP introduced huffman like encoded length bytes are really a mess :-(\n" );
+      // printf("These OpenPGP introduced huffman like encoded length bytes are really a mess :-(\n" );
 		  if (a->first_c)
 		    {
 		      c = a->first_c;
@@ -678,7 +678,7 @@ printf("block_filter %s\n", control_mode_str[control]);
 		    }
 		  else if ((c = iobuf_get (chain)) == -1)
 		    {
-		      printf ("block_filter: 1st length byte missing\n");
+		      // printf ("block_filter: 1st length byte missing\n");
 		      rc = GPG_ERR_BAD_DATA;
 		      break;
 		    }
@@ -699,8 +699,8 @@ printf("block_filter %s\n", control_mode_str[control]);
 		      a->size = (c - 192) * 256;
 		      if ((c = iobuf_get (chain)) == -1)
 			{
-			  printf
-			    ("block_filter: 2nd length byte missing\n");
+			  // printf
+			  //   ("block_filter: 2nd length byte missing\n");
 			  rc = GPG_ERR_BAD_DATA;
 			  break;
 			}
@@ -721,7 +721,7 @@ printf("block_filter %s\n", control_mode_str[control]);
 		      a->size |= iobuf_get_noeof (chain) << 8;
 		      if ((c = iobuf_get (chain)) == -1)
 			{
-			  printf ("block_filter: invalid 4 byte length\n");
+			  // printf ("block_filter: invalid 4 byte length\n");
 			  rc = GPG_ERR_BAD_DATA;
 			  break;
 			}
@@ -753,9 +753,8 @@ printf("block_filter %s\n", control_mode_str[control]);
 		{
 		  if (c == -1)
 		    c = 0;
-		  printf
-		    ("block_filter %p: read error (size=%lu,a->size=%lu)\n",
-		     a, (ulong) size + c, (ulong) a->size + c);
+		  // printf("block_filter %p: read error (size=%lu,a->size=%lu)\n",
+		  //   a, (ulong) size + c, (ulong) a->size + c);
 		  rc = GPG_ERR_BAD_DATA;
 		}
 	      else
@@ -771,7 +770,7 @@ printf("block_filter %s\n", control_mode_str[control]);
     }
   else if (control == IOBUFCTRL_FLUSH)
     {
-            printf ("IOBUFCTRL_FLUSH %d\n", a->partial);
+            // printf ("IOBUFCTRL_FLUSH %d\n", a->partial);
 
       if (a->partial)
 	{			/* the complicated openpgp scheme */
@@ -823,7 +822,7 @@ printf("block_filter %s\n", control_mode_str[control]);
 	      /* store the rest in the buffer */
 	      if (!rc && nbytes)
 		{
-      	      printf("store the rest in the buffer" );
+      	      // printf("store the rest in the buffer" );
 
 		  // printf (!a->buflen);
 		  // printf (nbytes < OP_MIN_PARTIAL_CHUNK);
@@ -881,18 +880,18 @@ printf("block_filter %s\n", control_mode_str[control]);
 	      len = a->buflen;
 	      if (len < 192){
 		      rc = iobuf_put (chain, len);
-          printf("1 byte <192 partial: remaining length=%u\n", len );
+          // printf("1 byte <192 partial: remaining length=%u\n", len );
 
         }
 	      else if (len < 8384)
 		{ // Use a 2 byte header
-      printf("2 byte header partial: remaining length=%u\n", len );
+      // printf("2 byte header partial: remaining length=%u\n", len );
 		  if (!(rc = iobuf_put (chain, ((len - 192) / 256) + 192)))
 		    rc = iobuf_put (chain, ((len - 192) % 256));
 		}
 	      else
 		{		/* use a 4 byte header */
-      printf("4 byte header partial: remaining length=%u\n", len );
+      // printf("4 byte header partial: remaining length=%u\n", len );
 
 		  if (!(rc = iobuf_put (chain, 0xff)))
 		    if (!(rc = iobuf_put (chain, (len >> 24) & 0xff)))
@@ -901,7 +900,7 @@ printf("block_filter %s\n", control_mode_str[control]);
 			  rc = iobuf_put (chain, len & 0xff);
 		}
 	      if (!rc && len){
-    printf("1 byte header partial: remaining length=%u\n", len );
+    // printf("1 byte header partial: remaining length=%u\n", len );
 		rc = iobuf_write (chain, a->buffer, len);
         }
 	      if (rc)
@@ -919,7 +918,7 @@ printf("block_filter %s\n", control_mode_str[control]);
 	}
       else if (a->size)
 	{
-	  printf ("block_filter: pending bytes!\n");
+	  // printf ("block_filter: pending bytes!\n");
 	}
   //     if (DBG_IOBUF)
 	// printf ("free block_filter %p\n", a);
@@ -976,10 +975,10 @@ iobuf_alloc (int use, size_t bufsize)
   iobuf_t a;
   static int number = 0;
 
-  printf ("iobuf_alloc use:%d %d\n",use, use == IOBUF_INPUT || use == IOBUF_INPUT_TEMP || use == IOBUF_OUTPUT || use == IOBUF_OUTPUT_TEMP);
+  // printf ("iobuf_alloc use:%d %d\n",use, use == IOBUF_INPUT || use == IOBUF_INPUT_TEMP || use == IOBUF_OUTPUT || use == IOBUF_OUTPUT_TEMP);
   if (bufsize == 0)
     {
-      printf ("iobuf_alloc() passed a bufsize of 0!\n");
+      // printf ("iobuf_alloc() passed a bufsize of 0!\n");
       bufsize = IOBUF_BUFFER_SIZE;
     }
 
@@ -1097,7 +1096,7 @@ iobuf_temp_with_content (const char *buffer, size_t length)
   int i;
 
   a = iobuf_alloc (IOBUF_INPUT_TEMP, length);
-  printf ("iobuf_temp_with_content: %d bytes\n", a->d.size);
+  // printf ("iobuf_temp_with_content: %d bytes\n", a->d.size);
   /* memcpy (a->d.buf, buffer, length); */
   for (i=0; i < length; i++)
     a->d.buf[i] = buffer[i];
@@ -1217,13 +1216,13 @@ do_iobuf_fdopen (int fd, const char *mode, int keep_open)
   fcx->fp = fp;
   fcx->print_only_name = 1;
   fcx->keep_open = keep_open;
-  sprintf (fcx->fname, "[fd %d]", fd);
+  // sprintf (fcx->fname, "[fd %d]", fd);
   a->filter = file_filter;
   a->filter_ov = fcx;
   file_filter (fcx, IOBUFCTRL_INIT, NULL, NULL, &len);
-  if (DBG_IOBUF)
-    printf ("iobuf-%d.%d: fdopen%s '%s'\n",
-               a->no, a->subno, keep_open? "_nc":"", fcx->fname);
+  // if (DBG_IOBUF)
+  //   printf ("iobuf-%d.%d: fdopen%s '%s'\n",
+  //              a->no, a->subno, keep_open? "_nc":"", fcx->fname);
   iobuf_ioctl (a, IOBUF_IOCTL_NO_CACHE, 1, NULL);
   return a;
 }
@@ -1295,7 +1294,7 @@ iobuf_fdopen (int fd, const char *mode)
 int
 iobuf_ioctl (iobuf_t a, iobuf_ioctl_t cmd, int intval, void *ptrval)
 {
-  printf("iobuf_ioctl %d %d %d\n",cmd,intval, ptrval);
+  // printf("iobuf_ioctl %d %d %d\n",cmd,intval, ptrval);
   byte desc[MAX_IOBUF_DESC];
 
   if (cmd == IOBUF_IOCTL_KEEP_OPEN)
@@ -1541,8 +1540,8 @@ iobuf_push_filter2 (iobuf_t a,
   if (DBG_IOBUF)
     {
       byte desc[MAX_IOBUF_DESC];
-      printf ("iobuf-%d.%d: push '%s'\n",
-		 a->no, a->subno, iobuf_desc (a, desc));
+      // printf ("iobuf-%d.%d: push '%s'\n",
+		 // a->no, a->subno, iobuf_desc (a, desc));
       print_chain (a);
     }
 
@@ -1891,7 +1890,7 @@ iobuf_readbyte (iobuf_t a)
 int
 iobuf_read (iobuf_t a, void *buffer, unsigned int buflen)
 {
-  printf("iobuf_read %d a->nlimit %d\n",buflen,a->nlimit);
+  // printf("iobuf_read %d a->nlimit %d\n",buflen,a->nlimit);
   unsigned char *buf = (unsigned char *)buffer;
   int c, n;
 
@@ -2449,7 +2448,7 @@ iobuf_get_fname_nonnull (iobuf_t a)
 void
 iobuf_set_partial_body_length_mode (iobuf_t a, size_t len)
 {
-  printf ("iobuf_set_partial_body_length_mode %d\n", len);
+  // printf ("iobuf_set_partial_body_length_mode %d\n", len);
   if (!len)
     /* Disable partial body length mode.  */
     {
@@ -2470,7 +2469,7 @@ iobuf_set_partial_body_length_mode (iobuf_t a, size_t len)
       ctx->size = 0;
       ctx->first_c = len;
       
-      printf ("pushing partial block filter %d\n", ctx->use);
+      // printf ("pushing partial block filter %d\n", ctx->use);
       iobuf_push_filter (a, block_filter, ctx);
     }
 }
@@ -2653,7 +2652,7 @@ file_filter (void *opaque, int control, iobuf_t chain, byte * buf,
 
   if (control == IOBUFCTRL_UNDERFLOW)
     {
-      printf (size); /* We need a buffer.  */
+      // printf (size); /* We need a buffer.  */
       if (a->npeeked > a->upeeked)
         {
           nbytes = a->npeeked - a->upeeked;
@@ -2856,8 +2855,8 @@ file_filter (void *opaque, int control, iobuf_t chain, byte * buf,
     {
       if (f != FD_FOR_STDIN && f != FD_FOR_STDOUT)
 	{
-	  if (DBG_IOBUF)
-	    printf ("%s: close fd/handle %d\n", a->fname, FD2INT (f));
+	  // if (DBG_IOBUF)
+	  //   printf ("%s: close fd/handle %d\n", a->fname, FD2INT (f));
 	  // if (!a->keep_open)
 	  //   fd_cache_close (a->no_cache ? NULL : a->fname, f);
 	}

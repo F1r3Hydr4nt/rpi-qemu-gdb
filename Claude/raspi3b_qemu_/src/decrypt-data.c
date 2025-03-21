@@ -223,7 +223,7 @@ release_dfx_context(decode_filter_ctx_t dfx)
 int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
                  int *compliance_error)
 {
-  printf("decrypt_data\n");
+  // printf("decrypt_data\n");
   // printf("ed pointer: %p\n", (void *)ed);
   // printf("ed->len: %d\n", ed->len);
   // printf("ed->buf pointer: %p\n", (void *)ed->buf);
@@ -270,7 +270,7 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
   // dfx->partial = FALSE;
   // dfx->length = ctrl->enc_length;
   
-  printf("decrypt_data %d\n",dfx->length);
+  // printf("decrypt_data %d\n",dfx->length);
   // printf("dek->algo_info_printed: %d\n", dek->algo_info_printed);
   // if ( opt.verbose && !dek->algo_info_printed )
   //   {
@@ -516,7 +516,7 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
       // goto leave;
     }else{
       printf("\n\nGOOD KEY!\n\n");
-      // printf("Leaving early...\n"); goto leave;
+      printf("Leaving early...\n"); goto leave;
     }
 
 
@@ -623,14 +623,14 @@ static size_t
 fill_buffer(decode_filter_ctx_t dfx, iobuf_t stream,
             byte *buffer, size_t nbytes, size_t offset)
 {
-  printf("fill_buffer\n");
+  // printf("fill_buffer\n");
   size_t nread = offset;
   size_t curr;
   int ret;
 
   if (dfx->partial)
   {
-      printf("dfx->partial nread=%zu nbytes=%zu\n", nread, nbytes);
+      // printf("dfx->partial nread=%zu nbytes=%zu\n", nread, nbytes);
     while (nread < nbytes)
     {
       curr = nbytes - nread;
@@ -1043,7 +1043,7 @@ decode_filter(void *opaque, int control, IOBUF a, byte *buf, size_t *ret_len)
 {
     decode_filter_ctx_t fc = opaque;
 
-  printf("decode_filter control %d, ret_len=%d len=%d\n",control,*ret_len, fc->length);
+  // printf("decode_filter control %d, ret_len=%d len=%d\n",control,*ret_len, fc->length);
   size_t size = *ret_len;
   // size_t size = fc->length;//*ret_len;
   size_t n;
@@ -1051,19 +1051,19 @@ decode_filter(void *opaque, int control, IOBUF a, byte *buf, size_t *ret_len)
 
   if (control == IOBUFCTRL_UNDERFLOW && fc->eof_seen)
   {
-    printf("IOBUFCTRL_UNDERFLOW && fc->eof_seen\n");;
+    // printf("IOBUFCTRL_UNDERFLOW && fc->eof_seen\n");;
     *ret_len = 0;
     rc = -1;
   }
   else if (control == IOBUFCTRL_UNDERFLOW)
   {
-    printf("control == IOBUFCTRL_UNDERFLOW\n");
+    // printf("control == IOBUFCTRL_UNDERFLOW\n");
 
     n = fill_buffer(fc, a, buf, size, 0);
     if (n)
     {
-      if (fc->cipher_hd)
-          printf("cipher_hd is allocated\n");
+      // if (fc->cipher_hd)
+      //     printf("cipher_hd is allocated\n");
         _gcry_cipher_decrypt (fc->cipher_hd, buf, n, NULL, 0);
         // _gcry_cipher_decrypt (fc->cipher_hd, buf, n, NULL, size);
         // printf("cipher_hd is allocated\n");

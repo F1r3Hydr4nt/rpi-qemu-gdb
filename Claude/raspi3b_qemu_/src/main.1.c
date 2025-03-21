@@ -50,18 +50,17 @@ void putc_uart(void *p, char c)
 }
 void putc_uart2(void *p, char c)
 {
-    (void)p;
-    uart_putc(c);
+    // (void)p;
+    // uart_putc(c);
 }
 
 void main()
 {
     init_printf(0, putc_uart);
-    // print_memory_map();
     // Properly allocate control structure with debug output
     ctrl_t ctrl = malloc(sizeof(struct server_control_s));
     if (!ctrl) {
-        printf("Failed to allocate control structure\n");
+        // printf("Failed to allocate control structure\n");
         goto cleanup;
     }
 // 2af14ef19220d275b0f87907f4ab5075dc9b75b574ef8c2e06e32e8311776945
@@ -94,7 +93,7 @@ void main()
     // Allocate memory for the session key
     ctrl->session_key = malloc(key_len);
     if (!ctrl->session_key) {
-        printf("Failed to allocate session_key\n");
+        // printf("Failed to allocate session_key\n");
         goto cleanup;
     }
 
@@ -103,18 +102,18 @@ void main()
     // ctrl->session_key = NULL; // Force KDF
 
     // Add some guard values
-    uint32_t guard1 = 0xDEADBEEF;
-    uint32_t guard2 = 0xBABECAFE;
-    printf("Guard values before decrypt: 0x%08X 0x%08X\n", guard1, guard2);
+    // uint32_t guard1 = 0xDEADBEEF;
+    //uint32_t guard2 = 0xBABECAFE;
+    // printf("Guard values before decrypt: 0x%08X 0x%08X\n", guard1, guard2);
     
     // Decrypt the data
     int rc = decrypt_memory(ctrl, __passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword_gpg, __passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword_gpg_len);
     if (rc) {
         printf("Decryption failed with code: %d\n", rc);
     }
-    // Check guard values
-    printf("Guard values after decrypt: 0x%08X 0x%08X\n", guard1, guard2);
-    printf("CTRL-A + X\n");
+    // // Check guard values
+    // printf("Guard values after decrypt: 0x%08X 0x%08X\n", guard1, guard2);
+    // printf("CTRL-A + X\n");
 cleanup:
     while (1) {
         __asm__("wfi");

@@ -466,7 +466,7 @@ DEK *passphrase_to_dek(int cipher_algo, STRING2KEY *s2k,
                        const char *tryagain_text, unsigned int flags,
                        int *canceled, const char *passphrase, unsigned char *derivedKey)
 {
-  printf("passphrase_to_dek\n");
+  // printf("passphrase_to_dek\n");
   char *pw = NULL;
   DEK *dek;
   STRING2KEY help_s2k;
@@ -612,7 +612,7 @@ DEK *passphrase_to_dek(int cipher_algo, STRING2KEY *s2k,
   // printf("\n\n\n GOT HERE \n\n\n");
   if (derivedKey != NULL)
   {
-    printf("OVERRIDDEN: %s\n", derivedKey);
+    // printf("OVERRIDDEN: %s\n", derivedKey);
     // Usage example:
     // uint8_t key[dek->keylen]; // For SHA1 output
     // hex_to_bytes(derivedKey, key, dek->keylen);
@@ -653,7 +653,7 @@ DEK *passphrase_to_dek(int cipher_algo, STRING2KEY *s2k,
 static void
 proc_symkey_enc(CTX c, PACKET *pkt)
 {
-  printf("proc_symkey_enc\n");
+  // printf("proc_symkey_enc\n");
   gpg_error_t err;
   PKT_symkey_enc *enc;
 
@@ -662,7 +662,7 @@ proc_symkey_enc(CTX c, PACKET *pkt)
     printf("invalid symkey encrypted packet\n");
   else if (!c->dek)
   {
-    printf("no DEK\n");
+    // printf("no DEK\n");
     int algo = enc->cipher_algo;
     const char *s = "CAST5"; // openpgp_cipher_algo_name (algo);
     const char *a =          //(enc->aead_algo ? openpgp_aead_algo_name (enc->aead_algo)
@@ -678,7 +678,7 @@ proc_symkey_enc(CTX c, PACKET *pkt)
         // if (enc->seskeylen)
         //   printf (("%s encrypted session key\n"), tmpstr);
         // else
-        printf(("%s %s encrypted data\n"), s, a);
+        // printf(("%s %s encrypted data\n"), s, a);
         // xfree (tmpstr);
       }
     }
@@ -711,15 +711,21 @@ proc_symkey_enc(CTX c, PACKET *pkt)
     else
     {
       // printf("passphrase len: %zu\n", strlen(c->passphrase));
-      printf("DOING DEK HERE passphrase:%s\n", c->passphrase);
+      // printf("DOING DEK HERE passphrase:%s\n", c->passphrase);
       // Assuming c->session_key is an unsigned char array of 16 bytes
-      printf("session_key: %s\n", c->session_key);
+      // printf("session_key: %s\n", c->session_key);
       // for (int i = 0; i < 16; i++) {
       //     printf("%02x", c->session_key[i]);
       // }
       // printf("\n");
-      c->dek = passphrase_to_dek(algo,
-                                 &enc->s2k, 0, 1, NULL, 0, 0, c->passphrase, c->session_key); // derivedKey);
+      // SKIPP
+      
+      // c->dek = passphrase_to_dek(algo,
+      //                            &enc->s2k, 0, 1, NULL, 0, 0, c->passphrase, c->session_key); // derivedKey);
+size_t key_len = strlen(c->session_key) + 1;  // +1 for the null terminator
+    c->dek->key = malloc(key_len);
+        memcpy(c->dek->key, c->session_key , key_len);
+
       // printf("LEAVING EARLY\n");
       // goto leave;
       // c->dek = passphrase_to_dek (algo, &enc->s2k, 0, 0, NULL,
@@ -952,7 +958,7 @@ leave:
 static void
 proc_encrypted(CTX c, PACKET *pkt)
 {
-  printf("processing encrypted packet\n");
+  // printf("processing encrypted packet\n");
   int result = 0;
   int early_plaintext = literals_seen;
   unsigned int compliance_de_vs = 0;
@@ -969,7 +975,7 @@ proc_encrypted(CTX c, PACKET *pkt)
     /* We fail only later so that we can print some more info first.  */
   }
 
-  if (1) //! opt.quiet)
+  if (0) //! opt.quiet)
   {
     if (c->symkeys > 1)
       printf(("encrypted with %lu passphrases\n"), c->symkeys);
@@ -1093,7 +1099,7 @@ proc_encrypted(CTX c, PACKET *pkt)
   //     if (compliant)
   //       compliance_de_vs |= 1;
   //   }
-printf("pkt->pkt.encrypted: %p\n", (void*)pkt->pkt.encrypted);
+// printf("pkt->pkt.encrypted: %p\n", (void*)pkt->pkt.encrypted);
   if (!result)
   {
     int compl_error;
@@ -1102,8 +1108,9 @@ printf("pkt->pkt.encrypted: %p\n", (void*)pkt->pkt.encrypted);
     if (!result && !compl_error)
       compliance_de_vs |= 2;
   }
-  printf("decrypt_data result: %d\n", result);
-
+  // printf("decrypt_data result: %d\n", result);
+  printf("Forcing early exit\n");
+  goto leave;
   /* Trigger the deferred error.  The second condition makes sure that a
    * printf printed in the cry_cipher_checktag never gets ignored.  */
   if (!result && early_plaintext)
@@ -1228,6 +1235,8 @@ printf("pkt->pkt.encrypted: %p\n", (void*)pkt->pkt.encrypted);
   //     // compliance_failure ();
   //     printf("compliance failure\n");
   //   }
+  leave:
+    ; /* null statement */
 }
 
 static int
@@ -1872,7 +1881,7 @@ int proc_packets(ctrl_t ctrl, void *anchor, iobuf_t a)
 
 int proc_encryption_packets(ctrl_t ctrl, void *anchor, iobuf_t a)
 {
-  printf("proc_encryption_packets a->use: %d, a->filter: %d\n", a->use, a->filter);
+  // printf("proc_encryption_packets a->use: %d, a->filter: %d\n", a->use, a->filter);
 
   CTX c = xmalloc_clear(sizeof *c);
   int rc;
@@ -1881,7 +1890,7 @@ int proc_encryption_packets(ctrl_t ctrl, void *anchor, iobuf_t a)
   c->anchor = anchor;
   c->encrypt_only = 1;
   rc = do_proc_packets(ctrl, c, a);
-  xfree(c);
+  // xfree(c);
   return rc;
 }
 
@@ -1910,7 +1919,7 @@ check_nesting(CTX c)
 static int
 do_proc_packets(ctrl_t ctrl, CTX c, iobuf_t a)
 {
-  printf("do_proc_packets %d\n", ctrl->enc_length);// %s\n", ctrl->passphrase);
+  // printf("do_proc_packets %d\n", ctrl->enc_length);// %s\n", ctrl->passphrase);
 
   // printf("do_proc_packets\n");// %s\n", ctrl->passphrase);
   // Copy across any main ctx passphrase or session_key
@@ -1929,7 +1938,7 @@ do_proc_packets(ctrl_t ctrl, CTX c, iobuf_t a)
         // printf("Overriding passphrase DEK with session key\n");//, c->passphrase);
     }
 }
-  else printf("Will derive key from passphrase\n");
+  // else printf("Will derive key from passphrase\n");
   c->enc_len = ctrl->enc_length;
 
   // log_printhex(c->iobuf->d.buf,c->iobuf->d.len,"do_proc_packets");
@@ -2000,7 +2009,7 @@ do_proc_packets(ctrl_t ctrl, CTX c, iobuf_t a)
     // }
     if (c->encrypt_only)
     {
-      printf("Encrypt only\n");
+      // printf("Encrypt only\n");
       switch (pkt->pkttype)
       {
       case PKT_PUBLIC_KEY:
@@ -2086,13 +2095,13 @@ do_proc_packets(ctrl_t ctrl, CTX c, iobuf_t a)
       free_packet(pkt, &parsectx);
   }
 
-  if (rc == GPG_ERR_INV_PACKET)
-    printf(STATUS_NODATA, "3");
+  // if (rc == GPG_ERR_INV_PACKET)
+  //   printf(STATUS_NODATA, "3");
 
   if (any_data)
     rc = 0;
-  else if (rc == -1)
-    printf(STATUS_NODATA, "2");
+  // else if (rc == -1)
+  //   printf(STATUS_NODATA, "2");
 
 leave:
   //  release_list (c);

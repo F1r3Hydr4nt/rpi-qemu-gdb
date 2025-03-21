@@ -2,6 +2,7 @@
 import sys
 import os
 import binascii
+import shutil
 
 def read_binary_file(filename):
     """Read a binary file and return its contents"""
@@ -62,7 +63,7 @@ def find_key_chunks(data, original_key, chunk_size=4, min_match_percent=50):
         end_idx = min(start_idx + chunk_size, len(original_key))
         chunk = original_key[start_idx:end_idx]
         
-                    # Find this chunk in the data - use a lower threshold for initial detection
+        # Find this chunk in the data - use a lower threshold for initial detection
         # We'll sort through potential matches after
         chunk_offset, match_percent = find_best_offset(data, chunk, 30)  # Lower threshold to catch more potential matches
         
@@ -167,7 +168,7 @@ def main():
     print(f"Reading files...")
     try:
         # Read all required files
-        kernel_data = bytearray(read_binary_file(input_kernel))
+        kernel_data = read_binary_file(input_kernel)
         new_gpg_data = read_binary_file(new_gpg_file)
         original_gpg_data = read_binary_file(original_gpg_file)
         
@@ -209,6 +210,9 @@ def main():
                 # Use the offsets found by auto-detection
                 key_offsets = [offset for offset, _ in key_chunks]
                 print(f"✓ Found all {total_chunks} key chunks")
+        
+        # Convert kernel_data to bytearray for modification (at this point it's still a bytes object)
+        kernel_data = bytearray(kernel_data)
         
         # Verify key chunks
         key_chunks_data = []
@@ -392,30 +396,40 @@ def main():
             if response.lower() != 'y':
                 return 1
         
-        # Apply patches
-        print("\nApplying patches...")
+        # Instead of modifying the kernel_data in-place, first copy the entire input kernel to the output file
+        print(f"\nCopying full kernel from {input_kernel} to {output_kernel}...")
+        shutil.copy2(input_kernel, output_kernel)
         
-        # Divide new key into chunks
-        new_key_chunks = []
-        for i in range(total_chunks):
-            start_idx = i * chunk_size
-            end_idx = min(start_idx + chunk_size, len(new_key))
-            new_key_chunks.append(new_key[start_idx:end_idx])
-        
-        # Patch key chunks
-        for i, (offset, chunk) in enumerate(zip(key_offsets, new_key_chunks)):
-            print(f"Patching key chunk {i+1}/{total_chunks} at offset 0x{offset:X}")
-            print(f"  Original: {kernel_data[offset:offset+len(chunk)].decode('ascii', errors='replace')}")
-            print(f"  New: {chunk.decode('ascii', errors='replace')}")
-            kernel_data[offset:offset+len(chunk)] = chunk
-        
-        # Patch GPG data
-        print(f"Patching GPG data at offset 0x{data_offset:X}")
-        kernel_data[data_offset:data_offset+len(new_gpg_data)] = new_gpg_data
-        
-        # Write output file
-        with open(output_kernel, 'wb') as f:
-            f.write(kernel_data)
+        # Now open the output file for binary read/write to apply the patches
+        with open(output_kernel, 'r+b') as f:
+            # Divide new key into chunks
+            new_key_chunks = []
+            for i in range(total_chunks):
+                start_idx = i * chunk_size
+                end_idx = min(start_idx + chunk_size, len(new_key))
+                new_key_chunks.append(new_key[start_idx:end_idx])
+            
+            print("\nApplying patches to the copied kernel...")
+            
+            # Patch key chunks
+            for i, (offset, chunk) in enumerate(zip(key_offsets, new_key_chunks)):
+                print(f"Patching key chunk {i+1}/{total_chunks} at offset 0x{offset:X}")
+                original_bytes = kernel_data[offset:offset+len(chunk)]
+                try:
+                    print(f"  Original: {original_bytes.decode('ascii', errors='replace')}")
+                    print(f"  New: {chunk.decode('ascii', errors='replace')}")
+                except:
+                    print(f"  Original (hex): {original_bytes.hex()}")
+                    print(f"  New (hex): {chunk.hex()}")
+                
+                # Seek to the position and write the chunk
+                f.seek(offset)
+                f.write(chunk)
+            
+            # Patch GPG data
+            print(f"Patching GPG data at offset 0x{data_offset:X}")
+            f.seek(data_offset)
+            f.write(new_gpg_data)
         
         print(f"\n✓ Successfully created patched kernel: {output_kernel}")
         
@@ -427,9 +441,9 @@ def main():
             print(f"    Chunk {i+1}/{total_chunks}: 0x{offset:X}")
         
         # Print the command that would use these offsets with this script for future reference
-        # key_offsets_str = ",".join([f"0x{offset:X}" for offset in key_offsets])
-        # print(f"\nFor future reference, you can use these offsets with this script:")
-        # print(f"python chunked_key_kernel_patcher.py {input_kernel} {output_kernel} {new_gpg_file} {original_gpg_file} {chunk_size} \"{key_offsets_str}\" 0x{data_offset:X}")
+        key_offsets_str = ",".join([f"0x{offset:X}" for offset in key_offsets])
+        print(f"\nFor future reference, you can use these offsets with this script:")
+        print(f"python chunked_key_kernel_patcher.py {input_kernel} {output_kernel} {new_gpg_file} {original_gpg_file} {chunk_size} \"{key_offsets_str}\" 0x{data_offset:X}")
         
         return 0
         
@@ -441,3 +455,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+    

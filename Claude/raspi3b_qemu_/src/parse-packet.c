@@ -379,7 +379,7 @@ read_32(IOBUF inp)
 int dbg_parse_packet(parse_packet_ctx_t ctx, PACKET *pkt,
                      const char *dbg_f, int dbg_l)
 {
-  printf("dbg_parse_packet\n");
+  // printf("dbg_parse_packet\n");
   int skip, rc;
 
   do
@@ -911,9 +911,9 @@ static const char *pkt_type_str[] = {
 // printf("Packet processing complete (rc=%d)\n", rc);
 
 /* Add at start of switch statement */
-printf("\nProcessing packet type: %s (%d)\n\n", 
-          pkttype < sizeof(pkt_type_str)/sizeof(*pkt_type_str) ? 
-          pkt_type_str[pkttype] : "UNKNOWN", pkttype);
+// printf("\nProcessing packet type: %s (%d)\n\n", 
+//           pkttype < sizeof(pkt_type_str)/sizeof(*pkt_type_str) ? 
+//           pkt_type_str[pkttype] : "UNKNOWN", pkttype);
   switch (pkttype)
     {
     case PKT_PUBLIC_KEY:
@@ -1003,8 +1003,8 @@ printf("\nProcessing packet type: %s (%d)\n\n",
 // printf("Storing packet in context (type=%d, rc=%d)\n", pkttype, rc);
 
 // // Hex dumps
-printf("Packet header (%d bytes):\n", hdrlen);
-log_hexdump(hdr, hdrlen);
+// printf("Packet header (%d bytes):\n", hdrlen);
+// log_hexdump(hdr, hdrlen);
  leave:
   /* FIXME: We leak in case of an error (see the xmalloc's above).  */
   if (!rc && iobuf_error (inp))
@@ -1355,10 +1355,10 @@ parse_symkeyenc(IOBUF inp, int pkttype, unsigned long pktlen,
 
   if (list_mode || 1)
   {
-    printf( // listfp,
-        ":symkey enc packet: version %d, cipher %d, aead %d,"
-        "s2k %d, hash %d\n",
-        version, cipher_algo, aead_algo, s2kmode, hash_algo);
+    // printf( // listfp,
+    //     ":symkey enc packet: version %d, cipher %d, aead %d,"
+    //     "s2k %d, hash %d\n",
+    //     version, cipher_algo, aead_algo, s2kmode, hash_algo);
     if (seskeylen)
     {
       /* To compute the size of the session key we need to know
@@ -1377,11 +1377,11 @@ parse_symkeyenc(IOBUF inp, int pkttype, unsigned long pktlen,
     {
       // printf (listfp, "\tsalt ");
       //       es_write_hexstring (listfp, k->s2k.salt, 8, 0, NULL);
-      if (s2kmode == 3)
-        printf( // listfp,
-            ", count %lu (%lu)\n",
-            S2K_DECODE_COUNT((ulong)k->s2k.count),
-            (ulong)k->s2k.count);
+      // if (s2kmode == 3)
+      //   printf( // listfp,
+      //       ", count %lu (%lu)\n",
+      //       S2K_DECODE_COUNT((ulong)k->s2k.count),
+      //       (ulong)k->s2k.count);
       // printf (listfp, "\n");
     }
   }
@@ -3409,14 +3409,14 @@ static int
 parse_encrypted(IOBUF inp, int pkttype, unsigned long pktlen,
                 PACKET *pkt, int new_ctb, int partial)
 {
-  printf("parse_encrypted\n");
-  printf("Packet length: %lu\n", pktlen);
-// Add at start
-printf("=== parse_encrypted start ===\n");
-printf("Input buffer: %p\n", (void*)inp);
-printf("Packet type: %d (MDC: %d)\n", pkttype, (pkttype == PKT_ENCRYPTED_MDC));
-printf("Partial: %d\n", partial);
-    printf("Buffer use: %d\n", inp->use);
+//   printf("parse_encrypted\n");
+//   printf("Packet length: %lu\n", pktlen);
+// // Add at start
+// printf("=== parse_encrypted start ===\n");
+// printf("Input buffer: %p\n", (void*)inp);
+// printf("Packet type: %d (MDC: %d)\n", pkttype, (pkttype == PKT_ENCRYPTED_MDC));
+// printf("Partial: %d\n", partial);
+//     printf("Buffer use: %d\n", inp->use);
     
   // unsigned char peek_buf[16];
   // if (iobuf_peek(inp, peek_buf, sizeof(peek_buf)) >= 0) {
@@ -3481,7 +3481,7 @@ printf("Partial: %d\n", partial);
      the MDC version number but with the IV etc.).  This value is
      required during decryption.  */
   ed->len = pktlen;
-    printf("Encrypted data length: %lu\n", ed->len);
+    // printf("Encrypted data length: %lu\n", ed->len);
 
   // Add before ed->buf = inp
   if (ed->len > 0)
@@ -3500,15 +3500,15 @@ printf("Partial: %d\n", partial);
   }
 
 // After allocating ed
-printf("Allocated encrypted packet at: %p\n", (void*)ed);
+// printf("Allocated encrypted packet at: %p\n", (void*)ed);
 
-// Before assigning buffer
-printf("Setting buf to input stream: %p\n", (void*)inp);
-  ed->buf = inp;
+// // Before assigning buffer
+// printf("Setting buf to input stream: %p\n", (void*)inp);
+ed->buf = inp;
 
 
 // At leave
-printf("=== parse_encrypted end (rc=%d) ===\n", rc);
+// printf("=== parse_encrypted end (rc=%d) ===\n", rc);
 leave:
   return rc;
 }

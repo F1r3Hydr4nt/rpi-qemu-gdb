@@ -45,8 +45,8 @@ void uart_putc(char c)
 
 void putc_uart(void *p, char c)
 {
-    (void)p;
-    uart_putc(c);
+    // (void)p;
+    // uart_putc(c);
 }
 void putc_uart2(void *p, char c)
 {

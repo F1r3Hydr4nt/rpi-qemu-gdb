@@ -242,7 +242,7 @@ void log_hexdump(const uint8_t *buffer, int length) {
     char text[17];
     int written = 0;
     
-    printf("%d bytes:\n", length);
+    // printf("%d bytes:\n", length);
     while (length > 0) {
         int have = (length > 16) ? 16 : length;
         

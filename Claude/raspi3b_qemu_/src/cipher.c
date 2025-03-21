@@ -73,11 +73,11 @@ memcpy(temp, fixed_random, nprefix);
   //   }
     //log_printhex (cfx->dek->key, cfx->dek->keylen, "KEY:");
   _gcry_cipher_setkey (cfx->cipher_hd, cfx->dek->key, cfx->dek->keylen);
-  log_hexdump(&cfx->cipher_hd->key, 16);
+  // log_hexdump(&cfx->cipher_hd->key, 16);
 
   _gcry_cipher_setiv (cfx->cipher_hd, NULL, 8);
 
-  log_hexdump(&cfx->cipher_hd->u_iv, 8);
+  // log_hexdump(&cfx->cipher_hd->u_iv, 8);
   // if (cfx->mdc_hash) /* Hash the "IV". */{
   //   printf("Hashing IV\n");
   //   gcry_md_write (cfx->mdc_hash, temp, nprefix+2 );

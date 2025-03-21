@@ -118,3 +118,6 @@ Log comparison complete. Results saved in results/
 
 
 LOL WTF?!
+
+
+diff --side-by-side --width=180 results/kernel1.in_asm.log results/patchedKernel.in_asm.log > comparison.txt
