@@ -384,21 +384,21 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
     dfx->chunkbyte = ed->chunkbyte;
     dfx->chunksize = (uint64_t)1 << (dfx->chunkbyte + 6);
 
-    if (dek->algo != dfx->cipher_algo)
-      printf("Note: different cipher algorithms used (%s/%s)\n",
-             openpgp_cipher_algo_name(dek->algo),
-             openpgp_cipher_algo_name(dfx->cipher_algo));
+    // if (dek->algo != dfx->cipher_algo)
+      // printf("Note: different cipher algorithms used (%s/%s)\n",
+      //        openpgp_cipher_algo_name(dek->algo),
+      //        openpgp_cipher_algo_name(dfx->cipher_algo));
 
-    rc = openpgp_cipher_open(&dfx->cipher_hd,
-                             dfx->cipher_algo,
-                             ciphermode,
-                             GCRY_CIPHER_SECURE);
+    // rc = openpgp_cipher_open(&dfx->cipher_hd,
+    //                          dfx->cipher_algo,
+    //                          ciphermode,
+    //                          GCRY_CIPHER_SECURE);
     if (rc)
       goto leave; /* Should never happen.  */
 
     // if (DBG_CRYPTO)
     //   printf (dek->key, dek->keylen, "thekey:");
-    rc = gcry_cipher_setkey(dfx->cipher_hd, dek->key, dek->keylen);
+    rc = _gcry_cipher_setkey(dfx->cipher_hd, dek->key, dek->keylen);
     if (gpg_err_code(rc) == GPG_ERR_WEAK_KEY)
     {
       printf(("WARNING: message was encrypted with"
@@ -407,7 +407,7 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
     }
     else if (rc)
     {
-      printf("key setup failed: %s\n", gpg_strerror(rc));
+      printf("key setup failed: %s\n","-1");//, gpg_strerror(rc));
       goto leave;
     }
 
@@ -453,7 +453,7 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
     {
       /* We should never get an error here cause we already checked
        * that the algorithm is available.  */
-      BUG();
+      // BUG();
     }
 
     /* log_hexdump( "thekey", dek->key, dek->keylen );*/
