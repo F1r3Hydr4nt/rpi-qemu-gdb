@@ -530,7 +530,7 @@ size_t _gcry_cipher_cfb_decrypt(gcry_cipher_hd_t c,
     }
 
     if (inbuflen >= blocksize) {
-        printf("cfb_decrypt 5 %d %d %d\n", inbuflen, outbuflen, c->unused);
+        // printf("cfb_decrypt 5 %d %d %d\n", inbuflen, outbuflen, c->unused);
         /* Save the current IV and then encrypt the IV. */
         cipher_block_cpy(c->lastiv, c->u_iv.iv, blocksize);
 
@@ -540,7 +540,7 @@ size_t _gcry_cipher_cfb_decrypt(gcry_cipher_hd_t c,
         ivBlock = encrypt(c->key, ivBlock, 0);
         bytesFromBlock(ivBlock, c->u_iv.iv);
         // printBlock(ivBlock);
-        ascii_dump(c->u_iv.iv, blocksize);
+        // ascii_dump(c->u_iv.iv, blocksize);
         /* XOR the input with the IV and store input into IV */
         cipher_block_xor_n_copy(outbuf, c->u_iv.iv, inbuf, blocksize);
 
@@ -550,7 +550,7 @@ size_t _gcry_cipher_cfb_decrypt(gcry_cipher_hd_t c,
     }
 
     if (inbuflen) {
-        printf("cfb_decrypt 6 %d %d %d\n", inbuflen, outbuflen, c->unused);
+        // printf("cfb_decrypt 6 %d %d %d\n", inbuflen, outbuflen, c->unused);
         /* Save the current IV and then encrypt the IV. */
         cipher_block_cpy(c->lastiv, c->u_iv.iv, blocksize);
 
@@ -560,7 +560,7 @@ size_t _gcry_cipher_cfb_decrypt(gcry_cipher_hd_t c,
         ivBlock = encrypt(c->key, ivBlock, 0);
         bytesFromBlock(ivBlock, c->u_iv.iv);
         // printBlock(ivBlock);
-        ascii_dump(c->u_iv.iv, blocksize);
+        // ascii_dump(c->u_iv.iv, blocksize);
 
         c->unused = blocksize;
         /* Apply the XOR. */
@@ -571,7 +571,7 @@ size_t _gcry_cipher_cfb_decrypt(gcry_cipher_hd_t c,
         inbuflen = 0;
 
         ivBlock = blockFromBytes(c->u_iv.iv);
-        ascii_dump(c->u_iv.iv, blocksize);
+        // ascii_dump(c->u_iv.iv, blocksize);
         // printBlock(ivBlock);
     }
 

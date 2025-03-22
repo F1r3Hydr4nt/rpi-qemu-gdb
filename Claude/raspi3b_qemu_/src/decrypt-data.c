@@ -342,14 +342,14 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
   {
     if (blocksize != 16)
     {
-      rc = gpg_error(GPG_ERR_CIPHER_ALGO);
+      // rc = gpg_error(GPG_ERR_CIPHER_ALGO);
       goto leave;
     }
 
     if (ed->chunkbyte > 56)
     {
       printf("invalid AEAD chunkbyte %u\n", ed->chunkbyte);
-      rc = gpg_error(GPG_ERR_INV_PACKET);
+      // rc = gpg_error(GPG_ERR_INV_PACKET);
       goto leave;
     }
 
@@ -375,7 +375,7 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
     {
       printf("Start-IV in AEAD packet too short (%d/%u)\n",
              i, startivlen);
-      rc = gpg_error(GPG_ERR_TOO_SHORT);
+      // rc = gpg_error(GPG_ERR_TOO_SHORT);
       goto leave;
     }
 
@@ -424,7 +424,7 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
     {
       /* An invalid message.  We can't check that during parsing
        * because we may not know the used cipher then.  */
-      rc = gpg_error(GPG_ERR_INV_PACKET);
+      // rc = gpg_error(GPG_ERR_INV_PACKET);
       goto leave;
     }
 
@@ -472,8 +472,8 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
 
     if (!ed->buf)
     {
-      printf(("problem handling encrypted packet\n"));
-      rc = gpg_error(GPG_ERR_INV_PACKET);
+      //printf(("problem handling encrypted packet\n"));
+      // rc = gpg_error(GPG_ERR_INV_PACKET);
       goto leave;
     }
 
@@ -516,7 +516,8 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
       // goto leave;
     }else{
       printf("\n\nGOOD KEY!\n\n");
-      printf("Leaving early...\n"); goto leave;
+      // printf("Leaving early...\n");
+       // goto leave;
     }
 
 
@@ -576,8 +577,8 @@ int decrypt_data(ctrl_t ctrl, void *procctx, PKT_encrypted *ed, DEK *dek,
   proc_packets(ctrl, procctx, ed->buf);
 
   ed->buf = NULL;
-  if (dfx->eof_seen > 1)
-    rc = gpg_error(GPG_ERR_INV_PACKET);
+  // if (dfx->eof_seen > 1)
+  //   rc = gpg_error(GPG_ERR_INV_PACKET);
   // else if ( ed->mdc_method )
   //   {
   //     /* We used to let parse-packet.c handle the MDC packet but this

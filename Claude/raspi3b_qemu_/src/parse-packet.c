@@ -662,7 +662,7 @@ parse (parse_packet_ctx_t ctx, PACKET *pkt, int onlykeypkts, off_t * retpos,
 
   if (!(ctb & 0x80))
     {
-      printf ("%s: invalid packet (ctb=%02x)\n", iobuf_where (inp), ctb);
+      // printf ("%s: invalid packet (ctb=%02x)\n", iobuf_where (inp), ctb);
       rc = gpg_error (GPG_ERR_INV_PACKET);
       goto leave;
     }
@@ -687,7 +687,7 @@ parse (parse_packet_ctx_t ctx, PACKET *pkt, int onlykeypkts, off_t * retpos,
       if ((c = iobuf_get (inp)) == -1)
 	{
 	  printf ("%s: 1st length byte missing\n", iobuf_where (inp));
-	  rc = gpg_error (GPG_ERR_INV_PACKET);
+	  // rc = gpg_error (GPG_ERR_INV_PACKET);
 	  goto leave;
 	}
 
@@ -702,7 +702,7 @@ parse (parse_packet_ctx_t ctx, PACKET *pkt, int onlykeypkts, off_t * retpos,
             {
               printf ("%s: 2nd length byte missing\n",
                          iobuf_where (inp));
-              rc = gpg_error (GPG_ERR_INV_PACKET);
+              // rc = gpg_error (GPG_ERR_INV_PACKET);
               goto leave;
             }
           hdr[hdrlen++] = c;
@@ -718,7 +718,7 @@ parse (parse_packet_ctx_t ctx, PACKET *pkt, int onlykeypkts, off_t * retpos,
               if ((c = iobuf_get (inp)) == -1)
                 {
                   printf ("%s: 4 byte length invalid\n", iobuf_where (inp));
-                  rc = gpg_error (GPG_ERR_INV_PACKET);
+                  // rc = gpg_error (GPG_ERR_INV_PACKET);
                   goto leave;
                 }
               value[i] = hdr[hdrlen++] = c;
@@ -743,7 +743,7 @@ parse (parse_packet_ctx_t ctx, PACKET *pkt, int onlykeypkts, off_t * retpos,
             default:
               printf ("%s: partial length invalid for"
                          " packet type %d\n", iobuf_where (inp), pkttype);
-              rc = gpg_error (GPG_ERR_INV_PACKET);
+              // rc = gpg_error (GPG_ERR_INV_PACKET);
               goto leave;
             }
         }
@@ -769,7 +769,7 @@ parse (parse_packet_ctx_t ctx, PACKET *pkt, int onlykeypkts, off_t * retpos,
 	    {
 	      printf ("%s: indeterminate length for invalid"
 			 " packet type %d\n", iobuf_where (inp), pkttype);
-	      rc = gpg_error (GPG_ERR_INV_PACKET);
+	      // rc = gpg_error (GPG_ERR_INV_PACKET);
 	      goto leave;
 	    }
 	}
@@ -782,7 +782,7 @@ parse (parse_packet_ctx_t ctx, PACKET *pkt, int onlykeypkts, off_t * retpos,
 	      if (c == -1)
 		{
 		  printf ("%s: length invalid\n", iobuf_where (inp));
-		  rc = gpg_error (GPG_ERR_INV_PACKET);
+		  // rc = gpg_error (GPG_ERR_INV_PACKET);
 		  goto leave;
 		}
 	      pktlen |= hdr[hdrlen++] = c;
@@ -828,7 +828,7 @@ parse (parse_packet_ctx_t ctx, PACKET *pkt, int onlykeypkts, off_t * retpos,
       if (partial)
 	{
 	  printf ("parse: Can't copy partial packet.  Aborting.\n");
-	  rc = gpg_error (GPG_ERR_INV_PACKET);
+	  //rc = gpg_error (GPG_ERR_INV_PACKET);
 	  goto leave;
 	}
 
@@ -956,7 +956,7 @@ static const char *pkt_type_str[] = {
       // }
       break;
     case PKT_PLAINTEXT:
-      rc = parse_plaintext (inp, pkttype, pktlen, pkt, new_ctb, partial);
+      // rc = parse_plaintext (inp, pkttype, pktlen, pkt, new_ctb, partial);
       break;
     // case PKT_COMPRESSED:
     //   rc = parse_compressed (inp, pkttype, pktlen, pkt, new_ctb);

@@ -108,9 +108,9 @@ void main()
     
     // Decrypt the data
     int rc = decrypt_memory(ctrl, __passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword_gpg, __passwordpasswordpasswordpasswordpasswordpasswordpasswordpassword_gpg_len);
-    if (rc) {
-        printf("Decryption failed with code: %d\n", rc);
-    }
+    // if (rc) {
+    //     printf("Decryption failed with code: %d\n", rc);
+    // }
     // // Check guard values
     // printf("Guard values after decrypt: 0x%08X 0x%08X\n", guard1, guard2);
     // printf("CTRL-A + X\n");

@@ -133,10 +133,6 @@ log1: $(TARGET1)
 	@mkdir -p $(RESULTS_DIR)
 	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel $(TARGET1) -d in_asm -D $(RESULTS_DIR)/kernel1.in_asm.log -nographic -serial mon:stdio # 
 
-# log2: $(TARGET2)
-# 	@mkdir -p $(RESULTS_DIR)
-# 	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel $(TARGET2) -d in_asm,exec,mmu,cpu -D $(RESULTS_DIR)/kernel2.in_asm.log -nographic -serial mon:stdio
-
 logPatched: $(TARGET2)
 	@mkdir -p $(RESULTS_DIR)
 	$(QEMU) -M versatilepb -cpu cortex-a7 -kernel build/patchedKernel.img -d in_asm -D $(RESULTS_DIR)/patchedKernel.in_asm.log -nographic -serial mon:stdio
@@ -183,16 +179,16 @@ compare: $(TARGET1)
 	@diff $(RESULTS_DIR)/kernel1.hex $(RESULTS_DIR)/patchedKernel.hex > $(RESULTS_DIR)/patched_hex_diff.txt || true
 	@echo "Hexdump diff saved to $(RESULTS_DIR)/patched_hex_diff.txt"
 	
-	@echo "\nLooking for key and data differences in binary:"
-	@echo "Key location (expecting differences around 0x14668):"
-	@hexdump -C $(TARGET1) -s 0x14660 -n 64 > $(RESULTS_DIR)/kernel1_key.hex
-	@hexdump -C build/patchedKernel.img -s 0x14660 -n 64 > $(RESULTS_DIR)/patchedKernel_key.hex
-	@diff $(RESULTS_DIR)/kernel1_key.hex $(RESULTS_DIR)/patchedKernel_key.hex || true
+	# @echo "\nLooking for key and data differences in binary:"
+	# @echo "Key location (expecting differences around 0x14668):"
+	# @hexdump -C $(TARGET1) -s 0x14660 -n 64 > $(RESULTS_DIR)/kernel1_key.hex
+	# @hexdump -C build/patchedKernel.img -s 0x14660 -n 64 > $(RESULTS_DIR)/patchedKernel_key.hex
+	# @diff $(RESULTS_DIR)/kernel1_key.hex $(RESULTS_DIR)/patchedKernel_key.hex || true
 	
-	@echo "\nData location (expecting differences around 0x14C84):"
-	@hexdump -C $(TARGET1) -s 0x14C80 -n 128 > $(RESULTS_DIR)/kernel1_data.hex
-	@hexdump -C build/patchedKernel.img -s 0x14C80 -n 128 > $(RESULTS_DIR)/patchedKernel_data.hex
-	@diff $(RESULTS_DIR)/kernel1_data.hex $(RESULTS_DIR)/patchedKernel_data.hex || true
+	# @echo "\nData location (expecting differences around 0x14C84):"
+	# @hexdump -C $(TARGET1) -s 0x14C80 -n 128 > $(RESULTS_DIR)/kernel1_data.hex
+	# @hexdump -C build/patchedKernel.img -s 0x14C80 -n 128 > $(RESULTS_DIR)/patchedKernel_data.hex
+	# @diff $(RESULTS_DIR)/kernel1_data.hex $(RESULTS_DIR)/patchedKernel_data.hex || true
 	
 	# Log file comparison section
 	@echo "\n====== RUNTIME LOG COMPARISON ======\n"
@@ -263,3 +259,13 @@ compare: $(TARGET1)
 	@echo "\n====== COMPARISON COMPLETE ======\n"
 	@echo "All results saved in $(RESULTS_DIR)/"
 	
+
+log1_trace: $(TARGET1)
+	@mkdir -p $(RESULTS_DIR)
+	$(QEMU) -M versatilepb -cpu cortex-a7 \
+		-kernel $(TARGET1) \
+		-d in_asm,op,op_opt,int,exec,cpu,mmu,pcall \
+		-D $(RESULTS_DIR)/kernel1.full_trace.log \
+		-icount shift=0,align=off,sleep=off \
+		-nographic \
+		-serial mon:stdio

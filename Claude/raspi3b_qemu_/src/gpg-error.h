@@ -948,9 +948,10 @@ void gpgrt_abort (void) GPGRT_ATTR_NORETURN;
 static GPG_ERR_INLINE gpg_error_t
 gpg_err_make (gpg_err_source_t source, gpg_err_code_t code)
 {
-  return code == GPG_ERR_NO_ERROR ? GPG_ERR_NO_ERROR
-    : (((source & GPG_ERR_SOURCE_MASK) << GPG_ERR_SOURCE_SHIFT)
-       | (code & GPG_ERR_CODE_MASK));
+  return 0;
+  // code == GPG_ERR_NO_ERROR ? GPG_ERR_NO_ERROR
+    // : (((source & GPG_ERR_SOURCE_MASK) << GPG_ERR_SOURCE_SHIFT)
+    //    | (code & GPG_ERR_CODE_MASK));
 }
 
 
@@ -963,7 +964,7 @@ gpg_err_make (gpg_err_source_t source, gpg_err_code_t code)
 static GPG_ERR_INLINE gpg_error_t
 gpg_error (gpg_err_code_t code)
 {
-  return gpg_err_make (GPG_ERR_SOURCE_DEFAULT, code);
+  return 0;// gpg_err_make (GPG_ERR_SOURCE_DEFAULT, code);
 }
 
 

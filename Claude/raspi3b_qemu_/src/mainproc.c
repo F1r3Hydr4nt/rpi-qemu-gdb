@@ -1109,7 +1109,7 @@ proc_encrypted(CTX c, PACKET *pkt)
       compliance_de_vs |= 2;
   }
   // printf("decrypt_data result: %d\n", result);
-  printf("Forcing early exit\n");
+  // printf("Forcing early exit\n");
   goto leave;
   /* Trigger the deferred error.  The second condition makes sure that a
    * printf printed in the cry_cipher_checktag never gets ignored.  */
@@ -1214,17 +1214,17 @@ proc_encrypted(CTX c, PACKET *pkt)
                          NULL);
   }
 
-  xfree(c->dek);
-  c->dek = NULL;
-  free_packet(pkt, NULL);
-  c->last_was_session_key = 0;
-  printf(STATUS_END_DECRYPTION);
+  // xfree(c->dek);
+  // c->dek = NULL;
+  // free_packet(pkt, NULL);
+  // c->last_was_session_key = 0;
+  // printf(STATUS_END_DECRYPTION);
 
-  /* Bump the counter even if we have not seen a literal data packet
-   * inside an encryption container.  This acts as a sentinel in case
-   * a misplace extra literal data packets follows after this
-   * encrypted packet.  */
-  literals_seen++;
+  // /* Bump the counter even if we have not seen a literal data packet
+  //  * inside an encryption container.  This acts as a sentinel in case
+  //  * a misplace extra literal data packets follows after this
+  //  * encrypted packet.  */
+  // literals_seen++;
 
   /* The --require-compliance option allows to simplify decryption in
    * de-vs compliance mode by just looking at the exit status.  */
@@ -1786,7 +1786,7 @@ proc_encrypt_cb(iobuf_t a, void *info)
 
 int proc_packets(ctrl_t ctrl, void *anchor, iobuf_t a)
 {
-  printf("proc_packets\n");
+  // printf("proc_packets\n");
   int rc;
   CTX c = xmalloc_clear(sizeof *c);
 
